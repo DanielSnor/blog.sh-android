@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Words only the Android app needs, for a new post, a post's text and the look at a shot: what the keys of a video are called. -->
+<resources>
+    <string name="android_d_play">Play</string>
+    <string name="android_d_pause">Pause</string>
+</resources>

@@ -1,0 +1,4 @@
+#!/bin/sh
+# tools/name-of <words> -- which resource says these words: the lines of
+# tools/strings-map.tsv whose iOS key holds them, name first.
+grep -i -F -- "$*" "$(dirname "$0")/strings-map.tsv" | awk -F'\t' '{ printf "%-46s %s\n", $1, substr($2, 1, 110) }'

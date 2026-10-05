@@ -1,0 +1,11 @@
+#!/bin/sh
+# tools/gw <gradle arguments> -- the wrapper, with Android Studio's own Java
+# when no other is named, and Gradle's project cache kept beside the build
+# output (local.properties, build.root) instead of in the working copy.
+here=$(cd "$(dirname "$0")/.." && pwd)
+[ -n "$JAVA_HOME" ] || { [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ] && export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"; }
+root=$(sed -n 's/^build\.root=//p' "$here/local.properties" 2>/dev/null)
+if [ -n "$root" ]; then
+  exec "$here/gradlew" -p "$here" --project-cache-dir "$root/.gradle" "$@"
+fi
+exec "$here/gradlew" -p "$here" "$@"

@@ -1,0 +1,14 @@
+# Gradle and the build
+.gradle/
+build/
+.kotlin/
+# This machine's own: where the SDK is, where the build goes
+local.properties
+# Android Studio
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+# macOS
+.DS_Store

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The engine's own mark, as the iOS app wears it: a terminal's cursor on a round of ink. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#1E1D1C"
+        android:pathData="M54,54m-26.65,0a26.65,26.65 0,1 1,53.3 0a26.65,26.65 0,1 1,-53.3 0" />
+    <path
+        android:fillColor="#FF2E00"
+        android:pathData="M46.27,40.64h15.47v26.72h-15.47z" />
+</vector>

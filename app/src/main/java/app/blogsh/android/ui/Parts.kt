@@ -568,9 +568,11 @@ fun Menu(open: Boolean, onDismiss: () -> Unit, content: @Composable ColumnScope.
 
 @Composable
 fun MenuKey(label: String, symbol: Int? = null, danger: Boolean = false, enabled: Boolean = true, onClick: () -> Unit) {
+    // A line that cannot be chosen now says so by going pale, as it does on iOS.
+    val fade = if (enabled) 1f else 0.38f
     DropdownMenuItem(
-        text = { Text(label, style = ui(15f), color = if (danger) Theme.danger else Theme.ink) },
-        leadingIcon = symbol?.let { { Mark(it, 20.dp, if (danger) Theme.danger else Theme.accent) } },
+        text = { Text(label, style = ui(15f), color = (if (danger) Theme.danger else Theme.ink).copy(alpha = fade)) },
+        leadingIcon = symbol?.let { { Mark(it, 20.dp, (if (danger) Theme.danger else Theme.accent).copy(alpha = fade)) } },
         enabled = enabled, onClick = onClick,
     )
 }

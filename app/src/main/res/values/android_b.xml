@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Words only the archive's own search field needs: iOS has the system's field, with its keys already named. -->
+<resources>
+    <string name="android_b_clear">Clear</string>
+</resources>

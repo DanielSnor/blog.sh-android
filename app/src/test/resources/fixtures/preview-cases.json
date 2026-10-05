@@ -1,0 +1,342 @@
+[
+ {
+  "markdown": "",
+  "html": ""
+ },
+ {
+  "markdown": "plain",
+  "html": "<p>plain</p>"
+ },
+ {
+  "markdown": "one\ntwo",
+  "html": "<p>one\ntwo</p>"
+ },
+ {
+  "markdown": "one\n\ntwo",
+  "html": "<p>one</p>\n<p>two</p>"
+ },
+ {
+  "markdown": "  indented",
+  "html": "<p>  indented</p>"
+ },
+ {
+  "markdown": "trailing  \n\n",
+  "html": "<p>trailing  </p>"
+ },
+ {
+  "markdown": "**bold** and *italic* and ~~gone~~",
+  "html": "<p><strong>bold</strong> and <em>italic</em> and <del>gone</del></p>"
+ },
+ {
+  "markdown": "***both***",
+  "html": "<p><strong><em>both</strong></em></p>"
+ },
+ {
+  "markdown": "a * b * c",
+  "html": "<p>a <em> b </em> c</p>"
+ },
+ {
+  "markdown": "2*3*4",
+  "html": "<p>2<em>3</em>4</p>"
+ },
+ {
+  "markdown": "*a*b*",
+  "html": "<p><em>a</em>b*</p>"
+ },
+ {
+  "markdown": "**a** **b**",
+  "html": "<p><strong>a</strong> <strong>b</strong></p>"
+ },
+ {
+  "markdown": "*a**b*",
+  "html": "<p>*a**b*</p>"
+ },
+ {
+  "markdown": "\\*not\\*",
+  "html": "<p>\\<em>not\\</em></p>"
+ },
+ {
+  "markdown": "`code` and `*not em*` and ``",
+  "html": "<p><code>code</code> and <code>*not em*</code> and ``</p>"
+ },
+ {
+  "markdown": "`a` `b`",
+  "html": "<p><code>a</code> <code>b</code></p>"
+ },
+ {
+  "markdown": "x `unclosed",
+  "html": "<p>x `unclosed</p>"
+ },
+ {
+  "markdown": "`<b>`",
+  "html": "<p><code>&lt;b&gt;</code></p>"
+ },
+ {
+  "markdown": "[link](https://example.com)",
+  "html": "<p><a href=\"https://example.com\">link</a></p>"
+ },
+ {
+  "markdown": "[rel](/posts/a/)",
+  "html": "<p><a href=\"/posts/a/\">rel</a></p>"
+ },
+ {
+  "markdown": "[mail](mailto:a@b.cz)",
+  "html": "<p><a href=\"mailto:a@b.cz\">mail</a></p>"
+ },
+ {
+  "markdown": "[bad](javascript:alert(1))",
+  "html": "<p>bad</p>"
+ },
+ {
+  "markdown": "[bare](example.com)",
+  "html": "<p>bare</p>"
+ },
+ {
+  "markdown": "[wiki](https://cs.wikipedia.org/wiki/Praha_(okres))",
+  "html": "<p><a href=\"https://cs.wikipedia.org/wiki/Praha_(okres)\">wiki</a></p>"
+ },
+ {
+  "markdown": "[a](https://x.cz) [b](https://y.cz)",
+  "html": "<p><a href=\"https://x.cz\">a</a> <a href=\"https://y.cz\">b</a></p>"
+ },
+ {
+  "markdown": "[**b**](https://x.cz)",
+  "html": "<p><a href=\"https://x.cz\"><strong>b</strong></a></p>"
+ },
+ {
+  "markdown": "[x](https://x.cz?a=1&b=2)",
+  "html": "<p><a href=\"https://x.cz?a=1&amp;b=2\">x</a></p>"
+ },
+ {
+  "markdown": "# h",
+  "html": "<h2>h</h2>"
+ },
+ {
+  "markdown": "## h2",
+  "html": "<h3>h2</h3>"
+ },
+ {
+  "markdown": "### h3",
+  "html": "<h4>h3</h4>"
+ },
+ {
+  "markdown": "#### h4",
+  "html": "<p>#### h4</p>"
+ },
+ {
+  "markdown": "#nospace",
+  "html": "<p>#nospace</p>"
+ },
+ {
+  "markdown": "## *em* head",
+  "html": "<h3><em>em</em> head</h3>"
+ },
+ {
+  "markdown": "text\n## head\ntext",
+  "html": "<p>text</p>\n<h3>head</h3>\n<p>text</p>"
+ },
+ {
+  "markdown": "> quote",
+  "html": "<blockquote><p>quote</p></blockquote>"
+ },
+ {
+  "markdown": "> a\n> b",
+  "html": "<blockquote><p>a\nb</p></blockquote>"
+ },
+ {
+  "markdown": ">no space",
+  "html": "<blockquote><p>no space</p></blockquote>"
+ },
+ {
+  "markdown": "> a\n\n> b",
+  "html": "<blockquote><p>a</p></blockquote>\n<blockquote><p>b</p></blockquote>"
+ },
+ {
+  "markdown": "> **b**",
+  "html": "<blockquote><p><strong>b</strong></p></blockquote>"
+ },
+ {
+  "markdown": "- a\n- b",
+  "html": "<ul><li>a</li><li>b</li></ul>"
+ },
+ {
+  "markdown": "* a\n+ b",
+  "html": "<ul><li>a</li><li>b</li></ul>"
+ },
+ {
+  "markdown": "1. a\n2. b",
+  "html": "<ol><li>a</li><li>b</li></ol>"
+ },
+ {
+  "markdown": "1. a\n- b",
+  "html": "<ol><li>a</li><li>b</li></ol>"
+ },
+ {
+  "markdown": "- a\n\n- b",
+  "html": "<ul><li>a</li></ul>\n<ul><li>b</li></ul>"
+ },
+ {
+  "markdown": "  - nested",
+  "html": "<ul><li>nested</li></ul>"
+ },
+ {
+  "markdown": "-nospace",
+  "html": "<p>-nospace</p>"
+ },
+ {
+  "markdown": "10. ten",
+  "html": "<ol><li>ten</li></ol>"
+ },
+ {
+  "markdown": "```\ncode\n```",
+  "html": "<pre class=\"code-block\"><code>code</code></pre>"
+ },
+ {
+  "markdown": "```ruby\nputs 1\n```",
+  "html": "<pre class=\"code-block\"><code>puts 1</code></pre>"
+ },
+ {
+  "markdown": "```\nunclosed",
+  "html": "<pre class=\"code-block\"><code>unclosed</code></pre>"
+ },
+ {
+  "markdown": "```\n<b>&\n```\nafter",
+  "html": "<pre class=\"code-block\"><code>&lt;b&gt;&amp;</code></pre>\n<p>after</p>"
+ },
+ {
+  "markdown": "a\n```\nb\n```\nc",
+  "html": "<p>a</p>\n<pre class=\"code-block\"><code>b</code></pre>\n<p>c</p>"
+ },
+ {
+  "markdown": "![alt](cat.jpg)",
+  "html": "<figure><img src=\"data:image/jpeg;base64,AAAA\" alt=\"alt\"></figure>"
+ },
+ {
+  "markdown": "before\n\n![alt](cat.jpg)\n\nafter",
+  "html": "<p>before</p>\n<figure><img src=\"data:image/jpeg;base64,AAAA\" alt=\"alt\"></figure>\n<p>after</p>"
+ },
+ {
+  "markdown": "before\n![alt](cat.jpg)\n\nafter",
+  "html": "<p>before</p>\n<figure><div class=\"no-preview\">cat.jpg: a picture has to stand on a line of its own, with a blank line before it and after it -- the blog refuses the post otherwise</div></figure>\n<p>after</p>"
+ },
+ {
+  "markdown": "![alt](cat.jpg)\nafter",
+  "html": "<figure><div class=\"no-preview\">cat.jpg: a picture has to stand on a line of its own, with a blank line before it and after it -- the blog refuses the post otherwise</div></figure>\n<p>after</p>"
+ },
+ {
+  "markdown": "![alt](nothing.jpg)",
+  "html": "<figure><div class=\"no-preview\">Picture nothing.jpg -- no preview on this device</div></figure>"
+ },
+ {
+  "markdown": "![](cat.jpg)",
+  "html": "<figure><img src=\"data:image/jpeg;base64,AAAA\" alt=\"\"></figure>"
+ },
+ {
+  "markdown": "![a \"q\" <b>](cat.jpg)",
+  "html": "<figure><img src=\"data:image/jpeg;base64,AAAA\" alt=\"a &quot;q&quot; &lt;b&gt;\"></figure>"
+ },
+ {
+  "markdown": "![a](cat.jpg) trailing",
+  "html": "<p>!a trailing</p>"
+ },
+ {
+  "markdown": "![a](cat.jpg)   ",
+  "html": "<figure><img src=\"data:image/jpeg;base64,AAAA\" alt=\"a\"></figure>"
+ },
+ {
+  "markdown": "text ![a](cat.jpg)",
+  "html": "<p>text !a</p>"
+ },
+ {
+  "markdown": "![a](b) ![c](cat.jpg)",
+  "html": "<figure><img src=\"data:image/jpeg;base64,AAAA\" alt=\"a](b) ![c\"></figure>"
+ },
+ {
+  "markdown": "![x](a&b.jpg)",
+  "html": "<figure><img src=\"data:x&quot;y\" alt=\"x\"></figure>"
+ },
+ {
+  "markdown": "![x](has space.jpg)",
+  "html": "<p>![x](has space.jpg)</p>"
+ },
+ {
+  "markdown": "!![clip](clip.mp4)",
+  "html": "<figure><video controls playsinline src=\"data:video/mp4;base64,BBBB\"></video><figcaption>clip</figcaption></figure>"
+ },
+ {
+  "markdown": "!![](clip.mp4)",
+  "html": "<figure><video controls playsinline src=\"data:video/mp4;base64,BBBB\"></video></figure>"
+ },
+ {
+  "markdown": "!![clip](gone.mp4)",
+  "html": "<figure><div class=\"no-preview\">Picture gone.mp4 -- no preview on this device</div></figure>"
+ },
+ {
+  "markdown": "a\n!![clip](clip.mp4)",
+  "html": "<p>a</p>\n<figure><div class=\"no-preview\">clip.mp4: a picture has to stand on a line of its own, with a blank line before it and after it -- the blog refuses the post otherwise</div></figure>"
+ },
+ {
+  "markdown": "!![clip](cat.jpg)",
+  "html": "<figure><video controls playsinline src=\"data:image/jpeg;base64,AAAA\"></video><figcaption>clip</figcaption></figure>"
+ },
+ {
+  "markdown": "![pic](clip.mp4)",
+  "html": "<figure><img src=\"data:video/mp4;base64,BBBB\" alt=\"pic\"></figure>"
+ },
+ {
+  "markdown": "<script>alert(1)</script>",
+  "html": "<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>"
+ },
+ {
+  "markdown": "a & b < c > d \"e\"",
+  "html": "<p>a &amp; b &lt; c &gt; d &quot;e&quot;</p>"
+ },
+ {
+  "markdown": "Žluťoučký kůň…d8-D",
+  "html": "<p>Žluťoučký kůň…d8-D</p>"
+ },
+ {
+  "markdown": "line\r\nwin\r\n\r\nnext",
+  "html": "<p>line\nwin</p>\n<p>next</p>"
+ },
+ {
+  "markdown": "old\rmac",
+  "html": "<p>old\nmac</p>"
+ },
+ {
+  "markdown": "# Title\n\nPara **one**.\n\n- a\n- b\n\n> q\n\n```\nc\n```\n\n![x](cat.jpg)\n\nEnd.",
+  "html": "<h2>Title</h2>\n<p>Para <strong>one</strong>.</p>\n<ul><li>a</li><li>b</li></ul>\n<blockquote><p>q</p></blockquote>\n<pre class=\"code-block\"><code>c</code></pre>\n<figure><img src=\"data:image/jpeg;base64,AAAA\" alt=\"x\"></figure>\n<p>End.</p>"
+ },
+ {
+  "markdown": "\n\n\n",
+  "html": ""
+ },
+ {
+  "markdown": "   ",
+  "html": ""
+ },
+ {
+  "markdown": "a\n \nb",
+  "html": "<p>a</p>\n<p>b</p>"
+ },
+ {
+  "markdown": "1.5 is a number",
+  "html": "<p>1.5 is a number</p>"
+ },
+ {
+  "markdown": "- ",
+  "html": "<ul><li></li></ul>"
+ },
+ {
+  "markdown": "> ",
+  "html": "<blockquote><p></p></blockquote>"
+ },
+ {
+  "markdown": "#",
+  "html": "<p>#</p>"
+ },
+ {
+  "markdown": "## ",
+  "html": "<p>## </p>"
+ }
+]

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="android_back">Zpět</string>
+    <string name="android_close">Zavřít</string>
+    <string name="android_more">Další</string>
+    <string name="android_leave_unsaved_title">Opustit, co je tu napsáno?</string>
+    <string name="android_leave_unsaved_text">Není to odeslané ani uložené a bude to pryč.</string>
+    <string name="android_leave">Opustit</string>
+    <string name="android_stay">Zůstat</string>
+    <string name="android_draft_kept">Navázáno tam, kde to skončilo: co tu bylo napsáno, než se appka zavřela.</string>
+</resources>

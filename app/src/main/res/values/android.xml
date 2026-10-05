@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Words only the Android app needs: what its own keys are called. Everything else is in strings.xml, from the iOS catalog. -->
+<resources>
+    <string name="android_back">Back</string>
+    <string name="android_close">Close</string>
+    <string name="android_more">More</string>
+    <string name="android_leave_unsaved_title">Leave what is written here?</string>
+    <string name="android_leave_unsaved_text">It has not been sent or saved, and it will be gone.</string>
+    <string name="android_leave">Leave</string>
+    <string name="android_stay">Stay</string>
+    <string name="android_draft_kept">Picked up where it was left: what was written here before the app closed.</string>
+</resources>

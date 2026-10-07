@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
@@ -36,6 +36,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -49,10 +52,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.blogsh.android.R
 import app.blogsh.android.model.Delivery
+import app.blogsh.android.model.Kept
 import app.blogsh.android.model.Marks
 import app.blogsh.android.model.Pictures
 import app.blogsh.android.model.Shot
@@ -90,17 +95,14 @@ class EditorState(text: String = "") {
     }
 
     /**
-     * A paragraph of its own where the caret is: a picture's line, with a
-     * blank line before it and after it, as the blog wants it.
+     * A paragraph of its own where the caret is -- at the end of a text
+     * never touched: a picture's line, with a blank line before it and
+     * after it, as the blog wants it, and none of them doubled. The caret
+     * goes on after it.
      */
     fun insertParagraph(line: String) {
-        val text = value.text
-        val at = if (touched) value.selection.max else text.length
-        val before = text.substring(0, at).trimEnd('\n')
-        val after = text.substring(at).trimStart('\n')
-        val head = if (before.isEmpty()) "" else before + "\n\n"
-        val tail = if (after.isEmpty()) "\n" else "\n\n" + after
-        value = TextFieldValue(head + line + tail, TextRange((head + line).length))
+        val put = Kept.placed(line, value.text, if (touched) value.selection.max else null)
+        value = TextFieldValue(put.text, TextRange(put.caret))
         touched = true
     }
 }
@@ -118,6 +120,25 @@ fun rememberEditorState(text: String = ""): EditorState = remember { EditorState
 @Composable
 fun PaperEditor(state: EditorState, minHeight: Dp = 220.dp, enabled: Boolean = true) {
     var whole by remember { mutableStateOf(false) }
+    // As tall as the text asks, up to what stays in sight: a text that
+    // grew on down the page took its caret behind the keyboard, and the
+    // page does not follow a caret. Past that height the text moves
+    // inside its own frame, which does. With a keyboard up the text has
+    // everything down to it -- what stands under the text, the tags, is
+    // not needed while writing; without one, half the page. For more room
+    // there is the whole screen, one key away.
+    val density = LocalDensity.current
+    val page = LocalPage.current
+    val keyboardUp = WindowInsets.ime.getBottom(density) > 0
+    // Where the text's own upper edge is in the window.
+    var top by remember { mutableStateOf(0f) }
+    val least = 180.dp
+    val room = if (keyboardUp && page.bottom != Float.MAX_VALUE) {
+        val down = with(density) { (page.bottom - top).toDp() } - 6.dp
+        minOf(maxOf(least, down), maxOf(least, page.height * 0.9f))
+    } else {
+        maxOf(least, page.height * 0.5f)
+    }
     Column {
         EditorKeys(state, Symbols.arrowUpLeftAndArrowDownRight, stringResource(R.string.editor_whole)) { whole = true }
         BasicTextField(
@@ -127,7 +148,10 @@ fun PaperEditor(state: EditorState, minHeight: Dp = 220.dp, enabled: Boolean = t
             textStyle = mono(15f, bold = false).copy(color = Theme.ink, lineHeight = 21.sp),
             cursorBrush = SolidColor(Theme.accent),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            modifier = Modifier.fillMaxWidth().heightIn(min = minHeight).padding(top = 10.dp).onFocusChanged { if (it.isFocused) state.touched = true },
+            modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
+                .onGloballyPositioned { top = it.positionInWindow().y.roundToInt().toFloat() }
+                .heightIn(min = minOf(minHeight, room), max = room)
+                .onFocusChanged { if (it.isFocused) state.touched = true },
         )
     }
     if (whole) WritingScreen(state) { whole = false }
@@ -135,15 +159,17 @@ fun PaperEditor(state: EditorState, minHeight: Dp = 220.dp, enabled: Boolean = t
 
 /**
  * Nothing but the text: the marks over it, the paper under it, the
- * keyboard up. On a wide screen the lines keep a length one can read.
+ * keyboard up. The text has the whole width of the screen or the window,
+ * however wide: how long a line is, is the writer's to say, by the size
+ * of the window.
  */
 @Composable
 fun WritingScreen(state: EditorState, onClose: () -> Unit) {
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         SheetBars()
         val focus = remember { FocusRequester() }
-        Box(Modifier.fillMaxSize().background(Theme.paper).windowInsetsPadding(WindowInsets.safeDrawing), contentAlignment = Alignment.TopCenter) {
-            Column(Modifier.widthIn(max = 760.dp).fillMaxSize()) {
+        Typed {
+            Column(Modifier.fillMaxSize().background(Theme.paper).windowInsetsPadding(WindowInsets.safeDrawing)) {
                 Box(Modifier.padding(horizontal = Theme.gutter, vertical = 12.dp)) {
                     EditorKeys(state, Symbols.arrowDownRightAndArrowUpLeft, stringResource(R.string.editor_back), onClose)
                 }

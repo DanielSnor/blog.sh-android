@@ -37,7 +37,8 @@ import app.blogsh.android.model.ActionAnswer
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.HeldAnswer
 import app.blogsh.android.model.PostState
-import app.blogsh.android.model.RebuildAnswer
+import app.blogsh.android.model.Doing
+import app.blogsh.android.model.Herald
 import app.blogsh.android.model.TrashAnswer
 import app.blogsh.android.model.TrashRow
 import app.blogsh.android.model.engineInstant
@@ -60,7 +61,6 @@ import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.RowDate
 import app.blogsh.android.ui.Said
 import app.blogsh.android.ui.Says
-import app.blogsh.android.ui.ScreenHeader
 import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
@@ -76,8 +76,9 @@ private enum class Clearing(val word: String) { Trash("trash"), Versions("versio
  * What the trash holds, as `restore --json` lists it -- the rows the
  * terminal offers when `restore` is run with no slug -- and what a row
  * does: it restores its post. A draft comes back with its preview
- * rebuilt, as the terminal rebuilds it; a published post is asked about,
- * as the terminal asks. Under the rows, the clearing out the terminal
+ * rebuilt, as the terminal rebuilds it; a published post's pages are
+ * brought up to date by the app itself (`Herald`), where the terminal asks.
+ * Under the rows, the clearing out the terminal
  * has two commands for: `empty trash` and `empty versions`. Both are for
  * good, both say how much before they ask, and each is asked by its
  * own key.
@@ -94,6 +95,8 @@ fun TrashScreen() {
     var loading by remember { mutableStateOf(false) }
     var refreshing by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
+    // What the screen is doing while it cannot be touched.
+    var doing by remember { mutableStateOf<String?>(null) }
     var restoring by remember { mutableStateOf<TrashRow?>(null) }
     // How much the trash and the older versions hold, as `empty` counts them.
     var held by remember { mutableStateOf<HeldAnswer?>(null) }
@@ -131,6 +134,7 @@ fun TrashScreen() {
      */
     suspend fun empty(what: Clearing) {
         busy = true
+        doing = context.getString(Doing.word(listOf("empty")))
         try {
             val answer = Engine.call<HeldAnswer>("empty", what.word, "--yes")
             load()
@@ -143,19 +147,7 @@ fun TrashScreen() {
             said = Said(text = e.said)
         } finally {
             busy = false
-        }
-    }
-
-    suspend fun rebuild() {
-        busy = true
-        try {
-            val answer = Engine.call<RebuildAnswer>("rebuild")
-            said = Said(text = context.getString(if (answer.deploy == "done") R.string.rebuilt_and_deployed else R.string.rebuilt_the_deploy_is_owed_to_the))
-        } catch (e: Throwable) {
-            if (e.isCalledOff) throw e
-            said = Said(text = e.said)
-        } finally {
-            busy = false
+            doing = null
         }
     }
 
@@ -163,6 +155,7 @@ fun TrashScreen() {
     // time this runs.
     suspend fun restore(row: TrashRow) {
         busy = true
+        doing = context.getString(Doing.word(listOf("restore")))
         try {
             // A draft's preview is rebuilt without asking, the way the terminal
             // does it; a published post's page is asked about.
@@ -173,29 +166,25 @@ fun TrashScreen() {
             val words = if (lines.isEmpty()) context.getString(R.string.restored, answer.url ?: row.slug) else lines.joinToString("\n")
             load()
             // A published post is back in the archive and not yet on the site:
-            // that it is back, and the question about the site, as one.
-            said = if (answer.state == PostState.Published) {
-                Said(
-                    title = context.getString(R.string.rebuild_and_deploy_the_site_now), text = words,
-                    // Rebuilt by the screen itself, which is still here when the question is put away.
-                    ask = Said.Ask(button = context.getString(R.string.rebuild), cancel = context.getString(R.string.not_now)) {
-                        scope.launch { rebuild() }.join()
-                    },
-                )
-            } else {
-                Said(text = words)
-            }
+            // that it is back is said, and the site is brought up to date by itself.
+            if (answer.state == PostState.Published) Herald.shared.owe()
+            Herald.shared.say(words)
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             said = Said(text = e.said)
         } finally {
             busy = false
+            doing = null
         }
     }
 
     LaunchedEffect(Unit) { load() }
 
-    PaperScaffold(onBack = { nav.pop() }) {
+    val still = busy || Herald.shared.isBuilding
+    PaperScaffold(
+        onBack = { nav.pop() }, name = stringResource(R.string.tile_restore),
+        count = if (rows.isEmpty()) null else NumberFormat.getIntegerInstance().format(rows.size), doing = doing,
+    ) {
         PullToRefreshBox(
             isRefreshing = refreshing,
             onRefresh = {
@@ -210,15 +199,7 @@ fun TrashScreen() {
             },
             modifier = Modifier.weight(1f),
         ) {
-            LazyColumn(Modifier.fillMaxSize().alpha(if (busy) 0.5f else 1f), userScrollEnabled = !busy) {
-                item(key = "header") {
-                    PaperRow {
-                        ScreenHeader(
-                            stringResource(R.string.tile_restore), if (rows.isEmpty()) null else NumberFormat.getIntegerInstance().format(rows.size),
-                            Modifier.padding(top = 2.dp, bottom = 6.dp),
-                        )
-                    }
-                }
+            LazyColumn(Modifier.fillMaxSize().alpha(if (still) 0.5f else 1f), userScrollEnabled = !still) {
                 problem?.let { words ->
                     item(key = "problem") {
                         PaperRow { Text(words, color = Theme.muted, style = ui(14f), modifier = Modifier.padding(vertical = 12.dp)) }
@@ -227,7 +208,7 @@ fun TrashScreen() {
                 items(rows, key = { it.id }) { row ->
                     Box {
                         // A press restores; a long one opens the row's menu, which says the same.
-                        PaperRow(Modifier.combinedClickable(enabled = !busy, onClick = { restoring = row }, onLongClick = { menuFor = row.id })) {
+                        PaperRow(Modifier.combinedClickable(enabled = !still, onClick = { restoring = row }, onLongClick = { menuFor = row.id })) {
                             TrashRowView(row)
                         }
                         Menu(menuFor == row.id, { menuFor = null }) {
@@ -248,12 +229,12 @@ fun TrashScreen() {
                                 // What cannot be taken back, set apart and last.
                                 Plate {
                                     if (trash != null) row {
-                                        Pressable({ emptying = Clearing.Trash }, enabled = !busy) {
+                                        Pressable({ emptying = Clearing.Trash }, enabled = !still) {
                                             CommandRow(stringResource(R.string.empty_the_trash_item_s, trash.count, size(trash.bytes)), Symbols.trashSlash, danger = true)
                                         }
                                     }
                                     if (versions != null) row {
-                                        Pressable({ emptying = Clearing.Versions }, enabled = !busy) {
+                                        Pressable({ emptying = Clearing.Versions }, enabled = !still) {
                                             CommandRow(stringResource(R.string.remove_older_versions_file_s, versions.count, size(versions.bytes)), Symbols.clockBadgeXmark, danger = true)
                                         }
                                     }

@@ -62,6 +62,8 @@ import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import app.blogsh.android.R
 import app.blogsh.android.model.Blogs
+import app.blogsh.android.model.Reading
+import kotlin.math.roundToInt
 import app.blogsh.android.model.Delivery
 import app.blogsh.android.model.Preview
 import app.blogsh.android.model.Shot
@@ -73,9 +75,9 @@ import app.blogsh.android.ui.Mark
 import app.blogsh.android.ui.PaperSheet
 import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.Pressable
-import app.blogsh.android.ui.ScreenHeader
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
+import app.blogsh.android.ui.Typed
 import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.ui
 import kotlinx.coroutines.CancellationException
@@ -109,10 +111,10 @@ fun PreviewSheet(title: String, markdown: String, shown: Map<String, Preview.Sho
         )
         Preview.document(title, Preview.render(markdown, shown, spoken), language)
     }
-    PaperSheet(onDismiss, actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) }, scrolls = false) {
-        ScreenHeader(stringResource(R.string.preview), modifier = Modifier.padding(horizontal = Theme.gutter).padding(top = 2.dp))
-        Hairline(Modifier.padding(top = 10.dp))
-        WebPage(page, site.ifEmpty { null }, Modifier.weight(1f).fillMaxWidth())
+    PaperSheet(onDismiss, name = stringResource(R.string.preview), actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) }, scrolls = false) {
+        Hairline()
+        // The page enlarged as the app's own type is.
+        WebPage(page, site.ifEmpty { null }, Reading.shared.textSize.zoom, Modifier.weight(1f).fillMaxWidth())
         Hairline()
         Hint(
             stringResource(R.string.near_enough_not_exact_the_blog_itself),
@@ -128,7 +130,7 @@ fun PreviewSheet(title: String, markdown: String, shown: Map<String, Preview.Sho
  * script, and none would run.
  */
 @Composable
-private fun WebPage(html: String, base: String?, modifier: Modifier = Modifier) {
+private fun WebPage(html: String, base: String?, zoom: Float = 1f, modifier: Modifier = Modifier) {
     // The app's own window is a light one whatever the hour; the page asks
     // the view it is shown in whether it is night, so by night the view is
     // made in a dark one and the blog's stylesheet answers with its night.
@@ -145,6 +147,9 @@ private fun WebPage(html: String, base: String?, modifier: Modifier = Modifier) 
                 settings.javaScriptEnabled = false
                 settings.allowFileAccess = false
                 settings.allowContentAccess = false
+                // Enlarged inside the page, which then breaks its lines again to the same
+                // width; the system's own size of type is in the setting already.
+                if (zoom != 1f) settings.textZoom = (settings.textZoom * zoom).roundToInt()
                 loadDataWithBaseURL(base, html, "text/html", "utf-8", null)
             }
         },
@@ -175,7 +180,7 @@ internal fun pictureOf(bytes: ByteArray, edge: Int): ImageBitmap? = runCatching 
 fun ShotsViewer(shots: List<Shot>, current: String, onShot: (Shot) -> Unit, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         val pager = rememberPagerState(initialPage = shots.indexOfFirst { it.id == current }.coerceAtLeast(0)) { shots.size }
-        Column(Modifier.fillMaxSize().background(Theme.paper).windowInsetsPadding(WindowInsets.safeDrawing)) {
+        Typed { Column(Modifier.fillMaxSize().background(Theme.paper).windowInsetsPadding(WindowInsets.safeDrawing)) {
             Row(Modifier.fillMaxWidth().padding(horizontal = Theme.gutter, vertical = 14.dp)) {
                 if (pager.currentPage < shots.size) {
                     EngineLabel(stringResource(R.string.of, pager.currentPage + 1, shots.size), Modifier.alignByBaseline(), size = 13f)
@@ -189,7 +194,7 @@ fun ShotsViewer(shots: List<Shot>, current: String, onShot: (Shot) -> Unit, onDi
                 val shot = shots[page]
                 ShotPage(shot, front = pager.currentPage == page) { onShot(shot.withAlt(it)) }
             }
-        }
+        } }
     }
 }
 

@@ -45,7 +45,12 @@ import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.PaperScaffold
 import app.blogsh.android.ui.Partial
 import app.blogsh.android.ui.Plate
-import app.blogsh.android.ui.PostHeading
+import app.blogsh.android.ui.PostSlug
+import app.blogsh.android.ui.ShareKey
+import app.blogsh.android.ui.humanDate
+import app.blogsh.android.model.Doing
+import app.blogsh.android.model.Herald
+import app.blogsh.android.model.PostLink
 import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.RowDate
@@ -66,19 +71,22 @@ import kotlinx.coroutines.launch
  *
  * `gone` is said to the screen this one was opened from, once the post is
  * deleted: that screen is about the same post, and leaves with it.
+ * `renamed` tells it what the post is now, when it was renamed here: the
+ * screen under this one was opened with the name it had before.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PropsScreen(slug: String, gone: (() -> Unit)? = null) {
+fun PropsScreen(slug: String, gone: (() -> Unit)? = null, renamed: ((PropsAnswer) -> Unit)? = null) {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val uri = LocalUriHandler.current
     val told by rememberUpdatedState(gone)
+    val toldSlug by rememberUpdatedState(renamed)
     val state = remember {
         // Away from a post that is no longer there -- this screen, and the
         // one before it when that is the post's too: it is told, and leaves
         // by itself once it is in front again.
-        PropsState(slug, scope) {
+        PropsState(slug, scope, renamed = { toldSlug?.invoke(it) }) {
             told?.invoke()
             nav.pop()
         }
@@ -89,7 +97,12 @@ fun PropsScreen(slug: String, gone: (() -> Unit)? = null) {
 
     LaunchedEffect(Unit) { state.load() }
 
-    PaperScaffold(onBack = { nav.pop() }) {
+    // A build holds the lock most of these keys need: while one runs, they wait.
+    val still = state.busy || Herald.shared.isBuilding
+    PaperScaffold(
+        onBack = { nav.pop() }, title = props?.title ?: state.slug, doing = state.doing,
+        actions = { props?.let { PostLink.of(it) }?.let { ShareKey(it) } },
+    ) {
         PullToRefreshBox(
             isRefreshing = refreshing,
             onRefresh = {
@@ -110,19 +123,19 @@ fun PropsScreen(slug: String, gone: (() -> Unit)? = null) {
             ) {
                 if (problem != null) ProblemLine(problem)
                 if (props != null) {
-                    PostHeading(
-                        props.title,
+                    // Where the post is, under its title in the bar: its address, or that it has none yet.
+                    PostSlug(
                         if (props.state == PostState.Draft) stringResource(R.string.draft_not_on_the_site_preview_only)
-                        else props.address.removePrefix("/"),
+                        else props.address.removePrefix("/")
                     )
-                    Rows(props, Modifier.padding(top = 16.dp))
+                    Rows(props, Modifier.padding(top = 12.dp))
                     if (props.url.isNotEmpty()) {
                         val label = stringResource(if (props.state == PostState.Draft) R.string.show_the_preview_on_the_web else R.string.show_on_the_web)
                         Plate(Modifier.padding(top = 10.dp)) {
                             row {
                                 // Everything on the screen waits while the engine is asked; so does the way out to the web.
-                                Pressable({ runCatching { uri.openUri(props.url) } }, enabled = !state.busy) {
-                                    CommandRow(label, Symbols.safari, enabled = !state.busy)
+                                Pressable({ runCatching { uri.openUri(props.url) } }, enabled = !still) {
+                                    CommandRow(label, Symbols.safari, enabled = !still)
                                 }
                             }
                         }
@@ -132,7 +145,7 @@ fun PropsScreen(slug: String, gone: (() -> Unit)? = null) {
                         for (action in keys(props)) {
                             if (action == PostAction.Delete) continue
                             row {
-                                Command(actionLabel(action, props), actionSymbol(action), leads = action in opensAScreen, enabled = !state.busy) {
+                                Command(actionLabel(action, props), actionSymbol(action), leads = action in opensAScreen, enabled = !still) {
                                     state.tapped(action)
                                 }
                             }
@@ -143,7 +156,7 @@ fun PropsScreen(slug: String, gone: (() -> Unit)? = null) {
                     if (PostAction.Delete in props.actions) {
                         Plate(Modifier.padding(top = 10.dp)) {
                             row {
-                                Command(actionLabel(PostAction.Delete, props), actionSymbol(PostAction.Delete), danger = true, enabled = !state.busy) {
+                                Command(actionLabel(PostAction.Delete, props), actionSymbol(PostAction.Delete), danger = true, enabled = !still) {
                                     state.tapped(PostAction.Delete)
                                 }
                             }
@@ -172,16 +185,18 @@ fun PropsScreen(slug: String, gone: (() -> Unit)? = null) {
         ScheduleSheet(
             slug = state.slug, offered = props?.slot, current = if (props?.scheduled == true) props.date else null,
             scheduled = props?.scheduled == true, onDismiss = { state.scheduling = false },
-        ) { state.load() }
+        ) { state.scheduled() }
     }
+    val savedWords = stringResource(R.string.saved)
+    val restoredWords = stringResource(R.string.restored, state.slug)
     if (state.editingProperties && props != null) {
-        PropertiesForm(props, onDismiss = { state.editingProperties = false }) { state.afterWrite(rebuildAsk = true) }
+        PropertiesForm(props, onDismiss = { state.editingProperties = false }) { state.afterWrite(saying = savedWords) }
     }
     if (state.showingAddresses && props != null) {
-        AddressesSheet(props, onDismiss = { state.showingAddresses = false }) { state.afterWrite(rebuildAsk = true) }
+        AddressesSheet(props, onDismiss = { state.showingAddresses = false }) { state.afterWrite() }
     }
     if (state.showingVersions) {
-        VersionsSheet(state.slug, onDismiss = { state.showingVersions = false }) { state.load() }
+        VersionsSheet(state.slug, onDismiss = { state.showingVersions = false }) { state.afterWrite(saying = restoredWords) }
     }
     if (state.renaming) {
         AsksFor(
@@ -221,6 +236,7 @@ private fun keys(props: PropsAnswer): List<PostAction> = keyOrder.filter { it in
 @Composable
 private fun Rows(props: PropsAnswer, modifier: Modifier = Modifier) {
     // A plate's rows are named before it is built: the words are read here.
+    val titleLabel = stringResource(R.string.title)
     val preview = stringResource(R.string.preview_2)
     val scheduled = stringResource(R.string.scheduled_2)
     val state = stringResource(R.string.state)
@@ -239,6 +255,8 @@ private fun Rows(props: PropsAnswer, modifier: Modifier = Modifier) {
     val seriesWords = seriesLabel(props)
     val announcedWords = announcedLabel(props)
     Plate(modifier) {
+        // The whole title: the bar has one line for it.
+        info(titleLabel, props.title)
         if (props.state == PostState.Draft) {
             info(preview, props.url, mono = true)
             if (props.scheduled && props.date != null) info(scheduled, humanDate(props.date))
@@ -263,12 +281,17 @@ private fun Rows(props: PropsAnswer, modifier: Modifier = Modifier) {
  * action are made where no screen is at hand -- in the middle of a call --
  * so they come through `Spoken`, as the engine's own errors do.
  */
-private class PropsState(slug: String, private val scope: CoroutineScope, private val leave: () -> Unit) {
+private class PropsState(
+    slug: String, private val scope: CoroutineScope, private val renamed: (PropsAnswer) -> Unit = {}, private val leave: () -> Unit,
+) {
     /** A rename changes it, and every key after that speaks of the new one. */
     var slug by mutableStateOf(slug)
     var props by mutableStateOf<PropsAnswer?>(null)
     var problem by mutableStateOf<String?>(null)
     var busy by mutableStateOf(false)
+
+    /** What the screen is doing while it cannot be touched. */
+    var doing by mutableStateOf<String?>(null)
 
     // What is being asked, one at a time, the way one keypress asks.
     var confirming by mutableStateOf<PostAction?>(null)
@@ -312,24 +335,21 @@ private class PropsState(slug: String, private val scope: CoroutineScope, privat
             PostAction.Publish -> publish(anyway = false)
             PostAction.Unschedule -> run(listOf("schedule", slug, "--cancel"))?.let { answer ->
                 load()
-                tell(answer.warnings)
+                tell(answer.warnings, or = say(R.string.the_schedule_is_cancelled_the_post_is))
             }
             PostAction.Unpublish -> run(listOf("unpublish", slug, "--yes"))?.let { answer ->
+                // Taking a post off the site builds the site.
+                Herald.shared.settled()
                 load()
-                tell(answer.warnings)
+                tell(answer.warnings, or = say(R.string.unpublished_the_post_is_a_draft_again))
             }
             PostAction.Announce -> announce(force = false)
             PostAction.Delete -> if (run(listOf("delete", slug, "--yes")) != null) {
-                // The post is out of this screen's reach now. Said once, with
-                // the question the terminal asks next -- and whichever way
-                // that is answered, the screen is left: its keys would act
-                // on a post that is not there.
-                said = Said(
-                    title = say(R.string.deleted),
-                    text = say(R.string.the_post_is_in_the_trash_and) + "\n\n" + say(R.string.rebuild_and_deploy_the_site_now),
-                    ask = ask(say(R.string.rebuild), cancel = say(R.string.not_now)) { rebuild(leaving = true) },
-                    after = { leave() },
-                )
+                // The post is out of this screen's reach now. Said once, and
+                // the screen is left: its keys would act on a post that is
+                // not there. The site is brought up to date by itself.
+                Herald.shared.owe()
+                said = Said(title = say(R.string.deleted), text = say(R.string.the_post_is_in_the_trash_and), after = { leave() })
             }
             else -> {}
         }
@@ -345,29 +365,36 @@ private class PropsState(slug: String, private val scope: CoroutineScope, privat
         if (anyway) args.add("--allow-partial")
         val ask = ask(say(R.string.publish_anyway)) { publish(anyway = true) }
         run(args, anyway = if (anyway) null else ask)?.let { answer ->
+            // Publishing builds the whole site: nothing is owed after it.
+            Herald.shared.settled()
             load()
-            tell(answer.warnings)
+            tell(answer.warnings, or = say(R.string.published, answer.url ?: slug))
         }
     }
 
-    /** The engine's own lines about what it did, when it had any. */
-    private fun tell(lines: List<String>?) {
+    /**
+     * The engine's own lines about what it did, when it had any -- they
+     * are worth an answer. Otherwise the plain fact that it was done,
+     * said in passing.
+     */
+    private fun tell(lines: List<String>?, or: String? = null) {
         val plain = lines?.plain
-        if (!plain.isNullOrEmpty()) said = Said(text = plain.joinToString("\n"))
+        if (!plain.isNullOrEmpty()) said = Said(text = plain.joinToString("\n")) else if (or != null) Herald.shared.say(or)
     }
 
-    /** The question the terminal asks after a change the site does not show yet. */
-    private fun askRebuild(saying: List<String>? = null) {
-        said = Said(
-            title = say(R.string.rebuild_and_deploy_the_site_now), text = (saying ?: emptyList()).plain.joinToString("\n"),
-            ask = ask(say(R.string.rebuild), cancel = say(R.string.not_now)) { rebuild() },
-        )
+    /** The schedule dialog closed on a plan: when the post goes out now. */
+    suspend fun scheduled() {
+        load()
+        val now = props ?: return
+        val date = engineInstant(now.date) ?: return
+        if (now.scheduled) Herald.shared.say(say(R.string.scheduled_goes_out, RowDate.spoken(date)))
     }
 
     private suspend fun announce(force: Boolean) {
         val args = mutableListOf(if (props?.network == "bluesky") "bluesky" else "toot", slug)
         if (force) args.add("--force")
         busy = true
+        doing = say(Doing.word(args))
         try {
             val answer = Engine.call<ActionAnswer>(args)
             load()
@@ -385,12 +412,13 @@ private class PropsState(slug: String, private val scope: CoroutineScope, privat
             }
         } finally {
             busy = false
+            doing = null
         }
     }
 
     private suspend fun pin() {
         val props = props ?: return
-        write(listOf("props", slug, "--set", "pinned=${if (props.pinned) "no" else "yes"}"), rebuildAsk = true)
+        write(listOf("props", slug, "--set", "pinned=${if (props.pinned) "no" else "yes"}"), owed = true)
     }
 
     suspend fun rename() {
@@ -400,28 +428,10 @@ private class PropsState(slug: String, private val scope: CoroutineScope, privat
         val wasDraft = props?.state == PostState.Draft
         slug = answer.slug
         props = answer
-        if (wasDraft) tell(answer.warnings) else askRebuild(saying = answer.warnings)
-    }
-
-    /**
-     * `leaving`: the post this screen was about is gone, so once the
-     * rebuild has said how it went, the screen goes too.
-     */
-    private suspend fun rebuild(leaving: Boolean = false) {
-        busy = true
-        val then: (() -> Unit)? = if (leaving) ({ leave() }) else null
-        try {
-            val answer = Engine.call<RebuildAnswer>("rebuild")
-            said = Said(
-                text = if (answer.deploy == "done") say(R.string.rebuilt_and_deployed) else say(R.string.rebuilt_the_deploy_is_owed_to_the),
-                after = then,
-            )
-        } catch (e: Throwable) {
-            if (e.isCalledOff) throw e
-            said = Said(text = e.said, after = then)
-        } finally {
-            busy = false
-        }
+        renamed(answer)
+        // A draft's own preview follows it by itself; a published post's pages are owed a build.
+        if (!wasDraft) Herald.shared.owe()
+        tell(answer.warnings)
     }
 
     /**
@@ -431,6 +441,7 @@ private class PropsState(slug: String, private val scope: CoroutineScope, privat
      */
     private suspend fun run(args: List<String>, anyway: Said.Ask? = null): ActionAnswer? {
         busy = true
+        doing = say(Doing.word(args))
         try {
             return Engine.call<ActionAnswer>(args)
         } catch (e: Throwable) {
@@ -445,12 +456,14 @@ private class PropsState(slug: String, private val scope: CoroutineScope, privat
             return null
         } finally {
             busy = false
+            doing = null
         }
     }
 
     /** A write that answers with the screen itself. */
     private suspend fun writeProps(args: List<String>): PropsAnswer? {
         busy = true
+        doing = say(Doing.word(args))
         try {
             return Engine.call<PropsAnswer>(args)
         } catch (e: Throwable) {
@@ -459,18 +472,22 @@ private class PropsState(slug: String, private val scope: CoroutineScope, privat
             return null
         } finally {
             busy = false
+            doing = null
         }
     }
 
-    private suspend fun write(args: List<String>, rebuildAsk: Boolean) {
+    private suspend fun write(args: List<String>, owed: Boolean) {
         val answer = writeProps(args) ?: return
         props = answer
-        if (rebuildAsk) askRebuild(saying = answer.warnings) else tell(answer.warnings)
+        if (owed) Herald.shared.owe()
+        tell(answer.warnings)
     }
 
-    suspend fun afterWrite(rebuildAsk: Boolean) {
+    /** A sheet wrote something the site does not show yet. */
+    suspend fun afterWrite(saying: String? = null) {
         load()
-        if (rebuildAsk) askRebuild()
+        Herald.shared.owe()
+        if (saying != null) Herald.shared.say(saying)
     }
 
     suspend fun load() {
@@ -517,8 +534,6 @@ private fun confirmButton(action: PostAction): String = when (action) {
 }
 
 // ---- Words
-
-private fun humanDate(iso: String): String = engineInstant(iso)?.let { RowDate.full(it) } ?: iso
 
 @Composable
 private fun seriesLabel(props: PropsAnswer): String? {

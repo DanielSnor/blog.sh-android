@@ -150,6 +150,7 @@ class HomeState {
                 blog.copy(
                     name = answer.site.name, claim = answer.site.claim, url = answer.site.url, maxMb = answer.maxMb,
                     accentLight = answer.site.accent?.light ?: blog.accentLight, accentDark = answer.site.accent?.dark ?: blog.accentDark,
+                    tonesLight = answer.site.palette?.light ?: blog.tonesLight, tonesDark = answer.site.palette?.dark ?: blog.tonesDark,
                 )
             }
             glance = glance(answers[1], answers[2])
@@ -159,7 +160,7 @@ class HomeState {
         } catch (e: EngineError.NotConfigured) {
             identity = null
             glance = null
-            problem = BlogshApp.context.getString(R.string.no_server_yet_set_one_up_under)
+            problem = BlogshApp.context.getString(R.string.nothing_to_connect_to_yet_the_name)
         } catch (e: Throwable) {
             // Called off, or another blog by now: the screen keeps what it shows.
             if (e.isCalledOff) throw e
@@ -261,7 +262,7 @@ fun HomeScreen(state: HomeState) {
             when (entry) {
                 MenuEntry.Add -> ComposeScreen()
                 MenuEntry.Post -> PostPickerScreen(languages)
-                MenuEntry.Queue -> QueueScreen()
+                MenuEntry.Queue -> QueueScreen(languages)
                 MenuEntry.Browse -> ArchiveScreen(languages, base, filter, searching)
                 MenuEntry.Restore -> TrashScreen()
                 MenuEntry.Rebuild -> SiteScreen()
@@ -360,18 +361,13 @@ fun HomeScreen(state: HomeState) {
         }
     }
 
-    if (showingSettings) {
-        SettingsSheet(onDismiss = {
-            showingSettings = false
-            scope.launch { state.load() }
-        })
-    }
+    if (showingSettings) SettingsSheet(onDismiss = { showingSettings = false })
     if (showingBlogs) {
-        // After the blogs' sheet has closed: a blog just added goes to its settings.
-        var settingsNext by remember { mutableStateOf(false) }
-        BlogsSheet(added = { settingsNext = true }, onDismiss = {
+        // A blog's settings are behind its row there: what was changed in
+        // them is asked of the server again when the list closes.
+        BlogsSheet(onDismiss = {
             showingBlogs = false
-            if (settingsNext) showingSettings = true
+            scope.launch { state.load() }
         })
     }
 }
@@ -448,16 +444,28 @@ private fun FactLines(facts: Facts, toTrash: () -> Unit) {
     )
     // The block stands in the middle as one: its widest line centred,
     // the others keeping their places under it.
+    // A line is as tall as its type; where large type leaves it too short
+    // for the number and what is said to it, the second stands under the first.
+    val crowded = Theme.crowded
+    val tall = 18.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+    fun height(line: Line) = if (crowded && line.detail != null) tall * 2 else tall
     Row(Modifier.width(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            for (line in lines) Box(Modifier.height(18.dp), contentAlignment = Alignment.CenterStart) { EngineLabel(line.label, maxLines = 1) }
+            for (line in lines) Box(Modifier.height(height(line)), contentAlignment = Alignment.TopStart) { EngineLabel(line.label, maxLines = 1) }
         }
         Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
             for (line in lines) {
                 val words: @Composable () -> Unit = {
-                    Row(Modifier.height(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(line.value, color = if (line.action != null) Theme.accent else Theme.ink, style = mono(12f), maxLines = 1)
-                        if (line.detail != null) Text(" · " + line.detail, color = Theme.muted, style = mono(12f, bold = false), maxLines = 1)
+                    if (crowded) {
+                        Column(Modifier.height(height(line))) {
+                            Text(line.value, color = if (line.action != null) Theme.accent else Theme.ink, style = mono(12f), maxLines = 1)
+                            if (line.detail != null) Text(line.detail, color = Theme.muted, style = mono(12f, bold = false), maxLines = 1)
+                        }
+                    } else {
+                        Row(Modifier.height(tall), verticalAlignment = Alignment.Top) {
+                            Text(line.value, color = if (line.action != null) Theme.accent else Theme.ink, style = mono(12f), maxLines = 1)
+                            if (line.detail != null) Text(" · " + line.detail, color = Theme.muted, style = mono(12f, bold = false), maxLines = 1)
+                        }
                     }
                 }
                 if (line.action != null) Pressable(line.action) { words() } else words()

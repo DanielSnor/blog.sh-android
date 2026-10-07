@@ -1,0 +1,47 @@
+{
+  "ok": true,
+  "slug": "novy-nazev",
+  "year": "2026",
+  "path": "/home/blog/content.nosync/posts/2026/novy-nazev.json",
+  "title": "K přejmenování",
+  "state": "published",
+  "scheduled": false,
+  "date": "2026-05-01T10:00:00+02:00",
+  "url": "https://example.com/posts/2026/novy-nazev/",
+  "address": "/posts/2026/novy-nazev/",
+  "type": "text",
+  "type_set": null,
+  "hero": "default",
+  "toc": "default",
+  "tags": [],
+  "series": null,
+  "series_part": null,
+  "pinned": false,
+  "unlisted": false,
+  "languages": {
+    "own": "cs",
+    "others": {
+      "en": "none"
+    }
+  },
+  "announced": null,
+  "announces": "nowhere",
+  "network": null,
+  "slot": null,
+  "addresses": [
+    {
+      "kind": "former_slugs",
+      "value": "2026/prejmenovat"
+    }
+  ],
+  "actions": [
+    "unpublish",
+    "pin",
+    "properties",
+    "rename",
+    "addresses",
+    "delete"
+  ],
+  "deploy": "skipped",
+  "warnings": []
+}

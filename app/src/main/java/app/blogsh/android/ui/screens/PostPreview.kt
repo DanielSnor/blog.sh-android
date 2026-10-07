@@ -23,6 +23,7 @@ import app.blogsh.android.R
 import app.blogsh.android.model.EditAnswer
 import app.blogsh.android.model.EditEntry
 import app.blogsh.android.model.Engine
+import app.blogsh.android.model.PostLink
 import app.blogsh.android.model.PostRow
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.said
@@ -30,7 +31,8 @@ import app.blogsh.android.ui.BarKey
 import app.blogsh.android.ui.Busy
 import app.blogsh.android.ui.Hairline
 import app.blogsh.android.ui.PaperSheet
-import app.blogsh.android.ui.PostHeading
+import app.blogsh.android.ui.PostFacts
+import app.blogsh.android.ui.ShareKey
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.RowDate
 import app.blogsh.android.ui.Symbols
@@ -66,23 +68,13 @@ fun PostPreviewSheet(post: PostRow, baseUrl: String = "", onDismiss: () -> Unit)
     val loaded = entry
     val web = loaded?.let { webUrl(it, baseUrl) }
     // The sheet's own key closes it, where iOS writes Done.
-    PaperSheet(onDismiss, actions = {
-        if (web != null) BarKey(Symbols.safari, stringResource(R.string.show_on_the_web)) { uri.openUri(web) }
-    }) {
-        PostHeading(post.title ?: post.slug, post.slug)
-        Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            post.day?.let { day ->
-                Text(
-                    if (post.scheduled) RowDate.soon(day) else RowDate.short(day), color = if (post.scheduled) Theme.accent else Theme.muted,
-                    style = mono(12f, bold = post.scheduled), maxLines = 1,
-                )
-            }
-            StateBadge(post)
-            Text(
-                if (post.tags.isEmpty()) post.type else post.tags.joinToString(", "), color = Theme.muted, style = ui(13f),
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
-            )
+    PaperSheet(onDismiss, title = post.title ?: post.slug, actions = {
+        if (web != null) {
+            BarKey(Symbols.safari, stringResource(R.string.show_on_the_web)) { uri.openUri(web) }
+            PostLink.of(web, post.title ?: post.slug)?.let { ShareKey(it) }
         }
+    }) {
+        PostFacts(post)
         Hairline(Modifier.padding(vertical = 14.dp))
         val failed = problem
         if (loaded != null) {

@@ -36,6 +36,9 @@ data class Blog(
     val url: String = "",
     val accentLight: String = "",
     val accentDark: String = "",
+    /** The rest of its palette, per scheme; null until it has said it. */
+    val tonesLight: Tones? = null,
+    val tonesDark: Tones? = null,
     val maxMb: Int = 24,
     /** What it counted last: `stats`, the trash, the versions. */
     val facts: Facts? = null,

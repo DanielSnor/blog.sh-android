@@ -8,4 +8,5 @@
     <string name="android_leave">Opustit</string>
     <string name="android_stay">Zůstat</string>
     <string name="android_draft_kept">Navázáno tam, kde to skončilo: co tu bylo napsáno, než se appka zavřela.</string>
+    <string name="android_queue_hold">Řádek otevře příspěvek. Podržením ukáže své klávesy — a podržený řádek jde přenést na jiné místo ve frontě.</string>
 </resources>

@@ -43,7 +43,9 @@ import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.ListAnswer
+import app.blogsh.android.model.PostLink
 import app.blogsh.android.model.PostRow
+import app.blogsh.android.model.PropsAnswer
 import app.blogsh.android.model.PostState
 import app.blogsh.android.model.TagStore
 import app.blogsh.android.model.isCalledOff
@@ -65,7 +67,9 @@ import app.blogsh.android.ui.PlainField
 import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.Room
 import app.blogsh.android.ui.RowDate
-import app.blogsh.android.ui.ScreenHeader
+import app.blogsh.android.ui.share
+import app.blogsh.android.ui.voiced
+import androidx.compose.ui.platform.LocalContext
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.mono
@@ -114,6 +118,8 @@ private data class Found(val query: String, val rows: List<PostRow>)
 fun ArchiveScreen(languages: List<String> = emptyList(), baseUrl: String = "", initialState: StateFilter? = null, searching: Boolean = false) {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val noAddress = stringResource(R.string.the_site_has_no_address_set_so)
     var posts by remember { mutableStateOf(emptyList<PostRow>()) }
     var problem by remember { mutableStateOf<String?>(null) }
     // The first reading begins with the screen: nothing is said to be empty before it has been asked.
@@ -209,12 +215,56 @@ fun ArchiveScreen(languages: List<String> = emptyList(), baseUrl: String = "", i
         }
     }
 
+    // A row knows its slug, not its address: the engine says the address
+    // (a post can carry one of its own, a draft has its hidden page), and
+    // the sheet opens with it.
+    suspend fun shareRow(post: PostRow) {
+        try {
+            val link = PostLink.of(Engine.call<PropsAnswer>("props", post.slug))
+            if (link != null) {
+                problem = null
+                share(context, link)
+            } else {
+                problem = noAddress
+            }
+        } catch (e: Throwable) {
+            if (e.isCalledOff) throw e
+            problem = e.said
+        }
+    }
+
     // Every time the screen is come to: a post may be another on the way back from it.
     OnShown { load() }
     val inFront = LocalShown.current
     LaunchedEffect(words, inFront) { if (inFront) search(words) }
 
-    PaperScaffold(onBack = { nav.pop() }) {
+    PaperScaffold(onBack = { nav.pop() }, name = stringResource(R.string.tile_browse), count = countLine) {
+        // The search and the filters stay put: under the bar, over the rows,
+        // however far down a long archive has been read -- a filter is wanted
+        // in the middle of a list more often than at its head.
+        PaperRow(rule = false) {
+            Box(Modifier.padding(top = 4.dp, bottom = 2.dp)) {
+                SearchField(query, { query = it }, open = searchOpen, opened = { searchOpen = false })
+            }
+        }
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = Theme.gutter, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Pressable({ state = null }) { FilterPill(stringResource(R.string.all), selected = state == null) }
+            for (one in StateFilter.entries) {
+                Pressable({ state = if (state == one) null else one }) { FilterPill(one.label, selected = state == one) }
+            }
+            PickPill(
+                label = type?.let { stringResource(R.string.type_2, it) } ?: stringResource(R.string.type),
+                any = stringResource(R.string.any_type), options = types, selected = type,
+            ) { type = it }
+            PickPill(
+                label = tag?.let { stringResource(R.string.tag_2, it) } ?: stringResource(R.string.tag),
+                any = stringResource(R.string.any_tag), options = tags, selected = tag,
+            ) { tag = it }
+        }
+        Hairline()
         PullToRefreshBox(
             isRefreshing = refreshing,
             onRefresh = {
@@ -230,42 +280,6 @@ fun ArchiveScreen(languages: List<String> = emptyList(), baseUrl: String = "", i
             modifier = Modifier.weight(1f),
         ) {
             LazyColumn(Modifier.fillMaxSize()) {
-                item {
-                    PaperRow(rule = false) {
-                        ScreenHeader(stringResource(R.string.tile_browse), countLine, Modifier.padding(top = 2.dp))
-                    }
-                }
-                // The search stays at the head of the list while the rows go under it:
-                // what was asked can be asked otherwise from anywhere in the answer.
-                stickyHeader {
-                    PaperRow(Modifier.background(Theme.paper), rule = false) {
-                        Box(Modifier.padding(top = 12.dp, bottom = 2.dp)) {
-                            SearchField(query, { query = it }, open = searchOpen, opened = { searchOpen = false })
-                        }
-                    }
-                }
-                item {
-                    Column {
-                        Row(
-                            Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = Theme.gutter, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Pressable({ state = null }) { FilterPill(stringResource(R.string.all), selected = state == null) }
-                            for (one in StateFilter.entries) {
-                                Pressable({ state = if (state == one) null else one }) { FilterPill(one.label, selected = state == one) }
-                            }
-                            PickPill(
-                                label = type?.let { stringResource(R.string.type_2, it) } ?: stringResource(R.string.type),
-                                any = stringResource(R.string.any_type), options = types, selected = type,
-                            ) { type = it }
-                            PickPill(
-                                label = tag?.let { stringResource(R.string.tag_2, it) } ?: stringResource(R.string.tag),
-                                any = stringResource(R.string.any_tag), options = tags, selected = tag,
-                            ) { tag = it }
-                        }
-                        Hairline(Modifier.padding(horizontal = Theme.gutter))
-                    }
-                }
                 problem?.let { text ->
                     item { PaperRow { Text(text, color = Theme.muted, style = ui(14f), modifier = Modifier.padding(vertical = 11.dp)) } }
                 }
@@ -282,6 +296,10 @@ fun ArchiveScreen(languages: List<String> = emptyList(), baseUrl: String = "", i
                             MenuKey(stringResource(R.string.preview), Symbols.docTextMagnifyingglass) {
                                 pressed = null
                                 previewing = post
+                            }
+                            MenuKey(stringResource(R.string.share_the_link), Symbols.squareAndArrowUp) {
+                                pressed = null
+                                scope.launch { shareRow(post) }
                             }
                         }
                     }
@@ -410,7 +428,7 @@ fun StateBadge(post: PostRow) {
 @Composable
 private fun StateMark(text: String, filled: Boolean) {
     Text(
-        text.lowercase(Locale.getDefault()), color = if (filled) Color.White else Theme.muted, style = mono(11f, bold = filled), maxLines = 1,
+        voiced(text), color = if (filled) Color.White else Theme.muted, style = mono(11f, bold = filled), maxLines = 1,
         modifier = Modifier
             .clip(CircleShape)
             .then(if (filled) Modifier.background(Theme.accent) else Modifier.border(1.dp, Theme.line, CircleShape))

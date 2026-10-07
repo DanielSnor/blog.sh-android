@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- What the window wears before the first screen is drawn: paper, so nothing flashes. -->
-    <color name="window_ground">#EAE9E3</color>
+    <!-- What the window wears before the first screen is drawn: the app's own ground, so nothing flashes. -->
+    <color name="window_ground">#F5F8FA</color>
 
     <style name="Theme.BlogSh" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_ground</item>

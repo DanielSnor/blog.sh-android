@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="window_ground">#000000</color>
+    <color name="window_ground">#111111</color>
 
     <style name="Theme.BlogSh" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/window_ground</item>

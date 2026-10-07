@@ -76,7 +76,6 @@ import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.Room
 import app.blogsh.android.ui.Said
 import app.blogsh.android.ui.Says
-import app.blogsh.android.ui.ScreenHeader
 import app.blogsh.android.ui.SwitchRow
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.TagSuggestions
@@ -156,9 +155,8 @@ fun ScheduleSheet(slug: String, offered: String?, current: String? = null, sched
     }
 
     val title = stringResource(if (scheduled) R.string.reschedule else R.string.schedule)
-    PaperSheet(onDismiss) {
-        ScreenHeader(title)
-        Plate(Modifier.padding(top = 14.dp)) {
+    PaperSheet(onDismiss, name = title) {
+        Plate {
             row {
                 // One picker on iOS, a day and an hour side by side; here the two
                 // halves of it are two keys, each opening the system's own.
@@ -369,9 +367,8 @@ fun PropertiesForm(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
     val (taken, typing) = TagStore.parts(tags)
     val suggesting = TagStore.suggest(typing, taken, from = TagStore.tags).isNotEmpty()
 
-    PaperSheet(onDismiss) {
-        ScreenHeader(stringResource(R.string.properties))
-        Plate(Modifier.padding(top = 14.dp)) {
+    PaperSheet(onDismiss, name = stringResource(R.string.properties)) {
+        Plate {
             row { FieldRow(stringResource(R.string.series), series, { series = it }, labelWidth = 84.dp) }
             row {
                 FieldRow(
@@ -434,17 +431,13 @@ fun AddressesSheet(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
         }
     }
 
-    PaperSheet(onDismiss, scrolls = false, actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) }) {
+    PaperSheet(
+        onDismiss, scrolls = false, name = stringResource(R.string.old_links),
+        count = if (addresses.isEmpty()) null else NumberFormat.getIntegerInstance().format(addresses.size),
+        actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) },
+    ) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             LazyColumn(Modifier.fillMaxSize()) {
-                item {
-                    PaperRow {
-                        ScreenHeader(
-                            stringResource(R.string.old_links), if (addresses.isEmpty()) null else NumberFormat.getIntegerInstance().format(addresses.size),
-                            Modifier.padding(top = 2.dp, bottom = 6.dp),
-                        )
-                    }
-                }
                 problem?.let { words ->
                     item { PaperRow { Box(Modifier.padding(bottom = 10.dp)) { ProblemLine(words) } } }
                 }
@@ -517,17 +510,13 @@ fun VersionsSheet(slug: String, onDismiss: () -> Unit, done: suspend () -> Unit)
 
     LaunchedEffect(Unit) { load() }
 
-    PaperSheet(onDismiss, scrolls = false, actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) }) {
+    PaperSheet(
+        onDismiss, scrolls = false, name = stringResource(R.string.earlier_versions),
+        count = if (versions.isEmpty()) null else NumberFormat.getIntegerInstance().format(versions.size),
+        actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) },
+    ) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             LazyColumn(Modifier.fillMaxSize()) {
-                item {
-                    PaperRow {
-                        ScreenHeader(
-                            stringResource(R.string.earlier_versions), if (versions.isEmpty()) null else NumberFormat.getIntegerInstance().format(versions.size),
-                            Modifier.padding(top = 2.dp, bottom = 6.dp),
-                        )
-                    }
-                }
                 problem?.let { words ->
                     item { PaperRow { Box(Modifier.padding(bottom = 10.dp)) { ProblemLine(words) } } }
                 }

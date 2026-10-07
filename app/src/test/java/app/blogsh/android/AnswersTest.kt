@@ -3,11 +3,18 @@ package app.blogsh.android
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.HeldAnswer
+import app.blogsh.android.model.PostLink
+import app.blogsh.android.model.QueueRow
+import app.blogsh.android.model.Tones
+import app.blogsh.android.model.PostRow
+import app.blogsh.android.model.PostState
+import app.blogsh.android.model.PropsAnswer
 import app.blogsh.android.model.Refusal
 import app.blogsh.android.model.ServerPaths
 import app.blogsh.android.model.StatsAnswer
 import app.blogsh.android.model.VersionAnswer
 import app.blogsh.android.model.plain
+import app.blogsh.android.model.seenAs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -24,8 +31,11 @@ class AnswersTest {
     @Before
     fun words() = English.speak()
 
-    private fun version(claim: String, accent: Boolean = true): ByteArray {
-        val colours = if (accent) ""","accent":{"light":"#1da1f2","dark":"#4ab3f4"}""" else ""
+    private fun version(claim: String, accent: Boolean = true, palette: Boolean = false): ByteArray {
+        var colours = if (accent) ""","accent":{"light":"#1da1f2","dark":"#4ab3f4"}""" else ""
+        if (palette) {
+            colours += ""","palette":{"light":{"bg":"#fff7eb","text":"#1e1d1c","meta_text":"#6b6862","border":"#d7d0c6"},"dark":{"bg":"#000000","text":"#e6dccb","meta_text":"#a1988a","border":"#3c3935"}}"""
+        }
         return """{"ok":true,"engine":"1.10.pre","max_mb":24,"site":{"name":"./blog.sh","claim":"$claim","url":"https://blogsh.app","lang":"en","locales":["en","cs"]$colours}}"""
             .toByteArray()
     }
@@ -66,6 +76,22 @@ class AnswersTest {
     @Test
     fun anEngineWithoutAnAccentIsStillRead() {
         assertNull(Engine.decode<VersionAnswer>(version("x", accent = false)).site.accent)
+    }
+
+    /** The rest of the palette, as the engine names its colours. */
+    @Test
+    fun thePaletteIsRead() {
+        val answer = Engine.decode<VersionAnswer>(version("x", palette = true))
+        assertEquals(Tones("#fff7eb", "#1e1d1c", "#6b6862", "#d7d0c6"), answer.site.palette?.light)
+        assertEquals(Tones("#000000", "#e6dccb", "#a1988a", "#3c3935"), answer.site.palette?.dark)
+    }
+
+    /** An engine from before it said its palette: the accent is still its own. */
+    @Test
+    fun anEngineWithoutAPaletteIsStillRead() {
+        val answer = Engine.decode<VersionAnswer>(version("x"))
+        assertNull(answer.site.palette)
+        assertEquals("#1da1f2", answer.site.accent?.light)
     }
 
     /**
@@ -212,5 +238,87 @@ class AnswersTest {
         val found = Engine.objects(out.toByteArray())
         assertEquals(3, found.size)
         assertTrue(String(found[2]).contains("\"slug\""))
+    }
+
+    // a post that changed while it was looked at
+
+    /**
+     * A post renamed in its properties, as the engine answers the rename:
+     * the screen it was opened from takes its new name from this, and
+     * asks for the text and the properties under it.
+     */
+    @Test
+    fun aPostsRowIsReadFromItsProperties() {
+        val props = Engine.decode<PropsAnswer>(Fixture.text("props-renamed").toByteArray())
+        val row = PostRow(props)
+        assertEquals("novy-nazev", row.slug)
+        assertEquals("2026", row.year)
+        assertEquals("2026/novy-nazev", row.id)
+        assertEquals("K přejmenování", row.title)
+        assertEquals(PostState.Published, row.state)
+        assertFalse(row.scheduled)
+        assertEquals("2026-05-01T10:00:00+02:00", row.date)
+        assertTrue(row.day != null)
+        assertEquals("text", row.type)
+        assertEquals(emptyList<String>(), row.tags)
+        assertFalse(row.pinned)
+        assertNull(row.match)
+    }
+
+    /**
+     * A post without a title is called by its slug in a list and by its
+     * opening words in its properties: the row keeps none, so the screen
+     * opened from the list does not rename the post a moment later.
+     */
+    @Test
+    fun aRowWithoutATitleKeepsNone() {
+        val props = Engine.decode<PropsAnswer>(Fixture.text("props-renamed").toByteArray())
+        val untitled = PostRow("stary", "2026", null, null, "text", emptyList(), PostState.Draft, false, null, false)
+        val now = untitled.seenAs(props)
+        assertNull(now.title)
+        assertEquals("novy-nazev", now.slug)
+        assertEquals(PostState.Published, now.state)
+        val titled = untitled.copy(title = "Starý")
+        assertEquals("K přejmenování", titled.seenAs(props).title)
+    }
+
+    /** What is handed to somebody: the address the engine says, and the post's title to go with it. */
+    @Test
+    fun aPostsLinkIsItsAddressAndItsTitle() {
+        val props = Engine.decode<PropsAnswer>(Fixture.text("props-renamed").toByteArray())
+        val link = PostLink.of(props)
+        assertEquals("https://example.com/posts/2026/novy-nazev/", link?.url)
+        assertEquals("K přejmenování", link?.title)
+    }
+
+    /** A site with no address set, or one that is not a web address: no link to give. */
+    @Test
+    fun withoutAWebAddressThereIsNoLink() {
+        assertNull(PostLink.of("", "x"))
+        assertNull(PostLink.of("/posts/2026/x/", "x"))
+        assertNull(PostLink.of("file:///etc/passwd", "x"))
+        assertNull(PostLink.of("javascript:alert(1)", "x"))
+        assertEquals("http://localhost:8000/draft/abc/x/", PostLink.of("http://localhost:8000/draft/abc/x/", "x")?.url)
+        assertEquals("X", PostLink.of("https://sean.cz/posts/2026/x/", "X")?.title)
+    }
+
+    /**
+     * A row of the queue opens its post: the row it hands over is a
+     * draft with a plan, under the same slug and year.
+     */
+    @Test
+    fun aQueuedPostIsARowOfItsOwn() {
+        val json = """{"position":2,"date":"2026-10-10T09:00:00+02:00","slug":"plan-d","year":"2026","title":"Plan D","overdue":false}"""
+        val queued = Engine.decode<QueueRow>(json.toByteArray())
+        val row = PostRow(queued)
+        assertEquals(queued.id, row.id)
+        assertEquals("plan-d", row.slug)
+        assertEquals("Plan D", row.title)
+        assertEquals(PostState.Draft, row.state)
+        assertTrue(row.scheduled)
+        assertTrue(row.day != null)
+        // A post without a title is called by its slug, as everywhere.
+        val bare = Engine.decode<QueueRow>(json.replace("Plan D", "").toByteArray())
+        assertNull(PostRow(bare).title)
     }
 }

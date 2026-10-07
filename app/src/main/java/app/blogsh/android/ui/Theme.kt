@@ -34,6 +34,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -45,10 +47,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.blogsh.android.BlogshApp
 import app.blogsh.android.R
+import app.blogsh.android.model.Blogs
+import app.blogsh.android.model.Reading
+import app.blogsh.android.model.Tones
+import app.blogsh.android.model.engineInstant
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -56,11 +64,12 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * How the app looks: paper and ink by day, ink and paper on black by
- * night, one accent -- the blog's own -- and three voices of type: a
- * display face set in lower case for what a screen is, a plain sans for
- * what it holds, and a typewriter face for what the engine says (a
- * version, a count, a date, a key).
+ * How the app looks: a ground and the ink on it, by day and by night,
+ * and one accent -- all of them the open blog's own, as its pages have
+ * them, or the app's own -- and three voices of type: a terminal's face
+ * set in lower case for what a screen is, a plain sans for what it
+ * holds, and a typewriter face for what the engine says (a version, a
+ * count, a date, a key).
  */
 class Palette(
     /** The ground everything sits on. */
@@ -73,7 +82,7 @@ class Palette(
     val line: Color,
     /** The inside of a card, barely off the ground. */
     val card: Color,
-    /** Text on a pill filled with ink. */
+    /** Text on a pill filled with ink: the ground's own colour. */
     val onInk: Color,
     /**
      * What cannot be taken back: a delete, a refusal. The one colour
@@ -82,20 +91,27 @@ class Palette(
     val danger: Color,
 )
 
-private val Day = Palette(
-    paper = Color(0xFFEAE9E3), ink = Color(0xFF1E1D1C), muted = Color(0xFF6B6862),
-    line = Color(0xFF1E1D1C).copy(alpha = 0.18f), card = Color(0xFF1E1D1C).copy(alpha = 0.03f),
-    onInk = Color(0xFFEAE9E3), danger = Color(0xFFA81800),
+/** A colour of a palette, `0xRRGGBB`, as one to draw with. */
+fun tone(value: Long): Color = Color(0xFF000000 or value)
+
+private fun mixed(from: Color, to: Color, part: Float): Color = Color(
+    red = from.red + (to.red - from.red) * part,
+    green = from.green + (to.green - from.green) * part,
+    blue = from.blue + (to.blue - from.blue) * part,
 )
 
-private val Night = Palette(
-    paper = Color(0xFF000000), ink = Color(0xFFEAE9E3), muted = Color(0xFF9A9993),
-    line = Color(0xFFEAE9E3).copy(alpha = 0.16f), card = Color(0xFFEAE9E3).copy(alpha = 0.05f),
-    onInk = Color(0xFF14110F), danger = Color(0xFFFF7A5C),
-)
+private fun palette(scheme: Tones.Scheme, dark: Boolean): Palette {
+    val paper = tone(scheme.bg)
+    val ink = tone(scheme.text)
+    return Palette(
+        paper = paper, ink = ink, muted = tone(scheme.metaText), line = tone(scheme.border),
+        card = ink.copy(alpha = if (dark) 0.05f else 0.03f), onInk = paper,
+        danger = if (dark) Color(0xFFFF7A5C) else Color(0xFFA81800),
+    )
+}
 
-private val LocalPalette = staticCompositionLocalOf { Day }
-private val LocalAccent = staticCompositionLocalOf { Theme.ember }
+private val LocalPalette = staticCompositionLocalOf { palette(Tones.ownLight, dark = false) }
+private val LocalAccent = staticCompositionLocalOf { tone(Tones.ownAccentLight) }
 
 object Theme {
     val paper: Color @Composable get() = LocalPalette.current.paper
@@ -106,60 +122,88 @@ object Theme {
     val onInk: Color @Composable get() = LocalPalette.current.onInk
     val danger: Color @Composable get() = LocalPalette.current.danger
 
-    /** The blog's own accent: what the iOS app calls the tint. */
+    /** The blog's own accent, or the app's own: what the iOS app calls the tint. */
     val accent: Color @Composable get() = LocalAccent.current
 
-    /** The accent before a blog has said its own. */
-    val ember = Color(0xFFFF2E00)
+    /**
+     * Type so large that a name and its value no longer share a row: the
+     * value stands under its name and has the whole width.
+     */
+    val crowded: Boolean @Composable get() = LocalDensity.current.fontScale >= 1.6f
 
     val corner = 14.dp
     val gutter = 20.dp
 }
 
 /**
+ * The engine's voice and the names of screens are set in lower case --
+ * except in German, which reads its nouns by their capitals: there the
+ * words stand as they are written.
+ */
+fun voiced(text: String): String = BlogshApp.spoken.let { if (it.language == "de") text else text.lowercase(it) }
+
+/**
  * `#rrggbb` or `#rgb`, the way a palette writes a colour; anything
  * else -- rgb(), a name, nothing -- is null.
  */
-fun hexColor(hex: String?): Color? {
-    var digits = (hex ?: "").trim()
-    if (!digits.startsWith("#")) return null
-    digits = digits.drop(1)
-    if (digits.length == 3) digits = digits.map { "$it$it" }.joinToString("")
-    if (digits.length != 6) return null
-    val value = digits.toLongOrNull(16) ?: return null
-    return Color(0xFF000000 or value)
+fun hexColor(hex: String?): Color? = Tones.value(hex ?: "")?.let { tone(it) }
+
+/**
+ * The type as large as was chosen in the settings: the system's size and
+ * the steps above it. Said again inside every window the app opens -- a
+ * sheet, a dialog and a menu are windows of their own, and each starts
+ * from the system's size.
+ */
+@Composable
+fun Typed(content: @Composable () -> Unit) {
+    val density = LocalDensity.current
+    val system = LocalConfiguration.current.fontScale
+    val zoom = Reading.shared.textSize.zoom
+    CompositionLocalProvider(LocalDensity provides Density(density.density, system * zoom), content = content)
 }
 
 /**
- * The look, around everything: the palette of the hour, the blog's accent,
- * and the system's own controls -- a switch, a menu, a dialog -- dressed in both.
+ * The look, around everything: whose colours the app wears -- the open
+ * blog's, as its pages have them, or its own, when the blog has said none
+ * or when it is asked to keep to its own -- the accent, and the system's
+ * own controls -- a switch, a menu, a dialog -- dressed in both.
  */
 @Composable
-fun BlogshTheme(accentLight: String?, accentDark: String?, content: @Composable () -> Unit) {
+fun BlogshTheme(content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
-    val palette = if (dark) Night else Day
-    val accent = hexColor(if (dark) accentDark else accentLight) ?: Theme.ember
+    val reading = Reading.shared
+    val blog = Blogs.current
+    val worn = Tones.worn(reading.ownColours, blog?.tonesLight, blog?.tonesDark)
+    // The same palette while the colours are the same: everything on the screen is drawn
+    // again when it is another, and a blog says its numbers far more often than new colours.
+    val scheme0 = if (dark) worn.second else worn.first
+    val palette = remember(scheme0, dark) { palette(scheme0, dark) }
+    val own = tone(if (dark) Tones.ownAccentDark else Tones.ownAccentLight)
+    val accent = if (reading.ownColours) own else hexColor(if (dark) blog?.accentDark else blog?.accentLight) ?: own
+    val paper = palette.paper
+    val ink = palette.ink
+    // The system's own surfaces -- a dialog, a menu -- a step off the ground, towards the light.
     val scheme = if (dark) {
         darkColorScheme(
             primary = accent, onPrimary = Color.White, secondary = accent, tertiary = accent,
-            primaryContainer = accent.copy(alpha = 0.18f), onPrimaryContainer = palette.ink,
-            secondaryContainer = accent.copy(alpha = 0.18f), onSecondaryContainer = palette.ink,
-            tertiaryContainer = accent.copy(alpha = 0.18f), onTertiaryContainer = palette.ink,
-            background = palette.paper, onBackground = palette.ink, surface = palette.paper, onSurface = palette.ink,
-            surfaceVariant = Color(0xFF1A1917), onSurfaceVariant = palette.muted, outline = palette.muted, outlineVariant = palette.line,
-            surfaceContainer = Color(0xFF151413), surfaceContainerHigh = Color(0xFF1C1B19), surfaceContainerHighest = Color(0xFF242321),
-            surfaceContainerLow = Color(0xFF0F0E0D), surfaceContainerLowest = Color(0xFF000000), error = palette.danger,
+            primaryContainer = accent.copy(alpha = 0.18f), onPrimaryContainer = ink,
+            secondaryContainer = accent.copy(alpha = 0.18f), onSecondaryContainer = ink,
+            tertiaryContainer = accent.copy(alpha = 0.18f), onTertiaryContainer = ink,
+            background = paper, onBackground = ink, surface = paper, onSurface = ink,
+            surfaceVariant = mixed(paper, ink, 0.10f), onSurfaceVariant = palette.muted, outline = palette.muted, outlineVariant = palette.line,
+            surfaceContainer = mixed(paper, ink, 0.08f), surfaceContainerHigh = mixed(paper, ink, 0.11f), surfaceContainerHighest = mixed(paper, ink, 0.14f),
+            surfaceContainerLow = mixed(paper, ink, 0.06f), surfaceContainerLowest = paper, error = palette.danger,
         )
     } else {
         lightColorScheme(
             primary = accent, onPrimary = Color.White, secondary = accent, tertiary = accent,
-            primaryContainer = accent.copy(alpha = 0.18f), onPrimaryContainer = palette.ink,
-            secondaryContainer = accent.copy(alpha = 0.18f), onSecondaryContainer = palette.ink,
-            tertiaryContainer = accent.copy(alpha = 0.18f), onTertiaryContainer = palette.ink,
-            background = palette.paper, onBackground = palette.ink, surface = palette.paper, onSurface = palette.ink,
-            surfaceVariant = Color(0xFFDFDED7), onSurfaceVariant = palette.muted, outline = palette.muted, outlineVariant = palette.line,
-            surfaceContainer = Color(0xFFE4E3DD), surfaceContainerHigh = Color(0xFFF1F0EB), surfaceContainerHighest = Color(0xFFF6F5F1),
-            surfaceContainerLow = Color(0xFFE7E6E0), surfaceContainerLowest = Color(0xFFFFFFFF), error = palette.danger,
+            primaryContainer = accent.copy(alpha = 0.18f), onPrimaryContainer = ink,
+            secondaryContainer = accent.copy(alpha = 0.18f), onSecondaryContainer = ink,
+            tertiaryContainer = accent.copy(alpha = 0.18f), onTertiaryContainer = ink,
+            background = paper, onBackground = ink, surface = paper, onSurface = ink,
+            surfaceVariant = mixed(paper, ink, 0.08f), onSurfaceVariant = palette.muted, outline = palette.muted, outlineVariant = palette.line,
+            surfaceContainer = mixed(paper, ink, 0.04f), surfaceContainerHigh = mixed(paper, Color.White, 0.4f), surfaceContainerHighest = mixed(paper, Color.White, 0.65f),
+            surfaceContainerLow = mixed(paper, ink, 0.02f), surfaceContainerLowest = Color.White, error = palette.danger,
         )
     }
     CompositionLocalProvider(LocalPalette provides palette, LocalAccent provides accent) {
@@ -173,7 +217,7 @@ fun BlogshTheme(accentLight: String?, accentDark: String?, content: @Composable 
             bodyLarge = base.bodyLarge.plain(), bodyMedium = base.bodyMedium.plain(), bodySmall = base.bodySmall.plain(),
             labelLarge = base.labelLarge.plain(), labelMedium = base.labelMedium.plain(), labelSmall = base.labelSmall.plain(),
         )
-        MaterialTheme(colorScheme = scheme, typography = type, content = content)
+        MaterialTheme(colorScheme = scheme, typography = type) { Typed(content) }
     }
 }
 
@@ -224,7 +268,7 @@ fun EngineLabel(
     maxLines: Int = Int.MAX_VALUE,
 ) {
     Text(
-        text.lowercase(Locale.getDefault()), modifier = modifier, color = color, maxLines = maxLines, overflow = TextOverflow.Ellipsis,
+        voiced(text), modifier = modifier, color = color, maxLines = maxLines, overflow = TextOverflow.Ellipsis,
         style = mono(size, bold).copy(letterSpacing = (size * 0.06f).sp),
     )
 }
@@ -291,7 +335,7 @@ fun KeyChip(text: String) {
 @Composable
 fun FilterPill(label: String, selected: Boolean = false, modifier: Modifier = Modifier) {
     Text(
-        label.lowercase(Locale.getDefault()), maxLines = 1, color = if (selected) Theme.onInk else Theme.muted,
+        voiced(label), maxLines = 1, color = if (selected) Theme.onInk else Theme.muted,
         style = mono(11f, bold = selected).copy(letterSpacing = 0.6.sp),
         modifier = modifier
             .clip(CircleShape)
@@ -299,21 +343,6 @@ fun FilterPill(label: String, selected: Boolean = false, modifier: Modifier = Mo
             .border(1.dp, if (selected) Theme.ink else Theme.line, CircleShape)
             .padding(horizontal = 10.dp, vertical = 5.dp),
     )
-}
-
-/**
- * The head of a screen: its name in the display face, and beside it how
- * many it holds.
- */
-@Composable
-fun ScreenHeader(title: String, count: String? = null, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth().semantics(mergeDescendants = true) { heading() }, verticalAlignment = Alignment.Bottom) {
-        Text(title.lowercase(Locale.getDefault()), color = Theme.ink, style = display(29f), modifier = Modifier.alignByBaseline())
-        if (count != null) {
-            Spacer(Modifier.width(10.dp))
-            Text(count, color = Theme.accent, style = mono(12f), modifier = Modifier.alignByBaseline())
-        }
-    }
 }
 
 /**
@@ -337,6 +366,12 @@ object RowDate {
         return pattern("EEEjm").format(date.atZone(ZoneId.systemDefault()))
     }
 
+    /** A time a post goes out, as a sentence says it: the day, the date, the hour. */
+    fun spoken(date: Instant): String = pattern("EEEdMMMjm").format(date.atZone(ZoneId.systemDefault()))
+
     /** A day and its hour, whole: what a properties screen says a post's date is. */
     fun full(date: Instant): String = pattern("yMMMdjm").format(date.atZone(ZoneId.systemDefault()))
 }
+
+/** The engine's own date, as a person reads one; what cannot be read as a date stands as it came. */
+fun humanDate(iso: String): String = engineInstant(iso)?.let { RowDate.full(it) } ?: iso

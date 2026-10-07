@@ -70,6 +70,22 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.core.view.WindowCompat
 import app.blogsh.android.R
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import app.blogsh.android.model.Herald
+import app.blogsh.android.model.PostRow
+import app.blogsh.android.model.PostState
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -84,49 +100,118 @@ fun BarKey(symbol: Int, label: String, enabled: Boolean = true, tint: Color = Th
 }
 
 /**
- * A screen on paper: the bar over it keeps its keys -- the way back, and
- * what the screen itself offers -- and gives up a title; a screen says
- * its own name, in its own face, at the head of what it holds.
+ * What stands in a bar where the system would put its title: the
+ * screen's name, or a post's. It takes all the room between the way
+ * back and whatever keys stand at the far end, and starts at the near
+ * edge of it.
+ *
+ * A post's title is somebody's own words and can be long: the bar has
+ * one line for it, at one size on every screen, and cuts what does not
+ * fit at its end. The whole of it stands on the page under the bar.
+ */
+@Composable
+fun RowScope.BarName(name: String? = null, count: String? = null, title: String? = null) {
+    Box(Modifier.weight(1f).padding(horizontal = 6.dp).semantics(mergeDescendants = true) { heading() }, contentAlignment = Alignment.CenterStart) {
+        if (!title.isNullOrEmpty()) {
+            Text(title, color = Theme.ink, style = ui(18f, FontWeight.Bold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        } else if (!name.isNullOrEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    voiced(name), color = Theme.ink, style = display(21f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
+                )
+                if (count != null) Text(count, color = Theme.accent, style = mono(12f), maxLines = 1, modifier = Modifier.alignByBaseline())
+            }
+        }
+    }
+}
+
+/**
+ * A screen on paper. What it is stands in its bar, beside the way back:
+ * the page under the bar is the screen's own from its first line. A
+ * screen of the app's says its name, in the display face, and how many
+ * it holds; a screen about one post says the post's title. `doing` is
+ * the word for what the screen is doing while it cannot be touched.
  */
 @Composable
 fun PaperScaffold(
     onBack: (() -> Unit)? = null,
     close: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
+    name: String? = null,
+    count: String? = null,
+    title: String? = null,
+    doing: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().background(Theme.paper).windowInsetsPadding(WindowInsets.safeDrawing)) {
-        Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (onBack != null) {
-                BarKey(
-                    if (close) Symbols.xmark else Symbols.chevronLeft,
-                    stringResource(if (close) R.string.android_close else R.string.android_back), onClick = onBack,
-                )
+    Box(Modifier.fillMaxSize().background(Theme.paper).windowInsetsPadding(WindowInsets.safeDrawing)) {
+        Column(Modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (onBack != null) {
+                    BarKey(
+                        if (close) Symbols.xmark else Symbols.chevronLeft,
+                        stringResource(if (close) R.string.android_close else R.string.android_back), onClick = onBack,
+                    )
+                } else {
+                    Spacer(Modifier.width(Theme.gutter - 14.dp))
+                }
+                BarName(name, count, title)
+                actions()
             }
-            Spacer(Modifier.weight(1f))
-            actions()
+            content()
         }
-        content()
+        if (doing != null) BusyNote(doing, Modifier.align(Alignment.Center))
     }
 }
+
+/** How tall the page a form stands on is, and where its lower edge is in the window: what the text of a post measures its own room by. */
+data class Page(val height: Dp, val bottom: Float)
+
+val LocalPage = compositionLocalOf { Page(800.dp, Float.MAX_VALUE) }
 
 /**
  * A screen of fields, facts and actions: everything it holds in one
  * column on paper, between the two gutters.
+ *
+ * `answered` is counted by a form each time an action of its has
+ * answered -- a result or a refusal, written at the form's end. The page
+ * then goes there and the keyboard out of the way: an answer under the
+ * edge of the screen is an answer nobody got.
  */
 @Composable
 fun PaperScreen(
     onBack: (() -> Unit)? = LocalNav.current.let { nav -> { nav.pop() } },
     close: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
+    name: String? = null,
+    count: String? = null,
+    title: String? = null,
+    answered: Int = 0,
+    doing: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    PaperScaffold(onBack, close, actions) {
-        Column(
-            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
-                .padding(horizontal = Theme.gutter).padding(top = 2.dp, bottom = 28.dp),
-            content = content,
-        )
+    val scroll = rememberScrollState()
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(answered) {
+        if (answered == 0) return@LaunchedEffect
+        focus.clearFocus()
+        keyboard?.hide()
+        // Once the answer is laid out and the keyboard has gone.
+        delay(350)
+        scroll.animateScrollTo(scroll.maxValue)
+    }
+    PaperScaffold(onBack, close, actions, name, count, title, doing) {
+        var bottom by remember { mutableStateOf(Float.MAX_VALUE) }
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().onGloballyPositioned { bottom = it.positionInWindow().y + it.size.height }) {
+            CompositionLocalProvider(LocalPage provides Page(maxHeight, bottom)) {
+                Column(
+                    Modifier.fillMaxSize().verticalScroll(scroll)
+                        .padding(horizontal = Theme.gutter).padding(top = 2.dp, bottom = 28.dp),
+                    content = content,
+                )
+            }
+        }
     }
 }
 
@@ -139,12 +224,17 @@ fun PaperSheet(
     onDismiss: () -> Unit,
     actions: @Composable RowScope.() -> Unit = {},
     scrolls: Boolean = true,
+    name: String? = null,
+    count: String? = null,
+    title: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         SheetBars()
-        if (scrolls) PaperScreen(onBack = onDismiss, close = true, actions = actions, content = content)
-        else PaperScaffold(onBack = onDismiss, close = true, actions = actions, content = content)
+        Typed {
+            if (scrolls) PaperScreen(onBack = onDismiss, close = true, actions = actions, name = name, count = count, title = title, content = content)
+            else PaperScaffold(onBack = onDismiss, close = true, actions = actions, name = name, count = count, title = title, content = content)
+        }
     }
 }
 
@@ -161,6 +251,63 @@ fun SheetBars() {
         WindowCompat.getInsetsController(window, view).apply {
             isAppearanceLightStatusBars = !dark
             isAppearanceLightNavigationBars = !dark
+        }
+    }
+}
+
+/**
+ * What a screen is doing while it cannot be touched: a wheel and a word
+ * over it. An action that is over in a blink says nothing -- the note
+ * only comes up once the wait is long enough to be wondered about.
+ */
+@Composable
+fun BusyNote(words: String, modifier: Modifier = Modifier) {
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(600)
+        shown = true
+    }
+    val shape = CircleShape
+    Row(
+        modifier.alpha(if (shown) 1f else 0f).shadow(12.dp, shape).clip(shape).background(Theme.paper).border(1.dp, Theme.line, shape)
+            .padding(horizontal = 18.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Busy(16.dp)
+        Text(words, color = Theme.ink, style = ui(14f, FontWeight.Medium))
+    }
+}
+
+/**
+ * The herald's place on the screen: a line or two over the lower edge,
+ * there only while there is something to say -- what was just done, and
+ * the site being brought up to date.
+ */
+@Composable
+fun HeraldStrip(modifier: Modifier = Modifier) {
+    val herald = Herald.shared
+    val build = herald.build
+    val note = herald.note
+    if (build == Herald.Build.None && note == null) return
+    Column(modifier.fillMaxWidth().background(Theme.paper)) {
+        Hairline()
+        Column(Modifier.padding(horizontal = Theme.gutter, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            if (note != null) Text(note, color = Theme.ink, style = ui(13f, FontWeight.Medium))
+            when (build) {
+                Herald.Build.None -> {}
+                // Said with what comes next, so the line is never a thing left to do.
+                Herald.Build.Owed ->
+                    Text(herald.owedFor + " — " + stringResource(R.string.the_site_will_be_built_in_a), color = Theme.muted, style = ui(13f))
+                Herald.Build.Building -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Busy(12.dp)
+                    Text(herald.owedFor + " — " + stringResource(R.string.building_the_site_now), color = Theme.muted, style = ui(13f))
+                }
+                // The one thing here that wants something: it failed, and
+                // where to try again. A tap puts it away.
+                is Herald.Build.Failed -> Pressable({ herald.acknowledge() }) {
+                    Text(stringResource(R.string.the_site_could_not_be_built_it, build.why), color = Theme.danger, style = ui(13f))
+                }
+            }
         }
     }
 }
@@ -192,18 +339,42 @@ fun Busy(size: Dp = 20.dp, color: Color = Theme.accent, modifier: Modifier = Mod
 // ---- What a screen holds
 
 /**
- * A post at the head of its own screen. Its title is its own words, so
- * it keeps its capitals and the plain face; under it, in the engine's
- * voice, what the engine calls it.
+ * What a post is, as its row in a list knew it, the first thing on a
+ * screen about it and one table: its whole title, however long -- the
+ * bar over the screen has one line for it; what the engine calls it;
+ * what state it is in, and since or until when; its tags, or its type
+ * where it has none. A row with nothing to say is not drawn: a post
+ * without a title has no first row.
  */
 @Composable
-fun PostHeading(title: String, detail: String? = null) {
-    Column(Modifier.padding(top = 4.dp).semantics(mergeDescendants = true) { heading() }, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, color = Theme.ink, style = ui(22f, FontWeight.Bold))
-        if (!detail.isNullOrEmpty()) {
-            SelectionContainer { Text(detail, color = Theme.muted, style = mono(12f, bold = false)) }
-        }
+fun PostFacts(post: PostRow) {
+    // The day and the hour, in the blog's own zone said out: the phone may be abroad.
+    val at = post.date?.let { humanDate(it) }
+    val draft = stringResource(R.string.saved_draft)
+    val published = stringResource(R.string.saved_published)
+    val pinned = stringResource(R.string.browse_state_pinned)
+    // In the words the properties screen has for it.
+    val state = when {
+        post.state != PostState.Published -> draft
+        at == null -> published
+        else -> stringResource(R.string.published_2, at) + (if (post.pinned) " · $pinned" else "")
     }
+    val labels = listOf(R.string.title, R.string.slug, R.string.scheduled_2, R.string.state, R.string.type, R.string.tags).map { stringResource(it) }
+    Plate(Modifier.padding(top = 4.dp)) {
+        info(labels[0], post.title)
+        info(labels[1], post.slug, mono = true)
+        if (post.scheduled) info(labels[2], at) else info(labels[3], state)
+        if (post.tags.isEmpty()) info(labels[4], post.type) else info(labels[5], post.tags.joinToString(", "))
+    }
+}
+
+/**
+ * What the engine calls a post, or where the post is: the first line of
+ * a screen about it, under the title that stands in the bar.
+ */
+@Composable
+fun PostSlug(text: String) {
+    SelectionContainer { Text(text, color = Theme.muted, style = mono(12f, bold = false), modifier = Modifier.padding(top = 4.dp)) }
 }
 
 /** What the rows under it are, in the engine's voice. */
@@ -255,18 +426,27 @@ fun Plate(modifier: Modifier = Modifier, build: PlateScope.() -> Unit) {
     }
 }
 
-/** A fact: what it is in the engine's voice, what it says beside it. */
+/**
+ * A fact: what it is in the engine's voice, what it says beside it. At
+ * the largest sizes the two do not share a row: the value stands under
+ * its name and has the whole width.
+ */
 @Composable
 fun InfoRow(label: String, value: String, mono: Boolean = false) {
+    val style = if (mono) mono(13f, bold = false) else ui(15f)
+    if (Theme.crowded) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            EngineLabel(label)
+            SelectionContainer { Text(value, color = Theme.ink, style = style) }
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         EngineLabel(label, Modifier.alignByBaseline())
         // The value has the row: it wraps rather than being cut, and the
         // label keeps to its own width.
         SelectionContainer(Modifier.weight(1f).alignByBaseline()) {
-            Text(
-                value, color = Theme.ink, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth(),
-                style = if (mono) mono(13f, bold = false) else ui(15f),
-            )
+            Text(value, color = Theme.ink, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth(), style = style)
         }
     }
 }
@@ -284,8 +464,19 @@ fun FieldRow(
     keyboard: KeyboardOptions = KeyboardOptions.Default,
     enabled: Boolean = true,
 ) {
+    // At the largest sizes a column for the name leaves the field too
+    // little of the row: the name stands over it instead.
+    if (Theme.crowded) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            EngineLabel(label)
+            PlainField(text, onText, prompt, mono, keyboard, enabled, Modifier.fillMaxWidth())
+        }
+        return
+    }
+    // The label's column grows with its type.
+    val grown = LocalDensity.current.fontScale.coerceAtLeast(1f)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        EngineLabel(label, Modifier.width(labelWidth).alignByBaseline())
+        EngineLabel(label, Modifier.width(labelWidth * grown).alignByBaseline())
         PlainField(text, onText, prompt, mono, keyboard, enabled, Modifier.weight(1f).alignByBaseline())
     }
 }
@@ -354,11 +545,11 @@ fun Command(
 fun PrimaryButton(label: String, modifier: Modifier = Modifier, enabled: Boolean = true, busy: Boolean = false, onClick: () -> Unit) {
     Pressable(onClick, modifier = modifier, enabled = enabled && !busy) {
         Row(
-            Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.35f).clip(CircleShape).background(Theme.accent).padding(vertical = 14.dp),
+            Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.35f).clip(CircleShape).background(Theme.accent).padding(vertical = 14.dp, horizontal = 18.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically,
         ) {
             if (busy) Busy(16.dp, Color.White)
-            Text(label.lowercase(Locale.getDefault()), color = Color.White, style = mono(13f).copy(letterSpacing = 0.8.sp))
+            Text(voiced(label), color = Color.White, style = mono(13f).copy(letterSpacing = 0.8.sp), textAlign = TextAlign.Center)
         }
     }
 }
@@ -417,8 +608,8 @@ fun Says(said: Said?, onClose: () -> Unit) {
     }
     AlertDialog(
         onDismissRequest = leave,
-        title = if (said.title.isEmpty()) null else ({ Text(said.title, style = ui(18f, FontWeight.SemiBold), color = Theme.ink) }),
-        text = if (said.text.isEmpty()) null else ({ Text(said.text, style = ui(15f), color = Theme.ink) }),
+        title = if (said.title.isEmpty()) null else ({ Typed { Text(said.title, style = ui(18f, FontWeight.SemiBold), color = Theme.ink) } }),
+        text = if (said.text.isEmpty()) null else ({ Typed { Text(said.text, style = ui(15f), color = Theme.ink) } }),
         confirmButton = {
             val ask = said.ask
             if (ask != null) {
@@ -441,7 +632,7 @@ internal fun dialogGround(): Color = androidx.compose.material3.MaterialTheme.co
 @Composable
 fun DialogKey(label: String, danger: Boolean = false, quiet: Boolean = false, enabled: Boolean = true, onClick: () -> Unit) {
     TextButton(onClick = onClick, enabled = enabled) {
-        Text(label, style = ui(15f, if (quiet) FontWeight.Normal else FontWeight.SemiBold), color = if (danger) Theme.danger else if (quiet) Theme.muted else Theme.accent)
+        Typed { Text(label, style = ui(15f, if (quiet) FontWeight.Normal else FontWeight.SemiBold), color = if (danger) Theme.danger else if (quiet) Theme.muted else Theme.accent) }
     }
 }
 
@@ -457,7 +648,7 @@ class Choice(val label: String, val danger: Boolean = false, val run: () -> Unit
 fun Asks(title: String, message: String? = null, choices: List<Choice>, cancel: String = stringResource(R.string.cancel), onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         val shape = RoundedCornerShape(22.dp)
-        Column(Modifier.fillMaxWidth().clip(shape).background(dialogGround()).padding(top = 22.dp, bottom = 8.dp)) {
+        Typed { Column(Modifier.fillMaxWidth().clip(shape).background(dialogGround()).padding(top = 22.dp, bottom = 8.dp)) {
             Text(title, style = ui(16f, FontWeight.SemiBold), color = Theme.ink, modifier = Modifier.padding(horizontal = 22.dp))
             if (!message.isNullOrEmpty()) {
                 Text(message, style = ui(14f), color = Theme.muted, modifier = Modifier.padding(horizontal = 22.dp).padding(top = 8.dp))
@@ -476,7 +667,7 @@ fun Asks(title: String, message: String? = null, choices: List<Choice>, cancel: 
             Pressable(onDismiss, modifier = Modifier.fillMaxWidth()) {
                 Text(cancel, style = ui(15f), color = Theme.muted, modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 14.dp))
             }
-        }
+        } }
     }
 }
 
@@ -496,9 +687,9 @@ fun AsksFor(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title, style = ui(17f, FontWeight.SemiBold), color = Theme.ink) },
+        title = { Typed { Text(title, style = ui(17f, FontWeight.SemiBold), color = Theme.ink) } },
         text = {
-            Column {
+            Typed { Column {
                 if (!message.isNullOrEmpty()) Text(message, style = ui(14f), color = Theme.muted, modifier = Modifier.padding(bottom = 10.dp))
                 val shape = RoundedCornerShape(10.dp)
                 val focus = remember { FocusRequester() }
@@ -507,7 +698,7 @@ fun AsksFor(
                 }
                 // The caret is in the field when the question opens, as it is in an alert on iOS.
                 LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
-            }
+            } }
         },
         confirmButton = { DialogKey(confirm) { onDismiss(); onConfirm() } },
         dismissButton = { DialogKey(stringResource(R.string.cancel), quiet = true, onClick = onDismiss) },
@@ -538,13 +729,12 @@ object Partial {
 @Composable
 fun <T> ChoiceRow(label: String, chosen: String, selected: T, options: List<Pair<T, String>>, onSelect: (T) -> Unit) {
     var open by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        EngineLabel(label)
-        Spacer(Modifier.weight(1f))
+    val crowded = Theme.crowded
+    val choice: @Composable () -> Unit = {
         Box {
             Pressable({ open = true }) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(chosen, color = Theme.ink, style = ui(15f), maxLines = 1)
+                    Text(chosen, color = Theme.ink, style = ui(15f), maxLines = if (crowded) 2 else 1)
                     Mark(Symbols.chevronUpChevronDown, 16.dp)
                 }
             }
@@ -558,12 +748,26 @@ fun <T> ChoiceRow(label: String, chosen: String, selected: T, options: List<Pair
             }
         }
     }
+    // At the largest sizes the choice would be cut short beside its
+    // name: it stands under it, and may take a second line.
+    if (crowded) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            EngineLabel(label)
+            choice()
+        }
+        return
+    }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        EngineLabel(label)
+        Spacer(Modifier.weight(1f))
+        choice()
+    }
 }
 
 /** A menu opened from a key or from a row: its lines one under another. */
 @Composable
 fun Menu(open: Boolean, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
-    DropdownMenu(expanded = open, onDismissRequest = onDismiss, containerColor = dialogGround(), content = content)
+    DropdownMenu(expanded = open, onDismissRequest = onDismiss, containerColor = dialogGround()) { Typed { content() } }
 }
 
 @Composable
@@ -580,7 +784,11 @@ fun MenuKey(label: String, symbol: Int? = null, danger: Boolean = false, enabled
 /** On or off: a sentence in the plain face, or a property in the engine's voice. */
 @Composable
 fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, property: Boolean = false, enabled: Boolean = true) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+    // The whole row is the switch: its words are as good a place to press as its knob.
+    Row(
+        Modifier.fillMaxWidth().toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onChange),
+        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
+    ) {
         Box(Modifier.weight(1f)) {
             if (property) EngineLabel(label) else Text(label, color = Theme.ink, style = ui(15f))
         }
@@ -588,7 +796,7 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, prop
         CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Switch(
             modifier = Modifier.scale(0.82f).height(26.dp),
-            checked = checked, onCheckedChange = onChange, enabled = enabled,
+            checked = checked, onCheckedChange = null, enabled = enabled,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White, checkedTrackColor = Theme.accent,
                 uncheckedThumbColor = Theme.muted, uncheckedTrackColor = Theme.card, uncheckedBorderColor = Theme.line,

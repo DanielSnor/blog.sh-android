@@ -9,4 +9,5 @@
     <string name="android_leave">Leave</string>
     <string name="android_stay">Stay</string>
     <string name="android_draft_kept">Picked up where it was left: what was written here before the app closed.</string>
+    <string name="android_queue_hold">A row opens its post. Held, it shows its keys -- and a row held can be carried to another place in the queue.</string>
 </resources>

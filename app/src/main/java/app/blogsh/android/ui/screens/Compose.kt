@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -78,7 +80,6 @@ import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.ScreenBack
-import app.blogsh.android.ui.ScreenHeader
 import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.TagSuggestions
@@ -175,6 +176,8 @@ fun ComposeScreen() {
     var sending by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
     var made by remember { mutableStateOf<ActionAnswer?>(null) }
+    // Counted when a sending has answered: the page goes to the answer.
+    var answered by remember { mutableStateOf(0) }
     var previewing by remember { mutableStateOf(false) }
     var looking by remember { mutableStateOf<String?>(null) }
     var asking by remember { mutableStateOf(false) }
@@ -215,12 +218,19 @@ fun ComposeScreen() {
         state.set(Regex("\n*" + shot.markPattern.pattern + "\n*").replace(state.text, "\n\n"))
     }
 
-    // The text with every shot's mark carrying its description as it
-    // stands now: what will be sent, and what the preview shows.
-    fun described(text: String): String {
-        var marked = text
-        for (shot in shots) marked = shot.markPattern.replace(marked, Regex.escapeReplacement(shot.mark))
-        return marked
+    // A picture's description is one thing with two places to write it:
+    // typed on its card -- or under the shot seen large -- it is in the
+    // mark the text has for it, at every letter...
+    fun describe(changed: Shot) {
+        shots = shots.map { if (it.id == changed.id) changed else it }
+        state.set(Kept.typed(state.text, changed.name, changed.alt))
+    }
+
+    // ...and typed into the mark in the text it is on the card. A picture
+    // just chosen, whose mark the text already has, takes its words too.
+    LaunchedEffect(text, shots.size) {
+        val heard = Kept.heard(shots, text)
+        if (heard.map { it.alt } != shots.map { it.alt }) shots = heard
     }
 
     // ---- Sending
@@ -230,8 +240,9 @@ fun ComposeScreen() {
         try {
             problem = null
             val body = state.text
-            // The descriptions follow the marks already in the text.
-            val markdown = Markdown.file(title, tags, described(body))
+            // The text is what goes: a description typed on a card is in it
+            // already, one typed into the text itself was never the card's.
+            val markdown = Markdown.file(title, tags, body)
             val files = Kept.sent(shots, body).map { DeliveryFile(it.name, it.data) } +
                 DeliveryFile(Markdown.fileName(title, body), markdown.toByteArray(Charsets.UTF_8))
             made = delivered(Engine.deliver(files))
@@ -242,9 +253,11 @@ fun ComposeScreen() {
             shots = emptyList()
             pickedUp = false
             KeptWords.write(blog, null)
+            answered += 1
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             problem = e.said
+            answered += 1
         } finally {
             sending = false
         }
@@ -270,12 +283,15 @@ fun ComposeScreen() {
     fun leave() {
         if (unsent) asking = true else nav.pop()
     }
+
+    fun forget() {
+        made = null
+    }
     ScreenBack(enabled = unsent) { asking = true }
 
-    PaperScreen(onBack = { leave() }) {
-        ScreenHeader(stringResource(R.string.new_post))
+    PaperScreen(onBack = { leave() }, name = stringResource(R.string.new_post), answered = answered) {
         if (pickedUp) Hint(stringResource(R.string.android_draft_kept))
-        Plate(Modifier.padding(top = 14.dp)) {
+        Plate(Modifier.padding(top = if (pickedUp) 14.dp else 0.dp)) {
             row {
                 PlainField(
                     title, { title = it }, prompt = stringResource(R.string.title),
@@ -309,7 +325,7 @@ fun ComposeScreen() {
                 row {
                     key(shot.id) {
                         ShotCard(
-                            shot, onShot = { changed -> shots = shots.map { if (it.id == changed.id) changed else it } },
+                            shot, onShot = { describe(it) },
                             inText = text.contains("(${shot.name})"),
                             insert = { insert(shot) }, remove = { remove(shot) }, look = { looking = shot.id },
                         )
@@ -346,8 +362,10 @@ fun ComposeScreen() {
                     row { Command(stringResource(R.string.open_the_preview), Symbols.safari) { runCatching { links.openUri(url) } } }
                 }
                 row {
+                    // Deleted from there, the post is not this form's to point at any more.
                     Command(stringResource(R.string.its_properties_and_the_actions_on_it), Symbols.sliderHorizontal3, leads = true) {
-                        nav.push { PropsScreen(made.slug) }
+                        val slug = made.slug
+                        nav.push { PropsScreen(slug, gone = { forget() }) }
                     }
                 }
             }
@@ -355,13 +373,13 @@ fun ComposeScreen() {
     }
 
     if (previewing) {
-        val marked = remember { described(state.text) }
+        val marked = remember { state.text }
         val shown = remember { Preview.shown(shots) }
         PreviewSheet(title, marked, shown) { previewing = false }
     }
     looking?.let { one ->
         ShotsViewer(
-            shots, current = one, onShot = { changed -> shots = shots.map { if (it.id == changed.id) changed else it } },
+            shots, current = one, onShot = { describe(it) },
             onDismiss = { looking = null },
         )
     }
@@ -423,20 +441,29 @@ fun ShotCard(shot: Shot, onShot: (Shot) -> Unit, inText: Boolean, insert: () -> 
                 }
                 Text(Delivery.size(shot.data.size), color = Theme.muted, style = mono(11f, bold = false), modifier = Modifier.alignByBaseline())
             }
+            // The same words as in the picture's mark in the text: written
+            // here or there, they are one description.
             PlainField(
                 shot.alt, { onShot(shot.withAlt(it)) }, prompt = stringResource(R.string.no_description_yet),
                 keyboard = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(), size = 15f,
             )
-            Row(Modifier.fillMaxWidth()) {
-                Pressable(insert, enabled = !inText) {
-                    EngineLabel(
-                        stringResource(if (inText) R.string.used_in_the_text else R.string.insert_into_text),
-                        size = 11f, color = if (inText) Theme.muted else Theme.accent,
-                    )
+            // Two keys for a finger, not two words: each is as tall as a
+            // finger needs and takes its half of the row.
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Pressable(insert, enabled = !inText, modifier = Modifier.weight(1f)) {
+                    Box(Modifier.fillMaxWidth().heightIn(min = 40.dp), contentAlignment = Alignment.CenterStart) {
+                        EngineLabel(
+                            stringResource(if (inText) R.string.used_in_the_text else R.string.insert_into_text),
+                            size = 12f, color = if (inText) Theme.muted else Theme.accent,
+                        )
+                    }
                 }
-                Spacer(Modifier.weight(1f))
-                Pressable(remove) { EngineLabel(stringResource(R.string.remove), size = 11f, color = Theme.danger) }
+                Pressable(remove) {
+                    Box(Modifier.widthIn(min = 88.dp).heightIn(min = 40.dp), contentAlignment = Alignment.CenterEnd) {
+                        EngineLabel(stringResource(R.string.remove), size = 12f, color = Theme.danger)
+                    }
+                }
             }
             // Said on the card, before the post goes: what the text
             // does not name stays behind.

@@ -23,7 +23,6 @@ import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
-import app.blogsh.android.ui.ScreenHeader
 import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.SwitchRow
 import app.blogsh.android.ui.Theme
@@ -60,9 +59,8 @@ fun SiteScreen() {
         }
     }
 
-    PaperScreen {
-        ScreenHeader(stringResource(MenuEntry.Rebuild.shortId))
-        Plate(Modifier.padding(top = 14.dp)) {
+    PaperScreen(name = stringResource(MenuEntry.Rebuild.shortId)) {
+        Plate {
             row { SwitchRow(stringResource(R.string.build_every_page_again), full, { full = it }) }
             row { SwitchRow(stringResource(R.string.let_the_deploy_past_its_guards), force, { force = it }) }
         }

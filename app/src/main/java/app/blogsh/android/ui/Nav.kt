@@ -1,8 +1,17 @@
 package app.blogsh.android.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +22,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import app.blogsh.android.model.Herald
 import java.util.UUID
 
 /**
@@ -54,11 +64,19 @@ val LocalShown = compositionLocalOf { true }
 @Composable
 fun NavHost(nav: Nav, home: @Composable () -> Unit) {
     BackHandler(enabled = nav.stack.isNotEmpty()) { nav.pop() }
-    Box(Modifier.fillMaxSize()) {
-        Layer(shown = nav.stack.isEmpty(), content = home)
-        nav.stack.forEachIndexed { index, entry ->
-            key(entry.id) { Layer(shown = index == nav.stack.lastIndex, content = entry.content) }
+    // What was just done, and the site being brought up to date: said under
+    // whichever screen is open, which then ends where the line begins.
+    val herald = Herald.shared
+    val speaking = herald.build != Herald.Build.None || herald.note != null
+    val lowerEdge = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)
+    Column(Modifier.fillMaxSize().background(Theme.paper)) {
+        Box(Modifier.weight(1f).fillMaxWidth().then(if (speaking) Modifier.consumeWindowInsets(lowerEdge) else Modifier)) {
+            Layer(shown = nav.stack.isEmpty(), content = home)
+            nav.stack.forEachIndexed { index, entry ->
+                key(entry.id) { Layer(shown = index == nav.stack.lastIndex, content = entry.content) }
+            }
         }
+        if (speaking) HeraldStrip(Modifier.windowInsetsPadding(lowerEdge))
     }
 }
 

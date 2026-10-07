@@ -35,11 +35,13 @@ import app.blogsh.android.model.EditEntry
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.Lede
 import app.blogsh.android.model.ListAnswer
+import app.blogsh.android.model.PostLink
 import app.blogsh.android.model.PostRow
 import app.blogsh.android.model.PostState
 import app.blogsh.android.model.PropsAnswer
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.said
+import app.blogsh.android.model.seenAs
 import app.blogsh.android.ui.Busy
 import app.blogsh.android.ui.Command
 import app.blogsh.android.ui.EmptyNote
@@ -49,10 +51,10 @@ import app.blogsh.android.ui.PaperRow
 import app.blogsh.android.ui.PaperScaffold
 import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.Plate
-import app.blogsh.android.ui.PostHeading
+import app.blogsh.android.ui.PostFacts
+import app.blogsh.android.ui.ShareKey
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.RowDate
-import app.blogsh.android.ui.ScreenHeader
 import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
@@ -103,7 +105,7 @@ fun PostPickerScreen(languages: List<String> = emptyList()) {
     // Every time the screen is come to: a post may be another on the way back from it.
     OnShown { load() }
 
-    PaperScaffold(onBack = { nav.pop() }) {
+    PaperScaffold(onBack = { nav.pop() }, name = stringResource(R.string.tile_post)) {
         PullToRefreshBox(
             isRefreshing = refreshing,
             onRefresh = {
@@ -119,9 +121,6 @@ fun PostPickerScreen(languages: List<String> = emptyList()) {
             modifier = Modifier.weight(1f),
         ) {
             LazyColumn(Modifier.fillMaxSize()) {
-                item {
-                    PaperRow { ScreenHeader(stringResource(R.string.tile_post), modifier = Modifier.padding(top = 2.dp, bottom = 6.dp)) }
-                }
                 problem?.let { text ->
                     item { PaperRow { Text(text, color = Theme.muted, style = ui(14f), modifier = Modifier.padding(vertical = 11.dp)) } }
                 }
@@ -168,10 +167,14 @@ fun PostPickerScreen(languages: List<String> = emptyList()) {
  * `gone` is said to the list the post was picked from, when the post is deleted.
  */
 @Composable
-fun PostCrossroadsScreen(post: PostRow, languages: List<String> = emptyList(), gone: (() -> Unit)? = null) {
+fun PostCrossroadsScreen(picked: PostRow, languages: List<String> = emptyList(), gone: (() -> Unit)? = null) {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val uri = LocalUriHandler.current
+    // The post as it is now, not as the row it was picked by said it: on
+    // the way back from its text or its properties it may have another
+    // title, another state -- and another slug, by which every key here asks.
+    var post by remember { mutableStateOf(picked) }
     var looking by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
     // The post's text as the editor would open it: where the lede is read
@@ -181,6 +184,8 @@ fun PostCrossroadsScreen(post: PostRow, languages: List<String> = emptyList(), g
     // The post was deleted from its properties: this screen is about a
     // post that is not there, and leaves once it is in front again.
     var deleted by remember { mutableStateOf(false) }
+    // Where the post is, to hand on: the engine's to say, with the rest.
+    var link by remember { mutableStateOf<PostLink?>(null) }
     val noAddress = stringResource(R.string.the_site_has_no_address_set_so)
 
     // `edit <slug> --json`: the text handed out, nothing written. A
@@ -197,13 +202,23 @@ fun PostCrossroadsScreen(post: PostRow, languages: List<String> = emptyList(), g
         }
         reading = true
         try {
-            val answer = try {
-                Engine.call<EditAnswer>("edit", post.slug)
+            // One connection for the two: the text the lede is read from,
+            // and what the post is now, for the lines over it.
+            val slug = post.slug
+            val answers = try {
+                Engine.batch(listOf(listOf("edit", slug), listOf("props", slug)))
             } catch (e: Throwable) {
                 if (e.isCalledOff) throw e
                 null
             }
-            if (answer != null) entry = answer.post
+            // Asked of one name, answered after the post took another: not this one's to keep.
+            if (answers != null && answers.size == 2 && slug == post.slug) {
+                runCatching { Engine.decode<EditAnswer>(answers[0]) }.getOrNull()?.let { entry = it.post }
+                runCatching { Engine.decode<PropsAnswer>(answers[1]) }.getOrNull()?.let { props ->
+                    post = post.seenAs(props)
+                    link = PostLink.of(props)
+                }
+            }
         } finally {
             reading = false
         }
@@ -233,23 +248,11 @@ fun PostCrossroadsScreen(post: PostRow, languages: List<String> = emptyList(), g
     // has to name.
     OnShown { read() }
 
-    PaperScreen {
-        PostHeading(post.title ?: post.slug, post.slug)
-        // Which post this is, before anything is done to it: when it is
-        // from, what state it is in, and how it begins.
-        Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            post.day?.let { day ->
-                Text(
-                    if (post.scheduled) RowDate.soon(day) else RowDate.short(day), color = if (post.scheduled) Theme.accent else Theme.muted,
-                    style = mono(12f, bold = post.scheduled), maxLines = 1,
-                )
-            }
-            StateBadge(post)
-            Text(
-                if (post.tags.isEmpty()) post.type else post.tags.joinToString(", "), color = Theme.muted, style = ui(13f),
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
-            )
-        }
+    PaperScreen(title = post.title ?: post.slug, actions = { link?.let { ShareKey(it) } }) {
+        // Which post this is, before anything is done to it: what it is
+        // called, what state it is in and since when, its tags -- one
+        // table -- and then how it begins.
+        PostFacts(post)
         val text = entry?.text
         if (text != null || reading) {
             Box(Modifier.fillMaxWidth().padding(top = 12.dp)) {
@@ -277,22 +280,40 @@ fun PostCrossroadsScreen(post: PostRow, languages: List<String> = emptyList(), g
         // [l]: only on a site that publishes more than one language,
         // the way the prompt only mentions it there.
         val tongues = languages.map { lang ->
-            lang to stringResource(R.string.language, Locale.forLanguageTag(lang).getDisplayLanguage(Locale.getDefault()).ifEmpty { lang })
+            lang to stringResource(R.string.language_2, Locale.forLanguageTag(lang).getDisplayLanguage(Locale.getDefault()).ifEmpty { lang })
         }
         Plate {
             row {
                 Command(theText, Symbols.textAlignleft, leads = true) {
-                    val loaded = entry
-                    nav.push { TextEditScreen(post.slug, loaded) }
+                    // Its slug as it is at the press: the screen opened keeps to that one.
+                    // The text read for the lede is handed on only while it is
+                    // this post's under this name: after a rename it is not.
+                    val slug = post.slug
+                    val loaded = entry?.takeIf { it.slug == slug }
+                    nav.push { TextEditScreen(slug, loaded) }
                 }
             }
             for ((lang, label) in tongues) {
-                row { Command(label, Symbols.characterBubble, leads = true) { nav.push { TranslateScreen(post.slug, lang) } } }
+                row {
+                    Command(label, Symbols.characterBubble, leads = true) {
+                        val slug = post.slug
+                        nav.push { TranslateScreen(slug, lang) }
+                    }
+                }
             }
             row {
                 // A post deleted from its properties takes this screen with
                 // it, and the list reads itself again.
-                Command(properties, Symbols.sliderHorizontal3, leads = true) { nav.push { PropsScreen(post.slug, gone = { deleted = true }) } }
+                // One renamed there is asked for by its new slug from here on.
+                Command(properties, Symbols.sliderHorizontal3, leads = true) {
+                    val slug = post.slug
+                    nav.push {
+                        PropsScreen(slug, gone = { deleted = true }, renamed = { props ->
+                            post = post.seenAs(props)
+                            link = PostLink.of(props)
+                        })
+                    }
+                }
             }
         }
         // Not a key of the prompt: at the desk the browser is one window

@@ -1,6 +1,7 @@
 package app.blogsh.android
 
 import app.blogsh.android.model.Blog
+import app.blogsh.android.model.Tones
 import app.blogsh.android.model.BlogList
 import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.EngineJson
@@ -69,6 +70,19 @@ class BlogsTest {
         assertEquals("", blogs[0].claim)
         assertEquals(24, blogs[0].maxMb)
         assertNull(blogs[0].facts)
+        assertNull(blogs[0].tonesLight)
+        assertNull(blogs[0].tonesDark)
+    }
+
+    /** A blog's palette is written down with it and read back as it was. */
+    @Test
+    fun aBlogKeepsItsPalette() {
+        val blog = Blog(
+            tonesLight = Tones("#fff7eb", "#1e1d1c", "#6b6862", "#d7d0c6"),
+            tonesDark = Tones("#000000", "#e6dccb", "#a1988a", "#3c3935"),
+        )
+        val back = EngineJson.decodeFromString<Blog>(EngineJson.encodeToString(blog))
+        assertEquals(blog, back)
     }
 
     /**

@@ -35,7 +35,7 @@ class Shot(
      * The shot as a line of markdown, a paragraph of its own. One mark or
      * two: a picture is ![…](name), a video !![…](name).
      */
-    val mark: String get() = (if (kind == Kind.Video) "!!" else "!") + "[${alt.trim()}]($name)"
+    val mark: String get() = (if (kind == Kind.Video) "!!" else "!") + "[${Kept.oneLine(alt)}]($name)"
 
     /** The shot's mark wherever the text has it, whatever it says there. */
     val markPattern: Regex get() = Regex("""!{1,2}\[[^\]]*\]\(""" + Regex.escape(name) + """\)""")
@@ -140,6 +140,104 @@ object Kept {
     fun isVideo(name: String): Boolean = videoEndings.contains(name.substringAfterLast('.', "").lowercase())
 
     fun named(name: String, text: String): Boolean = text.contains("($name)")
+
+    /**
+     * A shot's mark put into the text where the caret is -- at its end
+     * when the text was never touched. A blank line on each side, counted:
+     * the blog renders a picture only as a paragraph of its own and
+     * refuses one on the line straight after a sentence, so a mark put in
+     * the middle of a line breaks the line there; and counted so that a
+     * blank line already standing is not doubled. The rule of /write/
+     * (spacedMark). The caret comes back after the mark and its gap, where
+     * one goes on writing.
+     */
+    class Placed(val text: String, val caret: Int)
+
+    fun placed(mark: String, text: String, at: Int?): Placed {
+        val position = (at ?: text.length).coerceIn(0, text.length)
+        val before = text.substring(0, position)
+        val after = text.substring(position)
+        val gaps = listOf("\n\n", "\n", "")
+        val trailing = before.takeLastWhile { it == '\n' }.length
+        val leading = after.takeWhile { it == '\n' }.length
+        val gapBefore = if (before.isEmpty()) "" else gaps[minOf(2, trailing)]
+        val gapAfter = if (after.isEmpty()) "\n" else gaps[minOf(2, leading)]
+        val put = gapBefore + mark + gapAfter
+        return Placed(before + put + after, position + put.length)
+    }
+
+    /**
+     * A description is one line in the markdown, whatever its field held:
+     * a line break inside ![…](name) is a picture the engine refuses, with
+     * a reason that names the wrong thing.
+     */
+    fun oneLine(words: String): String = words.split(Regex("""\s+""")).filter { it.isNotEmpty() }.joinToString(" ")
+
+    // A picture's description is ONE thing with two places to write it:
+    // the card, and the mark the text has for the picture. Whichever is
+    // written in, the other follows, at every letter -- so it does not
+    // matter where one happens to be when a word comes to mind. Two
+    // functions, one for each way; each leaves alone what already says
+    // the same, which is what keeps the two from chasing each other and
+    // keeps a space typed at the end of a word where it was typed.
+
+    /**
+     * What the text says of a picture: the words of its first mark, as
+     * they stand there -- nothing at all where the text has no mark for
+     * it, the empty string where the mark says nothing.
+     *
+     * Read the way the engine reads a picture: a mark is a line of its
+     * own, and its description runs to the last "](" before the name --
+     * so a square bracket in it is part of it, as it is for the engine.
+     * A mark that shares its line with prose, which the engine refuses
+     * but the text may hold while it is being written, is read too, up
+     * to its first closing bracket.
+     */
+    fun described(name: String, text: String): String? {
+        val file = Regex.escape(name)
+        // A line that holds another mark before this one is not this mark's line:
+        // what was read as its description has the other's end in it.
+        val line = Regex("""^[ \t]*!{1,2}\[(.*)\]\(""" + file + """\)[ \t]*$""", RegexOption.MULTILINE).find(text)
+            ?.takeIf { !it.groupValues[1].contains("](") }
+        val inline = Regex("""!\[([^\]\n]*)\]\(""" + file + """\)""").find(text)
+        // Whichever stands first in the text is the picture's first mark.
+        if (line != null && inline != null) return (if (line.range.first <= inline.range.first) line else inline).groupValues[1]
+        return (line ?: inline)?.groupValues?.get(1)
+    }
+
+    /**
+     * The text was written in: every card takes what the text now says of
+     * its picture. A card whose picture the text does not name keeps its
+     * own words -- they go in with the mark when it is put there.
+     */
+    fun heard(shots: List<Shot>, text: String): List<Shot> = shots.map { shot ->
+        val words = described(shot.name, text)
+        if (words == null || oneLine(words) == oneLine(shot.alt)) shot else shot.withAlt(words)
+    }
+
+    /**
+     * A card was written on: the mark the text has for its picture says
+     * the same -- that mark, and any other of the picture that said what
+     * it said. A text with no mark for the picture is let be. (A video's
+     * two marks end in the same one, so the one rule serves both.)
+     */
+    fun typed(text: String, name: String, after: String): String {
+        val words = described(name, text) ?: return text
+        if (oneLine(words) == oneLine(after)) return text
+        return text.replace("![$words]($name)", "![${oneLine(after)}]($name)")
+    }
+
+    /**
+     * The same for every card at once: the shots as they are now, their
+     * descriptions as they were. With a shot added or taken away between
+     * the two there is nothing to compare, and the text is let be.
+     */
+    fun retitled(text: String, shots: List<Shot>, before: List<String>): String {
+        if (shots.size != before.size) return text
+        var now = text
+        for ((shot, was) in shots.zip(before)) if (shot.alt != was) now = typed(now, shot.name, shot.alt)
+        return now
+    }
 
     /**
      * What travels with the text: the shots it names. One picked and

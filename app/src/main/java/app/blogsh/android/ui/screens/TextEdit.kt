@@ -29,6 +29,7 @@ import app.blogsh.android.model.ActionAnswer
 import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.Delivery
 import app.blogsh.android.model.DeliveryFile
+import app.blogsh.android.model.Herald
 import app.blogsh.android.model.EditAnswer
 import app.blogsh.android.model.EditEntry
 import app.blogsh.android.model.Engine
@@ -51,7 +52,6 @@ import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.PaperEditor
 import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.Plate
-import app.blogsh.android.ui.PostHeading
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.ScreenBack
@@ -88,6 +88,8 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     var saving by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
     var saved by remember { mutableStateOf<ActionAnswer?>(null) }
+    // Counted when a save has answered: the page goes to the answer.
+    var answered by remember { mutableStateOf(0) }
     var confirmingLoss by remember { mutableStateOf(false) }
     var previewing by remember { mutableStateOf(false) }
     var looking by remember { mutableStateOf<String?>(null) }
@@ -149,17 +151,26 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     // A paragraph of its own, where the caret is.
     fun insert(shot: Shot) = state.insertParagraph(shot.mark)
 
-    // The text with every new shot's mark carrying its description as it stands now.
-    fun described(text: String): String {
-        var marked = text
-        for (shot in shots) marked = shot.markPattern.replace(marked, Regex.escapeReplacement(shot.mark))
-        return marked
+    // A picture's description is one thing with two places to write it:
+    // typed on its card it is in the mark the text has for it...
+    fun describe(changed: Shot) {
+        shots = shots.map { if (it.id == changed.id) changed else it }
+        state.set(Kept.typed(state.text, changed.name, changed.alt))
+    }
+
+    // ...and typed into the mark in the text it is on the card. A picture
+    // just chosen, whose mark the text already has, takes its words too.
+    LaunchedEffect(text, shots.size) {
+        val heard = Kept.heard(shots, text)
+        if (heard.map { it.alt } != shots.map { it.alt }) shots = heard
     }
 
     // The header gets the two lines of the delivery: which post, which version.
     fun fileText(): String {
         val post = entry ?: return state.text
-        val marked = described(state.text)
+        // The text is what goes: a description typed on a card is in it
+        // already, one typed into the text itself was never the card's.
+        val marked = state.text
         val lines = "edits: ${post.slug}\nbase: ${post.base}\n"
         if (marked.startsWith("---\n")) return "---\n" + lines + marked.drop(4)
         return "---\n" + lines + "---\n\n" + marked
@@ -171,12 +182,17 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
             problem = null
             val files = Kept.sent(shots, state.text).map { DeliveryFile(it.name, it.data) } +
                 DeliveryFile("$slug.md", fileText().toByteArray(Charsets.UTF_8))
-            saved = delivered(Engine.deliver(files))
+            val answer = delivered(Engine.deliver(files))
+            saved = answer
             shots = emptyList()
+            // Saving a published post builds the site: nothing is owed after it.
+            if (answer.state == PostState.Published) Herald.shared.settled()
             load()
+            answered += 1
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             problem = e.said
+            answered += 1
         } finally {
             saving = false
         }
@@ -194,17 +210,16 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     ScreenBack(enabled = unsent) { asking = true }
 
     Box(Modifier.fillMaxSize()) {
-        PaperScreen(onBack = { leave() }) {
+        PaperScreen(onBack = { leave() }, title = entry?.title, answered = answered) {
             val post = entry
             if (post != null) {
-                PostHeading(post.title, post.slug)
                 if (!post.editable) {
                     Hint(
                         post.problem?.let { stringResource(R.string.this_post_cannot_be_edited_here_at, it) }
                             ?: stringResource(R.string.this_post_cannot_be_edited_here)
                     )
                 }
-                Plate(Modifier.padding(top = 14.dp)) {
+                Plate(Modifier.padding(top = if (post.editable) 0.dp else 14.dp)) {
                     row { PaperEditor(state, minHeight = 320.dp, enabled = post.editable) }
                 }
                 Hint(stringResource(R.string.the_header_and_the_text_as_the))
@@ -241,7 +256,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                         row {
                             key(shot.id) {
                                 ShotCard(
-                                    shot, onShot = { changed -> shots = shots.map { if (it.id == changed.id) changed else it } },
+                                    shot, onShot = { describe(it) },
                                     inText = text.contains("(${shot.name})"),
                                     insert = { insert(shot) }, remove = { shots = shots.filter { it.id != shot.id } }, look = { looking = shot.id },
                                 )
@@ -306,13 +321,13 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     if (previewing) {
         // The post's own media from beside its page on the blog; what
         // was picked here from the device.
-        val parts = remember { Preview.parts(described(state.text)) }
+        val parts = remember { Preview.parts(state.text) }
         val shown = remember { Preview.shown(entry?.media ?: emptyList(), entry?.preview ?: "/") + Preview.shown(shots) }
         PreviewSheet(parts.first, parts.second, shown) { previewing = false }
     }
     looking?.let { one ->
         ShotsViewer(
-            shots, current = one, onShot = { changed -> shots = shots.map { if (it.id == changed.id) changed else it } },
+            shots, current = one, onShot = { describe(it) },
             onDismiss = { looking = null },
         )
     }

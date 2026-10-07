@@ -117,4 +117,6 @@ object Symbols {
     val archivebox = R.drawable.ic_inventory_2
     /** megaphone */
     val megaphone = R.drawable.ic_campaign
+    /** square.and.arrow.up */
+    val squareAndArrowUp = R.drawable.ic_ios_share
 }

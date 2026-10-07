@@ -42,7 +42,7 @@ import app.blogsh.android.ui.DialogKey
 import app.blogsh.android.ui.Mark
 import app.blogsh.android.ui.PaperRow
 import app.blogsh.android.ui.PaperSheet
-import app.blogsh.android.ui.ScreenHeader
+import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.SiteIcon
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
@@ -52,48 +52,61 @@ import java.text.NumberFormat
 
 /**
  * The blogs the app drives, and the way from one to another: a row opens
- * its blog, the last key begins a new one. A blog is its own server, its
- * own key and its own colour; nothing of one is used for another. A long
- * press on a row offers to remove its blog.
+ * its blog, the key at its end opens that blog's settings, the last key
+ * begins a new one. A blog is its own server, its own key and its own
+ * colour; nothing of one is used for another. A long press on a row
+ * offers to remove its blog.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun BlogsSheet(added: () -> Unit, onDismiss: () -> Unit) {
+fun BlogsSheet(onDismiss: () -> Unit) {
     var removing by remember { mutableStateOf<Blog?>(null) }
-    PaperSheet(onDismiss, scrolls = false, actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) }) {
+    var settingUp by remember { mutableStateOf(false) }
+    val settings = stringResource(R.string.the_blog_s_settings)
+    PaperSheet(
+        onDismiss, scrolls = false, name = stringResource(R.string.blogs),
+        count = if (Blogs.all.isEmpty()) null else NumberFormat.getIntegerInstance().format(Blogs.all.size),
+        actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) },
+    ) {
         LazyColumn(Modifier.weight(1f)) {
-            item {
-                PaperRow {
-                    ScreenHeader(
-                        stringResource(R.string.blogs), if (Blogs.all.isEmpty()) null else NumberFormat.getIntegerInstance().format(Blogs.all.size),
-                        Modifier.padding(top = 2.dp, bottom = 6.dp),
-                    )
-                }
-            }
             items(Blogs.all, key = { it.id }) { blog ->
-                PaperRow(
-                    Modifier.combinedClickable(
-                        onClick = {
-                            Blogs.select(blog.id)
-                            onDismiss()
-                        },
-                        onLongClick = { removing = blog },
-                    )
-                ) { BlogRow(blog, open = blog.id == Blogs.currentId) }
+                PaperRow {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier.weight(1f).combinedClickable(
+                                onClick = {
+                                    Blogs.select(blog.id)
+                                    onDismiss()
+                                },
+                                onLongClick = { removing = blog },
+                            )
+                        ) { BlogRow(blog, open = blog.id == Blogs.currentId) }
+                        // The settings are the open blog's: the key opens the blog with them.
+                        Pressable(
+                            {
+                                Blogs.select(blog.id)
+                                settingUp = true
+                            },
+                            modifier = Modifier.semantics { contentDescription = settings },
+                        ) {
+                            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) { Mark(Symbols.sliderHorizontal3, 20.dp) }
+                        }
+                    }
+                }
             }
             item {
                 PaperRow(rule = false) {
                     Box(Modifier.padding(vertical = 12.dp)) {
                         Command(stringResource(R.string.add_a_blog), Symbols.plus) {
                             Blogs.add()
-                            added()
-                            onDismiss()
+                            settingUp = true
                         }
                     }
                 }
             }
         }
     }
+    if (settingUp) BlogSettingsSheet(onBack = { settingUp = false }, onDone = { settingUp = false; onDismiss() })
     removing?.let { blog ->
         Asks(
             stringResource(R.string.remove_from_the_app_its_key_is, blog.label),

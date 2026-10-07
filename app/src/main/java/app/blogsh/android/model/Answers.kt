@@ -49,6 +49,8 @@ data class VersionAnswer(
         val locales: List<String>,
         /** The palette's accent, per scheme; null from an engine before it said so. */
         val accent: Accent? = null,
+        /** The rest of the palette, per scheme; null from an engine before it said so. */
+        val palette: Palette? = null,
     ) {
         /**
          * The claim is markdown in the site's configuration, and a blog may
@@ -68,6 +70,9 @@ data class VersionAnswer(
 
     @Serializable
     data class Accent(val light: String, val dark: String)
+
+    @Serializable
+    data class Palette(val light: Tones, val dark: Tones)
 }
 
 @Serializable
@@ -112,6 +117,56 @@ data class PostRow(
      */
     val day: Instant?
         get() = if (state == PostState.Draft && !scheduled) null else engineInstant(date)
+}
+
+/**
+ * The row a post has in a list, from what its properties say now: a
+ * screen opened from a row keeps up with the post through this, when
+ * its title or its slug has changed since the list was read.
+ */
+fun PostRow(props: PropsAnswer): PostRow = PostRow(
+    slug = props.slug, year = props.year, date = props.date, title = props.title.ifEmpty { null },
+    type = props.type, tags = props.tags, state = props.state, scheduled = props.scheduled,
+    series = props.series, pinned = props.pinned,
+)
+
+/**
+ * This row as the post is now. A post without a title keeps none: its
+ * properties call it by its opening words, a list by its slug, and a
+ * screen opened from the list would otherwise change the post's name
+ * under the reader a moment after opening.
+ */
+fun PostRow.seenAs(props: PropsAnswer): PostRow = PostRow(props).let { now -> if (title == null) now.copy(title = null) else now }
+
+/**
+ * A post of the queue as the row a list would have for it: a draft
+ * with a plan. What the queue does not say -- its type, its tags --
+ * the screen it opens asks for itself.
+ */
+fun PostRow(queued: QueueRow): PostRow = PostRow(
+    slug = queued.slug, year = queued.year, date = queued.date, title = queued.title.ifEmpty { null },
+    type = "text", tags = emptyList(), state = PostState.Draft, scheduled = true, series = null, pinned = false,
+)
+
+/**
+ * A post's address to hand to somebody: where it is, and what it is
+ * called there. A published post's own address; for a draft the hidden
+ * page the build keeps for it -- the engine says which, the app only
+ * passes it on.
+ */
+data class PostLink(val url: String, val title: String) {
+    companion object {
+        /** Nothing for a site that has no address set: there is no link to give. */
+        fun of(props: PropsAnswer): PostLink? = of(props.url, props.title.ifEmpty { props.slug })
+
+        fun of(address: String, title: String): PostLink? {
+            val uri = runCatching { java.net.URI(address) }.getOrNull() ?: return null
+            val scheme = uri.scheme?.lowercase() ?: return null
+            if (scheme != "https" && scheme != "http") return null
+            if (uri.host.isNullOrEmpty()) return null
+            return PostLink(address, title)
+        }
+    }
 }
 
 /** `list --json`. */

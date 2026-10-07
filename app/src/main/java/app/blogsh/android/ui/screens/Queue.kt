@@ -48,7 +48,11 @@ import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.QueueAnswer
 import app.blogsh.android.model.QueueRow
-import app.blogsh.android.model.RebuildAnswer
+import app.blogsh.android.model.Doing
+import app.blogsh.android.model.Herald
+import app.blogsh.android.model.PostRow
+import app.blogsh.android.model.engineInstant
+import androidx.compose.foundation.clickable
 import app.blogsh.android.model.engineInstant
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.plain
@@ -56,6 +60,7 @@ import app.blogsh.android.model.said
 import app.blogsh.android.ui.Asks
 import app.blogsh.android.ui.AsksFor
 import app.blogsh.android.ui.Busy
+import app.blogsh.android.ui.Hint
 import app.blogsh.android.ui.Card
 import app.blogsh.android.ui.Choice
 import app.blogsh.android.ui.EmptyNote
@@ -71,7 +76,6 @@ import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.RowDate
 import app.blogsh.android.ui.Said
 import app.blogsh.android.ui.Says
-import app.blogsh.android.ui.ScreenHeader
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.mono
@@ -95,11 +99,16 @@ private class RowKey(val label: String, val symbol: Int, val danger: Boolean = f
  * The scheduled-post queue as `queue --json` hands it out, with the keys
  * of the terminal's screen on each row: [u] and [d] trade times with the
  * neighbour, [m] carries the post to a position, [p] publishes it now,
- * [s] asks for another time, [n] returns it to the drafts. When a post
+ * [s] asks for another time, [n] returns it to the drafts -- the last two
+ * under the names the properties screen has for them, reschedule and
+ * cancel the schedule: one thing, one name. A row itself opens its post,
+ * as a row of the archive does. When a post
  * leaves the queue the screen asks whether the rest should step forward
  * into the gap; the app asks the same, before the call, because the
  * engine answers both in one. The preview is rebuilt once, when you are
- * done -- the screen does it on the way out, the app offers it.
+ * done -- the screen does it on the way out; the app does it by itself
+ * once the queue has been left alone a moment (`Herald`), and says what
+ * each key did: when the post goes out now.
  *
  * The keys are behind a long press on the row. The same press is what
  * lifts the row: a finger that moves carries it, one that lets go where
@@ -107,7 +116,7 @@ private class RowKey(val label: String, val symbol: Int, val danger: Boolean = f
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QueueScreen() {
+fun QueueScreen(languages: List<String> = emptyList()) {
     val nav = LocalNav.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -118,7 +127,6 @@ fun QueueScreen() {
     var loading by remember { mutableStateOf(false) }
     var refreshing by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
-    var dirty by remember { mutableStateOf(false) }
 
     var leaving by remember { mutableStateOf<Leaving?>(null) }
     var rescheduling by remember { mutableStateOf<QueueRow?>(null) }
@@ -127,7 +135,8 @@ fun QueueScreen() {
     var carryText by remember { mutableStateOf("") }
     var notice by remember { mutableStateOf<String?>(null) }
     var said by remember { mutableStateOf<Said?>(null) }
-    var rebuilding by remember { mutableStateOf(false) }
+    // What the screen is doing while it cannot be touched.
+    var doing by remember { mutableStateOf<String?>(null) }
 
     /** The row whose menu is open. */
     var menuFor by remember { mutableStateOf<String?>(null) }
@@ -152,12 +161,29 @@ fun QueueScreen() {
 
     // ---- The keys
 
+    // What the previews are behind in, and that it does not matter for
+    // what goes out when: the herald says it while the site is brought up
+    // to date.
+    val previewsBehind = stringResource(R.string.draft_previews_still_show_the_old_times)
+    val movedWord = stringResource(R.string.moved)
+    val carriedWord = stringResource(R.string.carried)
+    val rescheduledWord = stringResource(R.string.rescheduled)
+
+    // A key moved a post: where it is now and when it goes out, read off
+    // the queue the engine answered with -- and the previews are owed a build.
+    fun changed(row: QueueRow, what: String) {
+        Herald.shared.owe(previewsBehind)
+        val now = rows.firstOrNull { it.id == row.id } ?: return
+        val at = engineInstant(now.date)?.let { RowDate.spoken(it) } ?: now.date
+        Herald.shared.say(context.getString(R.string.goes_out_of_in_the_queue, what, now.title.ifEmpty { now.slug }, at, now.position, rows.size))
+    }
+
     suspend fun move(row: QueueRow, direction: String) {
         busy = true
         try {
             val answer = Engine.call<QueueAnswer>("queue", direction, "${row.year}/${row.slug}")
             rows = answer.queue
-            dirty = true
+            changed(row, movedWord)
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             notice = e.said
@@ -172,7 +198,7 @@ fun QueueScreen() {
             try {
                 val answer = Engine.call<QueueAnswer>("queue", "--move", "${row.year}/${row.slug}", "--to", "$position")
                 rows = answer.queue
-                dirty = true
+                changed(row, carriedWord)
             } catch (e: Throwable) {
                 if (e.isCalledOff) throw e
                 notice = e.said
@@ -186,6 +212,7 @@ fun QueueScreen() {
 
     suspend fun leave(going: Leaving, compact: Boolean, anyway: Boolean = false) {
         busy = true
+        doing = context.getString(Doing.word(listOf(if (going.publish) "publish" else "schedule")))
         try {
             val args = (if (going.publish) listOf("publish", going.row.slug, "--yes") else listOf("schedule", going.row.slug, "--cancel")).toMutableList()
             if (compact) args.add("--compact")
@@ -194,12 +221,12 @@ fun QueueScreen() {
                 val answer = Engine.call<ActionAnswer>(args)
                 // The engine says what it did in its own words (the warnings carry
                 // the screen's lines); the app adds only the address a publish gave.
-                val lines = mutableListOf<String>()
-                if (going.publish) lines.add(context.getString(R.string.published, answer.url ?: going.row.slug))
-                answer.warnings?.plain?.takeIf { it.isNotEmpty() }?.let { lines.addAll(it) }
-                if (lines.isNotEmpty()) notice = lines.joinToString("\n")
-                // Publishing rebuilds by itself; a plan cancelled leaves the preview behind.
-                if (!going.publish) dirty = true
+                val done = if (going.publish) context.getString(R.string.published, answer.url ?: going.row.slug)
+                else context.getString(R.string.the_schedule_is_cancelled_the_post_is)
+                val warnings = answer.warnings?.plain
+                if (!warnings.isNullOrEmpty()) notice = (listOf(done) + warnings).joinToString("\n") else Herald.shared.say(done)
+                // Publishing builds the whole site; a plan cancelled leaves the previews behind.
+                if (going.publish) Herald.shared.settled() else Herald.shared.owe(previewsBehind)
                 load()
             } catch (e: Throwable) {
                 if (e.isCalledOff) throw e
@@ -215,27 +242,17 @@ fun QueueScreen() {
             }
         } finally {
             busy = false
+            doing = null
         }
     }
 
-    suspend fun changed() {
-        dirty = true
+    // The schedule dialog closed on another time for a post.
+    suspend fun rescheduled(row: QueueRow) {
         // Read by the screen, not by the sheet that says so: the sheet may be gone before the answer.
-        scope.launch { load() }.join()
-    }
-
-    suspend fun rebuild() {
-        rebuilding = true
-        try {
-            val answer = Engine.call<RebuildAnswer>("rebuild")
-            dirty = false
-            notice = context.getString(if (answer.deploy == "done") R.string.rebuilt_and_deployed else R.string.rebuilt_the_deploy_is_owed_to_the)
-        } catch (e: Throwable) {
-            if (e.isCalledOff) throw e
-            notice = e.said
-        } finally {
-            rebuilding = false
-        }
+        scope.launch {
+            load()
+            changed(row, rescheduledWord)
+        }.join()
     }
 
     LaunchedEffect(Unit) { load() }
@@ -254,7 +271,12 @@ fun QueueScreen() {
         }
     }
 
-    PaperScaffold(onBack = { nav.pop() }) {
+    // A build holds the lock a change of the queue needs: while one runs, the rows wait.
+    val still = busy || Herald.shared.isBuilding
+    PaperScaffold(
+        onBack = { nav.pop() }, name = stringResource(R.string.tile_queue),
+        count = if (rows.isEmpty()) null else NumberFormat.getIntegerInstance().format(rows.size), doing = doing,
+    ) {
         PullToRefreshBox(
             isRefreshing = refreshing,
             onRefresh = {
@@ -269,35 +291,15 @@ fun QueueScreen() {
             },
             modifier = Modifier.weight(1f),
         ) {
-            LazyColumn(Modifier.fillMaxSize().alpha(if (busy) 0.5f else 1f), state = listState, userScrollEnabled = !busy) {
-                item(key = "header") {
-                    PaperRow {
-                        ScreenHeader(
-                            stringResource(R.string.tile_queue), if (rows.isEmpty()) null else NumberFormat.getIntegerInstance().format(rows.size),
-                            Modifier.padding(top = 2.dp, bottom = 6.dp),
-                        )
-                    }
-                }
+            LazyColumn(Modifier.fillMaxSize().alpha(if (still) 0.5f else 1f), state = listState, userScrollEnabled = !still) {
                 problem?.let { words ->
                     item(key = "problem") {
                         PaperRow { Text(words, color = Theme.muted, style = ui(14f), modifier = Modifier.padding(vertical = 12.dp)) }
                     }
                 }
-                if (dirty) {
-                    item(key = "dirty") {
-                        PaperRow(rule = false) {
-                            Pressable({ scope.launch { rebuild() } }, modifier = Modifier.padding(vertical = 10.dp), enabled = !rebuilding && !busy) {
-                                Card(highlighted = true) {
-                                    Mark(Symbols.hammer)
-                                    Text(stringResource(R.string.the_preview_is_behind_the_queue_rebuild), color = Theme.ink, style = ui(14f, FontWeight.Medium))
-                                }
-                            }
-                        }
-                    }
-                }
                 items(rows, key = { it.id }) { row ->
                     // A post waiting for the cron has no slot to trade.
-                    ReorderableItem(reorder, key = row.id, enabled = !row.overdue && !busy) { dragging ->
+                    ReorderableItem(reorder, key = row.id, enabled = !row.overdue && !still) { dragging ->
                         val keys = listOf(
                             RowKey(stringResource(R.string.up_a_slot_earlier), Symbols.arrowUp, enabled = !(row.position == 1 || row.overdue)) {
                                 scope.launch { move(row, "--up") }
@@ -311,8 +313,9 @@ fun QueueScreen() {
                                 carrying = row
                             },
                             RowKey(stringResource(R.string.publish_now_2), Symbols.paperplane) { leaving = Leaving(row, publish = true) },
-                            RowKey(stringResource(R.string.another_time), Symbols.calendarBadgeClock) { rescheduling = row },
-                            RowKey(stringResource(R.string.return_to_drafts), Symbols.trayAndArrowDown, danger = true) { leaving = Leaving(row, publish = false) },
+                            // Under the names the properties screen has for them: one thing, one name.
+                            RowKey(stringResource(R.string.reschedule), Symbols.calendarBadgeClock) { rescheduling = row },
+                            RowKey(stringResource(R.string.cancel_the_schedule), Symbols.calendarBadgeMinus, danger = true) { leaving = Leaving(row, publish = false) },
                         )
                         val lifted: (Offset) -> Unit = {
                             moved = false
@@ -332,7 +335,7 @@ fun QueueScreen() {
                             }
                         }
                         val press = when {
-                            busy -> Modifier
+                            still -> Modifier
                             // It cannot be lifted, and it still has its keys.
                             row.overdue -> Modifier.pointerInput(row.id) {
                                 detectTapGestures(onLongPress = {
@@ -346,6 +349,12 @@ fun QueueScreen() {
                             PaperRow(
                                 // In the hand it is a sheet of its own over the others.
                                 (if (dragging) Modifier.background(Theme.paper).background(Theme.accent.copy(alpha = 0.12f)) else Modifier)
+                                    // A row opens its post, as in the archive: its text, its
+                                    // properties, and so its slug -- which the queue has no key for.
+                                    .clickable(enabled = !still) {
+                                        val post = PostRow(row)
+                                        nav.push { PostCrossroadsScreen(post, languages, gone = { scope.launch { load() } }) }
+                                    }
                                     .then(press)
                                     .semantics {
                                         customActions = keys.filter { it.enabled }.map { key -> CustomAccessibilityAction(key.label) { key.run(); true } }
@@ -363,6 +372,13 @@ fun QueueScreen() {
                         }
                     }
                 }
+                // Nothing on a row says it can be held: on iOS a row is also
+                // swept aside for its keys, here the long press is the one way.
+                if (rows.isNotEmpty()) {
+                    item(key = "hold") {
+                        PaperRow(rule = false) { Hint(stringResource(R.string.android_queue_hold), Modifier.padding(top = 6.dp, bottom = 24.dp)) }
+                    }
+                }
             }
             if (loading && rows.isEmpty() && !refreshing) {
                 Busy(modifier = Modifier.align(Alignment.Center))
@@ -378,23 +394,23 @@ fun QueueScreen() {
     // Asked about the row it names.
     leaving?.let { asked ->
         val behind = rows.size - asked.row.position
-        val alone = Choice(stringResource(if (asked.publish) R.string.publish_now_2 else R.string.return_to_drafts), danger = !asked.publish) {
+        val alone = Choice(stringResource(if (asked.publish) R.string.publish_now_2 else R.string.cancel_the_schedule), danger = !asked.publish) {
             scope.launch { leave(asked, compact = false) }
         }
         val shifting = if (behind > 0 && !asked.row.overdue) {
-            Choice(stringResource(if (asked.publish) R.string.publish_now_and_shift_the_rest_a else R.string.return_to_drafts_and_shift_the_rest, behind)) {
+            Choice(stringResource(if (asked.publish) R.string.publish_now_and_shift_the_rest_a else R.string.cancel_the_schedule_and_shift_the_rest, behind)) {
                 scope.launch { leave(asked, compact = true) }
             }
         } else null
         Asks(
-            stringResource(if (asked.publish) R.string.publish_now else R.string.return_to_the_drafts, asked.row.slug),
+            stringResource(if (asked.publish) R.string.publish_now else R.string.cancel_the_schedule_of, asked.row.slug),
             stringResource(if (asked.publish) R.string.the_same_as_publishing_a_draft_by else R.string.the_post_keeps_its_text_and_loses),
             listOfNotNull(alone, shifting),
             onDismiss = { leaving = null },
         )
     }
     rescheduling?.let { row ->
-        ScheduleSheet(row.slug, null, row.date, true, onDismiss = { rescheduling = null }, done = { changed() })
+        ScheduleSheet(row.slug, null, row.date, true, onDismiss = { rescheduling = null }, done = { rescheduled(row) })
     }
     carrying?.let { row ->
         AsksFor(

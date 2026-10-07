@@ -36,7 +36,6 @@ import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.PaperEditor
 import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.Plate
-import app.blogsh.android.ui.PostHeading
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.ScreenBack
@@ -66,6 +65,10 @@ fun TranslateScreen(slug: String, lang: String) {
     var saving by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
     var saved by remember { mutableStateOf<ActionAnswer?>(null) }
+    // The last save took the language off rather than wrote it.
+    var tookOff by remember { mutableStateOf(false) }
+    // Counted when a save has answered: the page goes to the answer.
+    var answered by remember { mutableStateOf(0) }
     var confirmingRemoval by remember { mutableStateOf(false) }
     var previewing by remember { mutableStateOf(false) }
     var asking by remember { mutableStateOf(false) }
@@ -96,16 +99,19 @@ fun TranslateScreen(slug: String, lang: String) {
         return "---\n" + lines + "---\n\n" + body
     }
 
-    suspend fun save(body: String) {
+    suspend fun save(body: String, takingOff: Boolean = false) {
         saving = true
         try {
             problem = null
             val file = DeliveryFile("$slug-$lang.md", fileText(body).toByteArray(Charsets.UTF_8))
             saved = delivered(Engine.deliver(listOf(file)))
+            tookOff = takingOff
             load()
+            answered += 1
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             problem = e.said
+            answered += 1
         } finally {
             saving = false
         }
@@ -119,10 +125,9 @@ fun TranslateScreen(slug: String, lang: String) {
     ScreenBack(enabled = unsent) { asking = true }
 
     Box(Modifier.fillMaxSize()) {
-        PaperScreen(onBack = { leave() }) {
+        PaperScreen(onBack = { leave() }, title = entry?.title, answered = answered) {
             val post = entry
             if (post != null) {
-                PostHeading(post.title, "${post.slug} · $lang")
                 SectionLabel(stringResource(R.string.the_original))
                 Plate {
                     row {
@@ -163,9 +168,15 @@ fun TranslateScreen(slug: String, lang: String) {
                 }
 
                 saved?.let { saved ->
-                    SectionLabel(stringResource(R.string.saved))
+                    SectionLabel(stringResource(if (tookOff) R.string.taken_off else R.string.saved))
                     Plate {
-                        row { Text(stringResource(R.string.the_text, saved.slug, languageName), color = Theme.ink, style = ui(15f)) }
+                        // What was done, not only to what: written, or taken off.
+                        row {
+                            Text(
+                                stringResource(if (tookOff) R.string.the_text_is_taken_off else R.string.the_text, saved.slug, languageName),
+                                color = Theme.ink, style = ui(15f),
+                            )
+                        }
                         saved.warnings?.plain?.forEach { warning ->
                             row { Text(warning, color = Theme.muted, style = ui(13f)) }
                         }
@@ -189,7 +200,7 @@ fun TranslateScreen(slug: String, lang: String) {
     if (confirmingRemoval) {
         Asks(
             stringResource(R.string.take_the_text_off_the_post_then, languageName, slug),
-            choices = listOf(Choice(stringResource(R.string.take_it_off), danger = true) { scope.launch { save("---\ntitle:\n---\n\n") } }),
+            choices = listOf(Choice(stringResource(R.string.take_it_off), danger = true) { scope.launch { save("---\ntitle:\n---\n\n", takingOff = true) } }),
             onDismiss = { confirmingRemoval = false },
         )
     }

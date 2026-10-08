@@ -199,7 +199,7 @@ fun EditorKeys(state: EditorState, symbol: Int, label: String, turn: () -> Unit)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.weight(1f)) { MarkBar { state.mark(it, words) } }
         Pressable(turn, modifier = Modifier.semantics { contentDescription = label }) {
-            Box(Modifier.size(34.dp, 30.dp).border(1.dp, Theme.line, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(34.dp, 30.dp).border(1.dp, Theme.keyLine, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
                 Mark(symbol, 16.dp)
             }
         }
@@ -229,7 +229,7 @@ fun MarkBar(apply: (Marks.Kind) -> Unit) {
                 }
             )
             Pressable({ apply(kind) }, modifier = Modifier.semantics { contentDescription = name }) {
-                Box(Modifier.size(34.dp, 30.dp).border(1.dp, Theme.line, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(34.dp, 30.dp).border(1.dp, Theme.keyLine, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
                     // Keys, so in the accent like every other key.
                     when (kind) {
                         Marks.Kind.Bold -> Text("B", color = Theme.accent, style = ui(14f, FontWeight.Bold))

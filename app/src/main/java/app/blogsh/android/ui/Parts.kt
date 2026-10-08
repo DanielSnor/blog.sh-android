@@ -4,12 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -52,7 +54,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -147,8 +151,12 @@ fun PaperScaffold(
     count: String? = null,
     title: String? = null,
     doing: String? = null,
+    /** Puts the menu out of the way, where the screen is the menu and something is open beside it. */
+    hideMenu: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    // On a screen whose menu was put out of the way, the key that brings it back.
+    val menu = hideMenu ?: LocalShowMenu.current
     Box(Modifier.fillMaxSize().background(Theme.paper).windowInsetsPadding(WindowInsets.safeDrawing)) {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -157,9 +165,10 @@ fun PaperScaffold(
                         if (close) Symbols.xmark else Symbols.chevronLeft,
                         stringResource(if (close) R.string.android_close else R.string.android_back), onClick = onBack,
                     )
-                } else {
+                } else if (menu == null) {
                     Spacer(Modifier.width(Theme.gutter - 14.dp))
                 }
+                if (menu != null) BarKey(Symbols.sidebarLeft, stringResource(R.string.show_or_hide_the_menu), onClick = menu)
                 BarName(name, count, title)
                 actions()
             }
@@ -232,13 +241,43 @@ fun PaperSheet(
     name: String? = null,
     count: String? = null,
     title: String? = null,
+    /** Something laid over the sheet, in the sheet's own window: nothing of the system's comes between the two. */
+    over: @Composable BoxScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         SheetBars()
         Typed {
-            if (scrolls) PaperScreen(onBack = onDismiss, close = true, actions = actions, name = name, count = count, title = title, content = content)
-            else PaperScaffold(onBack = onDismiss, close = true, actions = actions, name = name, count = count, title = title, content = content)
+            SheetFrame {
+                Box(Modifier.fillMaxSize()) {
+                    if (scrolls) PaperScreen(onBack = onDismiss, close = true, actions = actions, name = name, count = count, title = title, content = content)
+                    else PaperScaffold(onBack = onDismiss, close = true, actions = actions, name = name, count = count, title = title, content = content)
+                    over()
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Where a sheet stands in its window: the whole of it on a phone; on a
+ * wide screen a card in its middle, as wide as a form reads well, with
+ * the screen that asked for it still in sight around it.
+ */
+@Composable
+fun SheetFrame(content: @Composable () -> Unit) = CompositionLocalProvider(LocalShowMenu provides null) { SheetCard(content) }
+
+@Composable
+private fun SheetCard(content: @Composable () -> Unit) {
+    if (!Theme.wide) {
+        content()
+        return
+    }
+    // The bars and the keyboard are stepped around here, once: the card
+    // stands in what is left, and what it holds has nothing more to avoid.
+    Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.widthIn(max = 640.dp).fillMaxWidth().fillMaxHeight().clip(RoundedCornerShape(20.dp)).border(1.dp, Theme.line, RoundedCornerShape(20.dp))) {
+            content()
         }
     }
 }
@@ -589,7 +628,7 @@ fun CommandRow(label: String, symbol: Int, danger: Boolean = false, leads: Boole
         Box(Modifier.width(22.dp), contentAlignment = Alignment.Center) {
             if (busy) Busy(16.dp) else Mark(symbol, 20.dp, if (danger) Theme.danger else Theme.accent)
         }
-        Text(label, color = if (danger) Theme.danger else Theme.ink, style = ui(15f, FontWeight.Medium), modifier = Modifier.weight(1f))
+        Text(label, color = wordUnderPointer(if (danger) Theme.danger else Theme.ink, moves = !danger), style = ui(15f, FontWeight.Medium), modifier = Modifier.weight(1f))
         if (leads) Mark(Symbols.chevronRight, 16.dp, Theme.muted)
     }
 }
@@ -748,6 +787,8 @@ fun AsksFor(
     keyboard: KeyboardOptions = KeyboardOptions.Default,
     mono: Boolean = false,
     message: String? = null,
+    /** The value is one to type over -- a number -- so it opens chosen whole. */
+    chosen: Boolean = false,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -759,8 +800,28 @@ fun AsksFor(
                 if (!message.isNullOrEmpty()) Text(message, style = ui(14f), color = Theme.muted, modifier = Modifier.padding(bottom = 10.dp))
                 val shape = RoundedCornerShape(10.dp)
                 val focus = remember { FocusRequester() }
+                // The caret stands after what is there already -- a field that
+                // is only handed its words puts it before them, and every
+                // letter typed then lands in front of the old ones.
+                var field by remember { mutableStateOf(TextFieldValue(value, TextRange(if (chosen) 0 else value.length, value.length))) }
+                if (field.text != value) field = TextFieldValue(value, TextRange(value.length))
+                val style = if (mono) mono(15f, bold = false) else ui(16f)
                 Box(Modifier.fillMaxWidth().border(1.dp, Theme.line, shape).padding(horizontal = 12.dp, vertical = 11.dp)) {
-                    PlainField(value, onValue, prompt, mono = mono, keyboard = keyboard, modifier = Modifier.fillMaxWidth().focusRequester(focus))
+                    BasicTextField(
+                        value = field,
+                        onValueChange = {
+                            field = it
+                            if (it.text != value) onValue(it.text)
+                        },
+                        modifier = Modifier.fillMaxWidth().focusRequester(focus), singleLine = true,
+                        textStyle = style.copy(color = Theme.ink), cursorBrush = SolidColor(Theme.accent), keyboardOptions = keyboard,
+                        decorationBox = { inner ->
+                            Box {
+                                if (field.text.isEmpty() && prompt.isNotEmpty()) Text(prompt, color = Theme.muted, style = style, maxLines = 1)
+                                inner()
+                            }
+                        },
+                    )
                 }
                 // The caret is in the field when the question opens, as it is in an alert on iOS.
                 LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }

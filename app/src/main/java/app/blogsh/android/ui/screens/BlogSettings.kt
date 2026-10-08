@@ -42,6 +42,7 @@ import app.blogsh.android.ui.FieldRow
 import app.blogsh.android.ui.Hint
 import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.SheetBars
+import app.blogsh.android.ui.SheetFrame
 import app.blogsh.android.ui.Typed
 import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.PrimaryButton
@@ -117,6 +118,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
     Dialog(onDismissRequest = onBack, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         SheetBars()
         Typed {
+    SheetFrame {
     PaperScreen(
         onBack = onBack, name = stringResource(R.string.the_blog_s_settings),
         actions = { DialogKey(stringResource(R.string.done), onClick = onDone) },
@@ -234,6 +236,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
                 row { Command(stringResource(R.string.remove_this_blog), Symbols.minusCircle, danger = true) { confirmingRemoval = true } }
             }
         }
+    }
     }
         }
     }

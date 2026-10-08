@@ -30,6 +30,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -54,6 +55,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.blogsh.android.BlogshApp
@@ -272,8 +274,15 @@ fun HomeScreen(state: HomeState) {
     val claim = identity?.site?.claim ?: blog?.claim ?: ""
     val url = identity?.site?.url ?: blog?.url ?: ""
 
+    val layout = LocalLayout.current
+    // Beside the menu a screen takes the place of the one that was open;
+    // on a phone, and on a page, it is laid over the menu.
+    fun show(tag: Any?, screen: @Composable () -> Unit) {
+        if (layout == Layout.Columns) nav.open(tag, screen) else nav.push(tag, screen)
+    }
+
     fun open(entry: MenuEntry, filter: StateFilter? = null, searching: Boolean = false) {
-        nav.push {
+        show(entry) {
             // Read where the screen is drawn, not where it was asked for: the blog may say
             // its languages and its address a moment after the tile was tapped.
             val languages = state.otherLanguages
@@ -303,8 +312,8 @@ fun HomeScreen(state: HomeState) {
     fun resume(one: Begun) {
         when (val what = one.what) {
             Begun.What.New -> open(MenuEntry.Add)
-            is Begun.What.Text -> nav.push { TextEditScreen(what.slug) }
-            is Begun.What.Language -> nav.push { TranslateScreen(what.slug, what.lang) }
+            is Begun.What.Text -> show(null) { TextEditScreen(what.slug) }
+            is Begun.What.Language -> show(null) { TranslateScreen(what.slug, what.lang) }
         }
     }
 
@@ -319,8 +328,21 @@ fun HomeScreen(state: HomeState) {
         if (seen) state.loadGlance()
         seen = true
     }
+    // Beside an open screen the menu is never covered, so never comes
+    // back to the front: there it is the screen beside it closing that
+    // says something may have changed.
+    val depth = nav.depth
+    var deepest by remember { mutableStateOf(0) }
+    LaunchedEffect(depth) {
+        if (layout == Layout.Columns && depth < deepest) state.loadGlance()
+        deepest = depth
+    }
 
-    PaperScaffold(actions = { BarKey(Symbols.gearshape, stringResource(R.string.settings)) { showingSettings = true } }) {
+    PaperScaffold(
+        actions = { BarKey(Symbols.gearshape, stringResource(R.string.settings)) { showingSettings = true } },
+        // Beside an open screen the menu can step out of its way.
+        hideMenu = if (layout == Layout.Columns && nav.depth > 0) ({ nav.menuHidden = true }) else null,
+    ) {
         PullToRefreshBox(
             isRefreshing = state.refreshing,
             onRefresh = {
@@ -332,7 +354,18 @@ fun HomeScreen(state: HomeState) {
             },
             modifier = Modifier.weight(1f),
         ) {
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Theme.gutter).padding(top = 4.dp, bottom = 24.dp)) {
+            // A wide screen held upright is one large page: the menu on it
+            // is two thirds of its width, in its middle, and everything on
+            // it larger by the same measure.
+            val roomy = layout == Layout.Page
+            val density = LocalDensity.current
+            val measure = if (roomy) Density(density.density * 1.35f, density.fontScale) else density
+            Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), contentAlignment = Alignment.TopCenter) {
+            CompositionLocalProvider(LocalDensity provides measure) {
+            Column(
+                if (roomy) Modifier.fillMaxWidth(2f / 3f).padding(top = 30.dp, bottom = 24.dp)
+                else Modifier.fillMaxWidth().padding(horizontal = Theme.gutter).padding(top = 4.dp, bottom = 24.dp)
+            ) {
                 // The blog's own mark beside its name, as /write/ wears it: the name
                 // and the claim share one left edge, the mark stands before both.
                 // The whole of it is a key: the other blogs are behind it.
@@ -382,7 +415,10 @@ fun HomeScreen(state: HomeState) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             for (entry in row) {
                                 val label = stringResource(entry.nameId)
-                                Pressable({ open(entry) }, modifier = Modifier.weight(1f).semantics { contentDescription = label }) { Tile(entry) }
+                                Pressable({ open(entry) }, modifier = Modifier.weight(1f).semantics { contentDescription = label }) {
+                                    // Beside its screen, the entry that is open says so.
+                                    Tile(entry, highlighted = layout == Layout.Columns && nav.root == entry)
+                                }
                             }
                         }
                     }
@@ -393,7 +429,7 @@ fun HomeScreen(state: HomeState) {
                         // A glass, not the terminal's own key for it: a slash says
                         // "search" only to somebody who knows the terminal.
                         Mark(Symbols.magnifyingglass, 17.dp)
-                        EngineLabel(stringResource(R.string.search_the_archive))
+                        EngineLabel(stringResource(R.string.search_the_archive), color = wordUnderPointer(Theme.muted))
                     }
                 }
 
@@ -405,7 +441,7 @@ fun HomeScreen(state: HomeState) {
                     Pressable({ runCatching { links.openUri(url) } }, modifier = Modifier.padding(top = 8.dp)) {
                         Card(capsule = true) {
                             Mark(Symbols.safari, 17.dp)
-                            EngineLabel(stringResource(R.string.open_the_blog_in_the_browser))
+                            EngineLabel(stringResource(R.string.open_the_blog_in_the_browser), color = wordUnderPointer(Theme.muted))
                         }
                     }
                 }
@@ -415,6 +451,8 @@ fun HomeScreen(state: HomeState) {
                         FactLines(facts) { open(MenuEntry.Restore) }
                     }
                 }
+            }
+            }
             }
         }
     }
@@ -476,7 +514,7 @@ private fun DraftsCard(glance: Glance) {
     Card {
         Mark(Symbols.pencil, 21.dp)
         if (glance.drafts > 0) {
-            Text(stringResource(R.string.drafts_in_progress), color = Theme.ink, style = ui(15f, FontWeight.Medium), modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.drafts_in_progress), color = wordUnderPointer(Theme.ink), style = ui(15f, FontWeight.Medium), modifier = Modifier.weight(1f))
             CountBadge(glance.drafts)
         } else {
             Text(stringResource(R.string.no_drafts_in_progress), color = Theme.muted, style = ui(15f))
@@ -518,7 +556,7 @@ private fun Tile(entry: MenuEntry, highlighted: Boolean = false) {
     Column(
         Modifier.fillMaxWidth().clip(shape)
             .background(if (highlighted) Theme.accent.copy(alpha = 0.12f) else Theme.card)
-            .border(1.dp, if (highlighted) Theme.accent else Theme.line, shape)
+            .border(1.dp, if (highlighted) Theme.accent else Theme.keyLine, shape)
             .padding(top = 16.dp, bottom = 12.dp)
             .clearAndSetSemantics {},
         verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally,
@@ -526,7 +564,7 @@ private fun Tile(entry: MenuEntry, highlighted: Boolean = false) {
         // A tile is an action: its mark is in the accent, its word in
         // ink -- as the cards over the tiles have it.
         Mark(entry.symbol, 26.dp)
-        Text(stringResource(entry.shortId), color = Theme.ink, style = ui(13f, FontWeight.SemiBold), maxLines = 1)
+        Text(stringResource(entry.shortId), color = wordUnderPointer(Theme.ink), style = ui(13f, FontWeight.SemiBold), maxLines = 1)
     }
 }
 

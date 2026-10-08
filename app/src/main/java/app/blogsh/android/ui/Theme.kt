@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -140,6 +142,9 @@ object Theme {
     val line: Color @Composable get() = LocalPalette.current.line
     val card: Color @Composable get() = LocalPalette.current.card
     val danger: Color @Composable get() = LocalPalette.current.danger
+
+    /** The hairline around a key: the rules' colour, the accent under the pointer. */
+    val keyLine: Color @Composable get() = if (LocalUnderPointer.current) LocalAccent.current else LocalPalette.current.line
 
     /** The one accent: every control of the app, its links, its counts. What the iOS app calls the tint. */
     val accent: Color @Composable get() = LocalAccent.current
@@ -324,12 +329,27 @@ fun Pressable(
 ) {
     val source = remember { MutableInteractionSource() }
     val pressed by source.collectIsPressedAsState()
+    // Where there is a pointer -- a tablet with a mouse -- what the key is
+    // made of is told that the pointer is over it.
+    val over by source.collectIsHoveredAsState()
     Box(
         modifier
             .alpha(if (pressed) 0.55f else 1f)
             .clickable(interactionSource = source, indication = null, enabled = enabled, onClickLabel = label, role = Role.Button, onClick = onClick)
-    ) { content() }
+    ) { CompositionLocalProvider(LocalUnderPointer provides (over && enabled), content = content) }
 }
+
+/** The pointer is over the key this is a part of. */
+val LocalUnderPointer = compositionLocalOf { false }
+
+/**
+ * A key's word, in its own colour until the pointer is over the key:
+ * then in the accent, as on the blog's own pages -- where something
+ * filled keeps its fill, what cannot be taken back stays in its own
+ * colour, and the title of a post in a list stays as it is.
+ */
+@Composable
+fun wordUnderPointer(rest: Color, moves: Boolean = true): Color = if (moves && LocalUnderPointer.current) Theme.accent else rest
 
 /** A row of its own on the ground: a hairline around, a large corner. */
 @Composable
@@ -351,7 +371,7 @@ fun Card(
             .fillMaxWidth()
             .clip(shape)
             .background(if (warning) Theme.danger.copy(alpha = 0.10f) else if (highlighted) Theme.accent.copy(alpha = 0.12f) else Theme.card)
-            .border(1.dp, if (warning) Theme.danger.copy(alpha = 0.55f) else if (highlighted) Theme.accent else Theme.line, shape)
+            .border(1.dp, if (warning) Theme.danger.copy(alpha = 0.55f) else if (highlighted) Theme.accent else Theme.keyLine, shape)
             .padding(horizontal = 13.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -384,12 +404,12 @@ fun KeyChip(text: String) {
 @Composable
 fun FilterPill(label: String, selected: Boolean = false, modifier: Modifier = Modifier) {
     Text(
-        voiced(label), maxLines = 1, color = if (selected) Color.White else Theme.muted,
+        voiced(label), maxLines = 1, color = if (selected) Color.White else wordUnderPointer(Theme.muted),
         style = mono(11f, bold = selected).copy(letterSpacing = 0.6.sp),
         modifier = modifier
             .clip(CircleShape)
             .background(if (selected) Theme.accent else Color.Transparent)
-            .border(1.dp, if (selected) Theme.accent else Theme.line, CircleShape)
+            .border(1.dp, if (selected) Theme.accent else Theme.keyLine, CircleShape)
             .padding(horizontal = 10.dp, vertical = 5.dp),
     )
 }

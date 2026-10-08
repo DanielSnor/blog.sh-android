@@ -1,11 +1,15 @@
 package app.blogsh.android.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,27 +17,27 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -41,11 +45,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -59,7 +63,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogWindowProvider
 import app.blogsh.android.R
 import app.blogsh.android.model.AppLanguage
 import app.blogsh.android.model.BuildStamp
@@ -89,6 +92,7 @@ import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.tone
 import app.blogsh.android.ui.ui
+import app.blogsh.android.ui.wordUnderPointer
 import app.blogsh.android.ui.worn
 import java.time.Instant
 
@@ -100,7 +104,16 @@ import java.time.Instant
 @Composable
 fun SettingsSheet(onDismiss: () -> Unit) {
     val reading = Reading.shared
-    PaperSheet(onDismiss, name = stringResource(R.string.settings), actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) }) {
+    // The colour being chosen, if one is: its picker stands at the foot of this sheet.
+    var picking by remember { mutableStateOf<Picking?>(null) }
+    PaperSheet(
+        onDismiss, name = stringResource(R.string.settings), actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) },
+        over = {
+            picking?.let { one ->
+                key(one) { ColourPicker(one.title, one.value(), one.set, Modifier.align(Alignment.BottomCenter)) { picking = null } }
+            }
+        },
+    ) {
         SectionLabel(stringResource(R.string.language))
         val system = stringResource(R.string.as_the_system_has_it)
         Plate {
@@ -114,7 +127,7 @@ fun SettingsSheet(onDismiss: () -> Unit) {
         }
         Hint(stringResource(R.string.the_app_speaks_the_chosen_language_after))
 
-        ColoursSection()
+        ColoursSection { picking = it }
 
         SectionLabel(stringResource(R.string.text_size))
         TextSizePicker()
@@ -129,7 +142,7 @@ fun SettingsSheet(onDismiss: () -> Unit) {
 private fun ChoiceLine(name: String, chosen: Boolean, choose: () -> Unit) {
     Pressable(choose, modifier = Modifier.semantics { selected = chosen }) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(name, color = Theme.ink, style = ui(15f), modifier = Modifier.weight(1f))
+            Text(name, color = wordUnderPointer(Theme.ink), style = ui(15f), modifier = Modifier.weight(1f))
             if (chosen) Mark(Symbols.checkmark, 18.dp)
         }
     }
@@ -138,16 +151,20 @@ private fun ChoiceLine(name: String, chosen: Boolean, choose: () -> Unit) {
 /** One well of the table: which colour, of which scheme. */
 private data class Pick(val part: Shades.Part, val dark: Boolean)
 
+/** A colour that is being chosen: what its well is called, what it is now, and how it is changed. */
+class Picking(val title: String, val value: () -> Long, val set: (Long) -> Unit)
+
 /**
  * Whose colours the app wears -- the open blog's, its own, or the ones
  * chosen here -- and, for the last, the table they are chosen in: five
- * colours by day and five by night, each a well that opens a picker.
+ * colours by day and five by night, each a well that opens a picker --
+ * `choose` is told which colour, and whoever holds the sheet shows the
+ * picker over it.
  */
 @Composable
-fun ColoursSection() {
+fun ColoursSection(choose: (Picking) -> Unit) {
     val reading = Reading.shared
     val dark = isSystemInDarkTheme()
-    var picking by remember { mutableStateOf<Pick?>(null) }
     // The chosen colours cannot be read on this screen as it is now: the
     // section then keeps to the app's own, so there is always a way back.
     val unreadable = reading.wearing == Colouring.Chosen && !reading.worn.scheme(dark).legible
@@ -200,7 +217,7 @@ fun ColoursSection() {
                                 for (scheme in listOf(false, true)) {
                                     val pick = Pick(part, scheme)
                                     Box(Modifier.width(column), contentAlignment = Alignment.Center) {
-                                        ColourWell(value(pick), title(pick)) { picking = pick }
+                                        ColourWell(value(pick), title(pick)) { choose(Picking(title(pick), { value(pick) }, { set(pick, it) })) }
                                     }
                                 }
                             }
@@ -227,9 +244,6 @@ fun ColoursSection() {
     } else {
         Column { section() }
     }
-    picking?.let { pick ->
-        ColourPicker(title(pick), value(pick), { set(pick, it) }) { picking = null }
-    }
 }
 
 /** One colour, shown: a swatch that is a key. */
@@ -244,14 +258,15 @@ private fun ColourWell(value: Long, label: String, pick: () -> Unit) {
 /**
  * A picker for one colour, where the system has none: around the wheel,
  * away from grey, up from black -- or the number itself, as a palette
- * writes it. Every move in it is the colour at once, and it covers only
- * the foot of the screen, so the app is seen changing over it. In the
- * app's own colours whatever is worn, as a system's picker would be:
- * what is being chosen may well be what it would be drawn in.
+ * writes it. Every move in it is the colour at once. It stands at the
+ * foot of the sheet that asked for it, a part of that sheet and not a
+ * window of its own: a window is something the system may dim what is
+ * behind, and what is behind is the app changing colour. In the app's
+ * own colours whatever is worn, as a system's picker would be: what is
+ * being chosen may well be what it would be drawn in.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ColourPicker(title: String, value: Long, onChange: (Long) -> Unit, onDismiss: () -> Unit) {
+private fun ColourPicker(title: String, value: Long, onChange: (Long) -> Unit, modifier: Modifier = Modifier, onDismiss: () -> Unit) {
     var hsv by remember { mutableStateOf(Hsv.of(value)) }
     var number by remember { mutableStateOf(written(value)) }
     fun move(to: Hsv) {
@@ -259,55 +274,52 @@ private fun ColourPicker(title: String, value: Long, onChange: (Long) -> Unit, o
         number = written(to.number)
         onChange(to.number)
     }
+    BackHandler(onBack = onDismiss)
     PlainGround {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = Theme.paper, scrimColor = Color.Transparent,
-            dragHandle = { BottomSheetDefaults.DragHandle(color = Theme.muted) },
+        val shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        val quiet = remember { MutableInteractionSource() }
+        Column(
+            modifier.fillMaxWidth().shadow(18.dp, shape).clip(shape).background(Theme.paper).border(1.dp, Theme.line, shape)
+                // A touch beside a strip is the picker's, not the list's under it.
+                .clickable(interactionSource = quiet, indication = null) {}
+                // Over the bar at the screen's foot, and over the keyboard when the number is typed.
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                .padding(horizontal = Theme.gutter).padding(top = 10.dp, bottom = 14.dp)
         ) {
-            // Nothing is laid over the screen behind: what is being chosen is seen on it as it is.
-            val view = LocalView.current
-            SideEffect {
-                generateSequence(view.parent) { it.parent }.filterIsInstance<DialogWindowProvider>().firstOrNull()?.window?.setDimAmount(0f)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                EngineLabel(title, Modifier.weight(1f), color = Theme.ink)
+                DialogKey(stringResource(R.string.done), onClick = onDismiss)
             }
-            Typed {
-                Column(Modifier.fillMaxWidth().padding(horizontal = Theme.gutter).padding(bottom = 16.dp).navigationBarsPadding()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        EngineLabel(title, Modifier.weight(1f), color = Theme.ink)
-                        DialogKey(stringResource(R.string.done), onClick = onDismiss)
-                    }
-                    val shape = RoundedCornerShape(8.dp)
-                    val named = stringResource(R.string.android_colour_number)
-                    Row(Modifier.padding(top = 4.dp, bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(52.dp, 32.dp).clip(shape).background(tone(hsv.number)).border(1.dp, Theme.muted.copy(alpha = 0.55f), shape))
-                        PlainField(
-                            number,
-                            { typed ->
-                                number = typed.take(7)
-                                // Only a whole number is a colour: half of one is still being typed.
-                                if (typed.length == 7) Tones.value(typed)?.let {
-                                    hsv = Hsv.of(it)
-                                    onChange(it)
-                                }
-                            },
-                            mono = true, keyboard = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
-                            modifier = Modifier.weight(1f).semantics { contentDescription = named },
-                        )
-                    }
-                    Track(
-                        stringResource(R.string.android_hue), hsv.hue / 360f,
-                        listOf(0f, 60f, 120f, 180f, 240f, 300f, 360f).map { Color.hsv(it, 1f, 1f) },
-                    ) { move(hsv.copy(hue = it * 360f)) }
-                    Track(
-                        stringResource(R.string.android_saturation), hsv.saturation,
-                        listOf(Color.hsv(hsv.hue, 0f, hsv.value), Color.hsv(hsv.hue, 1f, hsv.value)),
-                    ) { move(hsv.copy(saturation = it)) }
-                    Track(
-                        stringResource(R.string.android_brightness), hsv.value,
-                        listOf(Color.Black, Color.hsv(hsv.hue, hsv.saturation, 1f)),
-                    ) { move(hsv.copy(value = it)) }
-                }
+            val well = RoundedCornerShape(8.dp)
+            val named = stringResource(R.string.android_colour_number)
+            Row(Modifier.padding(top = 4.dp, bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(52.dp, 32.dp).clip(well).background(tone(hsv.number)).border(1.dp, Theme.muted.copy(alpha = 0.55f), well))
+                PlainField(
+                    number,
+                    { typed ->
+                        number = typed.take(7)
+                        // Only a whole number is a colour: half of one is still being typed.
+                        if (typed.length == 7) Tones.value(typed)?.let {
+                            hsv = Hsv.of(it)
+                            onChange(it)
+                        }
+                    },
+                    mono = true, keyboard = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
+                    modifier = Modifier.weight(1f).semantics { contentDescription = named },
+                )
             }
+            Track(
+                stringResource(R.string.android_hue), hsv.hue / 360f,
+                listOf(0f, 60f, 120f, 180f, 240f, 300f, 360f).map { Color.hsv(it, 1f, 1f) },
+            ) { move(hsv.copy(hue = it * 360f)) }
+            Track(
+                stringResource(R.string.android_saturation), hsv.saturation,
+                listOf(Color.hsv(hsv.hue, 0f, hsv.value), Color.hsv(hsv.hue, 1f, hsv.value)),
+            ) { move(hsv.copy(saturation = it)) }
+            Track(
+                stringResource(R.string.android_brightness), hsv.value,
+                listOf(Color.Black, Color.hsv(hsv.hue, hsv.saturation, 1f)),
+            ) { move(hsv.copy(value = it)) }
         }
     }
 }
@@ -389,11 +401,13 @@ fun TextSizePicker() {
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).clip(shape).background(Theme.card).border(1.dp, Theme.line, shape)) {
         TextSize.entries.forEachIndexed { index, size ->
             val chosen = size == reading.textSize
+            val source = remember { MutableInteractionSource() }
+            val over by source.collectIsHoveredAsState()
             if (index > 0) Box(Modifier.width(1.dp).fillMaxHeight().background(Theme.line))
             Box(
                 // The chosen one is filled with the accent, as a chosen filter is.
                 Modifier.weight(1f).heightIn(min = 52.dp).background(if (chosen) Theme.accent else Color.Transparent)
-                    .clickable(role = Role.RadioButton) { reading.set(size) }
+                    .clickable(interactionSource = source, indication = LocalIndication.current, role = Role.RadioButton) { reading.set(size) }
                     .semantics {
                         contentDescription = names[index]
                         selected = chosen
@@ -401,7 +415,7 @@ fun TextSizePicker() {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    "Aa", color = if (chosen) Color.White else Theme.ink,
+                    "Aa", color = if (chosen) Color.White else if (over) Theme.accent else Theme.ink,
                     style = TextStyle(fontFamily = Faces.sans, fontWeight = FontWeight.Medium, fontSize = with(density) { size.sample(wide).dp.toSp() }),
                 )
             }

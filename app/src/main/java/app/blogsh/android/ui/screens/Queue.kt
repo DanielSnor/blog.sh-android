@@ -425,6 +425,7 @@ fun QueueScreen(languages: List<String> = emptyList()) {
             confirm = stringResource(R.string.carry),
             keyboard = KeyboardOptions(keyboardType = KeyboardType.Number),
             message = stringResource(R.string.the_posts_in_between_step_back_one),
+            chosen = true,
             onConfirm = { scope.launch { carry(row, carryTo) } },
             onDismiss = { carrying = null },
         )

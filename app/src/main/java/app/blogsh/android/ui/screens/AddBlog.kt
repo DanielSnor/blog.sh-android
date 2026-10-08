@@ -6,7 +6,11 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,12 +19,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.blogsh.android.R
@@ -37,13 +45,16 @@ import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.ui.Command
 import app.blogsh.android.ui.Hint
 import app.blogsh.android.ui.InfoRow
+import app.blogsh.android.ui.Mark
 import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.PlainField
 import app.blogsh.android.ui.Plate
+import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.SheetBars
+import app.blogsh.android.ui.SheetFrame
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.Typed
@@ -138,6 +149,7 @@ fun AddBlogSheet(initialCode: String = "", onBack: () -> Unit, onDone: () -> Uni
     Dialog(onDismissRequest = onBack, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         SheetBars()
         Typed {
+            SheetFrame {
             PaperScreen(onBack = onBack, name = stringResource(R.string.add_a_blog)) {
                 SectionLabel(stringResource(R.string.with_a_code))
                 Plate {
@@ -156,6 +168,7 @@ fun AddBlogSheet(initialCode: String = "", onBack: () -> Unit, onDone: () -> Uni
                         }
                     }
                     row {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         PlainField(
                             text,
                             {
@@ -164,8 +177,22 @@ fun AddBlogSheet(initialCode: String = "", onBack: () -> Unit, onDone: () -> Uni
                             },
                             prompt = "blogsh://pair?…", mono = true, size = 13f, singleLine = false, enabled = !connecting,
                             keyboard = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Uri),
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.weight(1f),
                         )
+                        // What was pasted and is not a code is put away by one key.
+                        if (text.isNotEmpty() && !connecting) {
+                            val clear = stringResource(R.string.android_b_clear)
+                            Pressable(
+                                {
+                                    text = ""
+                                    problem = null
+                                },
+                                modifier = Modifier.semantics { contentDescription = clear },
+                            ) {
+                                Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) { Mark(Symbols.xmarkCircle, 20.dp, Theme.muted) }
+                            }
+                        }
+                        }
                     }
                     row {
                         Command(stringResource(R.string.android_paste), Symbols.docOnClipboard, enabled = !connecting) {
@@ -215,6 +242,7 @@ fun AddBlogSheet(initialCode: String = "", onBack: () -> Unit, onDone: () -> Uni
                     }
                 }
                 Hint(stringResource(R.string.for_a_blog_that_lives_in_a))
+            }
             }
         }
     }

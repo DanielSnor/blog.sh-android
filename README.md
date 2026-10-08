@@ -228,6 +228,21 @@ together on one card, a hairline between them -- with one filled button
 for the one thing the screen is for, and what cannot be taken back set
 apart in a colour of its own.
 
+On a tablet the screens share the display as they do on an iPad. Held on
+its side there is room for two: the menu on the left -- the first screen,
+a column of its own, wider where the type is larger -- and beside it the
+screen that is open, with its own way back; another entry of the menu
+takes the open one's place, and the tile of the one that is open says so.
+With nothing open the place beside the menu says what it is for. The menu
+can step out of an open screen's way by a key in its bar, and comes back
+by the same key in the screen's -- or by itself, when the last screen
+beside it closes. Held upright the tablet is one large page: the open
+screen, or the menu at two thirds of the width and larger by a third.
+Turning the tablet keeps every screen as it was. A sheet -- the settings,
+the blogs, a form -- is a card in the middle of the display, the screen
+that asked for it in sight around it. And where there is a pointer, a key
+answers to it: its outline and its word go into the accent.
+
 What is in the accent goes by the rules of the blog's own pages: the
 accent is an action or something the engine says. So the marks of keys
 and tiles, the names of sections, the dates in a list, a pin, the filter
@@ -266,18 +281,14 @@ at once.
   moves up the system's own scale.
 - **The colour picker is the app's own.** Android has none to offer: a
   strip for the hue, one for how far from grey, one for how far from
-  black, and the number as a palette writes it. It covers the foot of
-  the screen, so the app is seen changing over it, and keeps to the
-  default scheme whatever is worn.
+  black, and the number as a palette writes it. It stands at the foot of
+  the settings' own sheet -- not in a window of its own, which a system
+  may dim what is behind -- so the app is seen changing over it, and it
+  keeps to the default scheme whatever is worn.
 - **Sharing** opens Android's sheet with the address as text and the
   title as its subject; there is no preview of the link in it.
 - **One icon.** An Android app cannot choose among icons the way an iOS
   one can, so the icon is one, whatever the open blog's accent is.
-- **No pointer, no menu to hide.** On a Mac and an iPad a key answers to
-  the pointer over it, and the menu's column has a key that hides it;
-  both wait for the tablet's layout here.
-- **A phone.** The two-column layout an iPad has is not here yet; a tablet
-  shows the phone's screens.
 - **The typewriter face** is Courier Prime, where iOS has the system's
   Courier New, and the marks are Google's Material Symbols, where iOS has
   Apple's SF Symbols -- neither of Apple's may travel.

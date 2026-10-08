@@ -137,4 +137,6 @@ object Symbols {
     val wrenchAndScrewdriver = R.drawable.ic_build
     /** doc.on.clipboard */
     val docOnClipboard = R.drawable.ic_content_paste
+    /** sidebar.left */
+    val sidebarLeft = R.drawable.ic_side_navigation
 }

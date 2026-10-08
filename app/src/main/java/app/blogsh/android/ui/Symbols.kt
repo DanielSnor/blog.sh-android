@@ -121,4 +121,20 @@ object Symbols {
     val squareAndArrowUp = R.drawable.ic_ios_share
     /** square.and.pencil */
     val squareAndPencil = R.drawable.ic_edit_square
+    /** checklist */
+    val checklist = R.drawable.ic_checklist
+    /** stethoscope */
+    val stethoscope = R.drawable.ic_stethoscope
+    /** xmark.octagon */
+    val xmarkOctagon = R.drawable.ic_dangerous
+    /** exclamationmark.triangle */
+    val exclamationmarkTriangle = R.drawable.ic_warning
+    /** arrow.clockwise */
+    val arrowClockwise = R.drawable.ic_refresh
+    /** qrcode.viewfinder */
+    val qrcodeViewfinder = R.drawable.ic_qr_code_scanner
+    /** wrench.and.screwdriver */
+    val wrenchAndScrewdriver = R.drawable.ic_build
+    /** doc.on.clipboard */
+    val docOnClipboard = R.drawable.ic_content_paste
 }

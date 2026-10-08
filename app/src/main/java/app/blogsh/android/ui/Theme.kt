@@ -84,8 +84,6 @@ class Palette(
     val line: Color,
     /** The inside of a card, barely off the ground. */
     val card: Color,
-    /** Text on a pill filled with ink: the ground's own colour. */
-    val onInk: Color,
     /**
      * What cannot be taken back: a delete, a refusal. The one colour
      * beside the accent, and never a fill.
@@ -107,7 +105,7 @@ private fun palette(shades: Shades, dark: Boolean): Palette {
     val ink = tone(shades.text)
     return Palette(
         paper = paper, ink = ink, muted = tone(shades.metaText), line = tone(shades.border),
-        card = ink.copy(alpha = if (dark) 0.05f else 0.03f), onInk = paper,
+        card = ink.copy(alpha = if (dark) 0.05f else 0.03f),
         danger = if (dark) Color(0xFFFF7A5C) else Color(0xFFA81800),
     )
 }
@@ -141,7 +139,6 @@ object Theme {
     val muted: Color @Composable get() = LocalPalette.current.muted
     val line: Color @Composable get() = LocalPalette.current.line
     val card: Color @Composable get() = LocalPalette.current.card
-    val onInk: Color @Composable get() = LocalPalette.current.onInk
     val danger: Color @Composable get() = LocalPalette.current.danger
 
     /** The one accent: every control of the app, its links, its counts. What the iOS app calls the tint. */
@@ -336,14 +333,25 @@ fun Pressable(
 
 /** A row of its own on the ground: a hairline around, a large corner. */
 @Composable
-fun Card(modifier: Modifier = Modifier, highlighted: Boolean = false, capsule: Boolean = false, content: @Composable RowScope.() -> Unit) {
+fun Card(
+    modifier: Modifier = Modifier,
+    highlighted: Boolean = false,
+    capsule: Boolean = false,
+    /**
+     * Something that wants looking at before it is lost sight of: the
+     * card stands on the colour of what cannot be taken back, thinned to
+     * a wash -- told apart at a glance from the cards that only report.
+     */
+    warning: Boolean = false,
+    content: @Composable RowScope.() -> Unit,
+) {
     val shape: Shape = if (capsule) CircleShape else RoundedCornerShape(Theme.corner)
     Row(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (highlighted) Theme.accent.copy(alpha = 0.12f) else Theme.card)
-            .border(1.dp, if (highlighted) Theme.accent else Theme.line, shape)
+            .background(if (warning) Theme.danger.copy(alpha = 0.10f) else if (highlighted) Theme.accent.copy(alpha = 0.12f) else Theme.card)
+            .border(1.dp, if (warning) Theme.danger.copy(alpha = 0.55f) else if (highlighted) Theme.accent else Theme.line, shape)
             .padding(horizontal = 13.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -351,13 +359,14 @@ fun Card(modifier: Modifier = Modifier, highlighted: Boolean = false, capsule: B
     )
 }
 
-/** How many: the accent, filled, with the number in the engine's voice. */
+/**
+ * How many: the number in the engine's voice and in ink. The accent on
+ * such a card is its mark's; the number beside it is only a number, as
+ * the counts beside the marks are on the blog's own pages.
+ */
 @Composable
 fun CountBadge(count: Int) {
-    Text(
-        "$count", color = Color.White, style = mono(12f),
-        modifier = Modifier.clip(CircleShape).background(Theme.accent).padding(horizontal = 9.dp, vertical = 2.dp),
-    )
+    Text("$count", color = Theme.ink, style = mono(13f), modifier = Modifier.padding(horizontal = 4.dp))
 }
 
 /** A key of the terminal, kept as a mark: a digit in a small square. */
@@ -368,16 +377,19 @@ fun KeyChip(text: String) {
     }
 }
 
-/** A filter: an outline at rest, filled with ink when it is the one on. */
+/**
+ * A filter: an outline and a muted word at rest; the one that is on is
+ * filled with the accent, as on the blog's own pages.
+ */
 @Composable
 fun FilterPill(label: String, selected: Boolean = false, modifier: Modifier = Modifier) {
     Text(
-        voiced(label), maxLines = 1, color = if (selected) Theme.onInk else Theme.muted,
+        voiced(label), maxLines = 1, color = if (selected) Color.White else Theme.muted,
         style = mono(11f, bold = selected).copy(letterSpacing = 0.6.sp),
         modifier = modifier
             .clip(CircleShape)
-            .background(if (selected) Theme.ink else Color.Transparent)
-            .border(1.dp, if (selected) Theme.ink else Theme.line, CircleShape)
+            .background(if (selected) Theme.accent else Color.Transparent)
+            .border(1.dp, if (selected) Theme.accent else Theme.line, CircleShape)
             .padding(horizontal = 10.dp, vertical = 5.dp),
     )
 }

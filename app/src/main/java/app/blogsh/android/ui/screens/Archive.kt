@@ -397,8 +397,11 @@ fun PostRowView(post: PostRow) {
         Column(Modifier.padding(top = 3.dp), verticalArrangement = Arrangement.spacedBy(5.dp), horizontalAlignment = Alignment.End) {
             val day = post.day
             if (day != null) {
+                // A date is in the accent, as on the blog's own pages; one
+                // still to come is told by its weight, and by saying a day
+                // and an hour.
                 Text(
-                    if (post.scheduled) RowDate.soon(day) else RowDate.short(day), color = if (post.scheduled) Theme.accent else Theme.muted,
+                    if (post.scheduled) RowDate.soon(day) else RowDate.short(day), color = Theme.accent,
                     style = mono(11f, bold = post.scheduled), maxLines = 1,
                 )
             } else {
@@ -406,7 +409,7 @@ fun PostRowView(post: PostRow) {
             }
             if (post.pinned) {
                 val pinned = stringResource(R.string.pinned)
-                Mark(Symbols.pin, 14.dp, Theme.muted, Modifier.semantics { contentDescription = pinned })
+                Mark(Symbols.pin, 14.dp, Theme.accent, Modifier.semantics { contentDescription = pinned })
             }
         }
     }

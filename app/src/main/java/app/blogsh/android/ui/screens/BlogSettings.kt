@@ -36,6 +36,7 @@ import app.blogsh.android.ui.Asks
 import app.blogsh.android.ui.Choice
 import app.blogsh.android.ui.Command
 import app.blogsh.android.ui.DialogKey
+import app.blogsh.android.ui.DoneRow
 import app.blogsh.android.ui.EngineLabel
 import app.blogsh.android.ui.FieldRow
 import app.blogsh.android.ui.Hint
@@ -152,10 +153,8 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
                 if (line != null) {
                     row { SelectionContainer { Text(line, color = Theme.ink, style = mono(12f, bold = false)) } }
                     row {
-                        Command(
-                            stringResource(if (copied) R.string.copied else R.string.copy_the_authorized_keys_line),
-                            if (copied) Symbols.checkmark else Symbols.docOnDoc,
-                        ) {
+                        if (copied) DoneRow(stringResource(R.string.copied))
+                        else Command(stringResource(R.string.copy_the_authorized_keys_line), Symbols.docOnDoc) {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             clipboard.setPrimaryClip(ClipData.newPlainText("authorized_keys", line))
                             copied = true

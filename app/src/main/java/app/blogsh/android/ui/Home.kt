@@ -32,6 +32,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -73,6 +75,7 @@ import app.blogsh.android.model.VersionAnswer
 import app.blogsh.android.model.engineInstant
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.said
+import app.blogsh.android.ui.screens.AddBlogSheet
 import app.blogsh.android.ui.screens.ArchiveScreen
 import app.blogsh.android.ui.screens.BlogsSheet
 import app.blogsh.android.ui.screens.ComposeScreen
@@ -84,6 +87,7 @@ import app.blogsh.android.ui.screens.StateFilter
 import app.blogsh.android.ui.screens.TextEditScreen
 import app.blogsh.android.ui.screens.TranslateScreen
 import app.blogsh.android.ui.screens.TrashScreen
+import java.net.URI
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -242,6 +246,14 @@ class HomeState {
 }
 
 /**
+ * A link that opened the app -- a pairing code read elsewhere, by a
+ * camera app or out of a note -- kept until its screen has taken it.
+ */
+object Incoming {
+    var code by mutableStateOf<String?>(null)
+}
+
+/**
  * The first screen, at one glance: which blog and which engine, what
  * waits -- the next post in the queue, the drafts in progress -- and the
  * six entries of the wizard's menu as tiles.
@@ -253,6 +265,7 @@ fun HomeScreen(state: HomeState) {
     val scope = rememberCoroutineScope()
     var showingSettings by remember { mutableStateOf(false) }
     var showingBlogs by remember { mutableStateOf(false) }
+    val links = LocalUriHandler.current
     val blog = Blogs.current
     val identity = state.identity
     val name = identity?.site?.name ?: blog?.label ?: ""
@@ -350,22 +363,21 @@ fun HomeScreen(state: HomeState) {
                     else Busy(modifier = Modifier.padding(top = 14.dp))
                 }
 
-                state.glance?.let { glance ->
+                // What waits, in the order it wants a hand: the drafts on
+                // the blog, then the writing kept on this device from the
+                // last time -- said here, or nobody knows of it before
+                // opening the form it waits in -- and last the queue, which
+                // goes out by itself.
+                val glance = state.glance
+                if (glance != null || begun.isNotEmpty()) {
                     Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Pressable({ open(MenuEntry.Queue) }) { QueueCard(glance) }
-                        Pressable({ open(MenuEntry.Browse, StateFilter.Draft) }) { DraftsCard(glance) }
-                    }
-                }
-
-                // Writing kept on this device from the last time: said here,
-                // or nobody knows of it before opening the form it waits in.
-                if (begun.isNotEmpty()) {
-                    Column(Modifier.padding(top = if (state.glance == null) 18.dp else 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (glance != null) Pressable({ open(MenuEntry.Browse, StateFilter.Draft) }) { DraftsCard(glance) }
                         for (one in begun) Pressable({ resume(one) }) { BegunCard(one) }
+                        if (glance != null) Pressable({ open(MenuEntry.Queue) }) { QueueCard(glance) }
                     }
                 }
 
-                Column(Modifier.padding(top = if (state.glance == null) 22.dp else 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.padding(top = if (glance == null && begun.isEmpty()) 22.dp else 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     for (row in MenuEntry.entries.chunked(3)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             for (entry in row) {
@@ -385,12 +397,47 @@ fun HomeScreen(state: HomeState) {
                     }
                 }
 
+                // The blog itself, as a reader has it.
+                val site = remember(url) {
+                    runCatching { URI(url) }.getOrNull()?.takeIf { it.scheme?.lowercase() in listOf("http", "https") && !it.host.isNullOrEmpty() }
+                }
+                if (site != null) {
+                    Pressable({ runCatching { links.openUri(url) } }, modifier = Modifier.padding(top = 8.dp)) {
+                        Card(capsule = true) {
+                            Mark(Symbols.safari, 17.dp)
+                            EngineLabel(stringResource(R.string.open_the_blog_in_the_browser))
+                        }
+                    }
+                }
+
                 blog?.facts?.let { facts ->
                     Box(Modifier.fillMaxWidth().padding(top = 26.dp), contentAlignment = Alignment.Center) {
                         FactLines(facts) { open(MenuEntry.Restore) }
                     }
                 }
             }
+        }
+    }
+
+    // A code read elsewhere opens the app with it: the way in for a blog,
+    // with the code already there, over whatever was open.
+    val incoming = Incoming.code
+    LaunchedEffect(incoming) {
+        if (incoming != null) {
+            showingSettings = false
+            showingBlogs = false
+        }
+    }
+    if (incoming != null) {
+        key(incoming) {
+            AddBlogSheet(
+                initialCode = incoming,
+                onBack = { Incoming.code = null },
+                onDone = {
+                    Incoming.code = null
+                    scope.launch { state.load() }
+                },
+            )
         }
     }
 
@@ -449,11 +496,11 @@ private fun BegunCard(one: Begun) {
         is Begun.What.Language ->
             stringResource(R.string.unsaved_translation, Locale.forLanguageTag(what.lang).getDisplayLanguage(Locale.getDefault()).ifEmpty { what.lang })
     }
-    Card {
-        Mark(Symbols.squareAndPencil, 21.dp)
+    Card(warning = true) {
+        Mark(Symbols.squareAndPencil, 21.dp, Theme.danger)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                "$kind · ${RowDate.spoken(Instant.ofEpochMilli(one.at))}", color = Theme.muted, style = ui(12f),
+                "$kind · ${RowDate.spoken(Instant.ofEpochMilli(one.at))}", color = Theme.danger, style = ui(12f, FontWeight.Medium),
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
             if (one.title.isNotEmpty()) {
@@ -476,7 +523,9 @@ private fun Tile(entry: MenuEntry, highlighted: Boolean = false) {
             .clearAndSetSemantics {},
         verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Mark(entry.symbol, 26.dp, Theme.ink)
+        // A tile is an action: its mark is in the accent, its word in
+        // ink -- as the cards over the tiles have it.
+        Mark(entry.symbol, 26.dp)
         Text(stringResource(entry.shortId), color = Theme.ink, style = ui(13f, FontWeight.SemiBold), maxLines = 1)
     }
 }
@@ -494,14 +543,19 @@ private fun FactLines(facts: Facts, toTrash: () -> Unit) {
     val hours = MeasureFormat.getInstance(Locale.getDefault(), MeasureFormat.FormatWidth.WIDE)
         .format(Measure(facts.readingHours.roundToLong(), MeasureUnit.HOUR))
     class Line(val label: String, val value: String, val detail: String?, val action: (() -> Unit)? = null)
-    val lines = listOf(
-        Line(stringResource(R.string.facts_posts), number(facts.posts), if (facts.since.isEmpty()) null else stringResource(R.string.facts_since, facts.since)),
-        Line(stringResource(R.string.facts_words), number(facts.words), if (facts.readingHours >= 1) stringResource(R.string.facts_reading, hours) else null),
-        Line(stringResource(R.string.facts_tags), number(facts.tags), null),
-        Line(stringResource(R.string.facts_media), number(facts.media), if (facts.media > 0) size(facts.mediaBytes) else null),
-        Line(stringResource(R.string.facts_trash), number(facts.trash), if (facts.trash > 0) size(facts.trashBytes) else null, toTrash),
-        Line(stringResource(R.string.facts_versions), number(facts.versions), if (facts.versions > 0) size(facts.versionsBytes) else null, toTrash),
+    // A line whose number is nought is not said at all, as on the blog's
+    // own pages: there is nothing in it to read, and behind the last two
+    // nothing to empty.
+    val all = listOf(
+        facts.posts to Line(stringResource(R.string.facts_posts), number(facts.posts), if (facts.since.isEmpty()) null else stringResource(R.string.facts_since, facts.since)),
+        facts.words to Line(stringResource(R.string.facts_words), number(facts.words), if (facts.readingHours >= 1) stringResource(R.string.facts_reading, hours) else null),
+        facts.tags to Line(stringResource(R.string.facts_tags), number(facts.tags), null),
+        facts.media to Line(stringResource(R.string.facts_media), number(facts.media), size(facts.mediaBytes)),
+        facts.trash to Line(stringResource(R.string.facts_trash), number(facts.trash), size(facts.trashBytes), toTrash),
+        facts.versions to Line(stringResource(R.string.facts_versions), number(facts.versions), size(facts.versionsBytes), toTrash),
     )
+    val lines = all.filter { it.first > 0 }.map { it.second }
+    if (lines.isEmpty()) return
     // The block stands in the middle as one: its widest line centred,
     // the others keeping their places under it.
     // A line is as tall as its type; where large type leaves it too short

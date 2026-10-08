@@ -1,0 +1,225 @@
+package app.blogsh.android
+
+import app.blogsh.android.model.Blog
+import app.blogsh.android.model.BlogList
+import app.blogsh.android.model.PairingCode
+import app.blogsh.android.model.PairingError
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Test
+import java.util.Base64
+
+/**
+ * The code `./blog.sh pair` shows, read by the app. A mistake here is a
+ * key handed to the wrong machine, or a good code turned away.
+ */
+class PairingTest {
+    /** 32 bytes, 0...31, in the alphabet a link can carry and without padding. */
+    private val key = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"
+
+    private fun link(change: (MutableMap<String, String?>) -> Unit = {}): String {
+        val parts = mutableMapOf<String, String?>(
+            "v" to "1", "h" to "blog.example.org", "p" to "2222", "u" to "me", "k" to key,
+            "f" to "abc-DEF_123.zzz", "n" to "M%C5%AFj%20blog",
+        )
+        change(parts)
+        return "blogsh://pair?" + listOf("v", "h", "p", "u", "k", "f", "n").mapNotNull { name -> parts[name]?.let { "$name=$it" } }.joinToString("&")
+    }
+
+    private fun problem(text: String): PairingCode.Problem? =
+        try {
+            PairingCode(text)
+            null
+        } catch (e: PairingCode.Unreadable) {
+            e.problem
+        }
+
+    @Test
+    fun aCodeIsReadWhole() {
+        val code = PairingCode(link())
+        assertEquals("blog.example.org", code.host)
+        assertEquals(2222, code.port)
+        assertEquals("me", code.user)
+        assertArrayEquals(ByteArray(32) { it.toByte() }, code.seed)
+        assertEquals(listOf("abc-DEF_123", "zzz"), code.fingerprints)
+        assertEquals("Můj blog", code.site)
+    }
+
+    /** Pasted with a line break after it, scanned in another case of its scheme. */
+    @Test
+    fun whatSurroundsTheLinkDoesNotMatter() {
+        assertEquals("blog.example.org", PairingCode("  \n" + link() + "\n").host)
+        assertEquals(2222, PairingCode(link().replace("blogsh://pair", "BLOGSH://PAIR")).port)
+    }
+
+    @Test
+    fun theFingerprintsAndTheNameMayBeMissing() {
+        val code = PairingCode(link { it["f"] = null; it["n"] = null })
+        assertTrue(code.fingerprints.isEmpty())
+        assertNull(code.site)
+        assertNull(PairingCode(link { it["n"] = "%20" }).site)
+    }
+
+    @Test
+    fun anAddressOfAnyKindIsAnAddress() {
+        assertEquals("192.168.1.20", PairingCode(link { it["h"] = "192.168.1.20" }).host)
+        assertEquals("fe80::1", PairingCode(link { it["h"] = "fe80%3A%3A1" }).host)
+    }
+
+    @Test
+    fun whatIsNotACodeIsNotOne() {
+        for (text in listOf("", "ahoj", "https://example.org/pair?v=1", "blogsh://open?v=1&h=x", "blogsh:pair")) {
+            assertEquals(text, PairingCode.Problem.NotACode, problem(text))
+        }
+    }
+
+    /**
+     * A kind of code the app has not heard of is said to be that -- not
+     * read as if it were the kind it knows.
+     */
+    @Test
+    fun aCodeOfAnotherVersionIsSaidToBeOne() {
+        assertEquals(PairingCode.Problem.AnotherVersion, problem(link { it["v"] = "2" }))
+        assertEquals(PairingCode.Problem.Incomplete, problem(link { it["v"] = null }))
+    }
+
+    @Test
+    fun aCodeWithAPartMissingIsIncomplete() {
+        for (part in listOf("h", "p", "u", "k")) {
+            assertEquals(part, PairingCode.Problem.Incomplete, problem(link { it[part] = null }))
+        }
+        assertEquals(PairingCode.Problem.Incomplete, problem(link { it["p"] = "0" }))
+        assertEquals(PairingCode.Problem.Incomplete, problem(link { it["p"] = "70000" }))
+        assertEquals(PairingCode.Problem.Incomplete, problem(link { it["p"] = "ssh" }))
+        // A key of another length is no key of this kind.
+        assertEquals(PairingCode.Problem.Incomplete, problem(link { it["k"] = "AAECAwQ" }))
+        assertEquals(PairingCode.Problem.Incomplete, problem(link { it["k"] = "!!!" }))
+    }
+
+    /**
+     * The engine writes the link the way a form is sent (Ruby's
+     * `URI.encode_www_form`): a space is a plus, a plus that was meant is
+     * `%2B`. A blog called "Můj blog" is not "Můj+blog".
+     */
+    @Test
+    fun aPartOfTheLinkIsReadAsTheEngineWroteIt() {
+        assertEquals("Můj blog a+b", PairingCode(link { it["n"] = "M%C5%AFj+blog+a%2Bb" }).site)
+        assertEquals("me+you", PairingCode(link { it["u"] = "me%2Byou" }).user)
+        assertEquals("100%", PairingCode(link { it["n"] = "100%" }).site)
+        assertEquals("Žluťoučký kůň", PairingCode(link { it["n"] = "%C5%BDlu%C5%A5ou%C4%8Dk%C3%BD%20k%C5%AF%C5%88" }).site)
+        // The first of two is the one that counts.
+        assertEquals("Můj blog", PairingCode(link() + "&n=second").site)
+        assertEquals("me", PairingCode(link() + "&u=somebody-else").user)
+    }
+
+    /** As ssh prints a fingerprint, and as the code spells the same one. */
+    @Test
+    fun aFingerprintIsComparedInTheCodesSpelling() {
+        assertEquals("ab-_cd", PairingCode.urlSafe("SHA256:ab+/cd=="))
+        assertEquals("ab-_cd", PairingCode.urlSafe("ab-_cd"))
+        val code = PairingCode(link { it["f"] = "ab-_cd.other" })
+        assertTrue(code.expects("SHA256:ab+/cd"))
+        assertTrue(code.expects("SHA256:other"))
+        assertFalse(code.expects("SHA256:somebody+else"))
+    }
+
+    /**
+     * A code that names no server takes the first one on trust, as a
+     * blog set up by hand does.
+     */
+    @Test
+    fun aCodeWithoutFingerprintsExpectsAnyServer() {
+        assertTrue(PairingCode(link { it["f"] = null }).expects("SHA256:whatever"))
+    }
+
+    /** The fingerprint of a key is the one ssh-keygen prints for it. */
+    @Test
+    fun theFingerprintOfAKeyIsSshsOwn() {
+        // ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJZ2lFQ0Nlp7tkPAqXT0k5i1a1xPB2SQXQv7fmM2U1bV
+        val blob = Base64.getDecoder().decode("AAAAC3NzaC1lZDI1NTE5AAAAIJZ2lFQ0Nlp7tkPAqXT0k5i1a1xPB2SQXQv7fmM2U1bV")
+        val print = PairingCode.fingerprint(blob)
+        assertTrue(print.startsWith("SHA256:"))
+        assertEquals(7 + 43, print.length)
+        assertFalse(print.contains("="))
+    }
+
+    // ---- The engine's answer
+
+    @Test
+    fun theEnginesYesNamesTheDevice() {
+        assertEquals("Opravdový telefon", PairingError.device("""{"ok": true, "device": "Opravdový telefon"}""".toByteArray()))
+    }
+
+    private fun refusal(answer: String): PairingError? =
+        try {
+            PairingError.device(answer.toByteArray())
+            null
+        } catch (e: PairingError) {
+            e
+        }
+
+    /**
+     * Too old, used already, or a code the blog never heard of: all the
+     * same to somebody holding a phone -- ask for a new one.
+     */
+    @Test
+    fun aSpentCodeIsSaidToBeSpent() {
+        for (word in listOf("expired", "used", "unknown_code")) {
+            assertEquals(word, PairingError.Spent, refusal("""{"ok": false, "error": "$word", "message": "…"}"""))
+        }
+    }
+
+    @Test
+    fun anotherNoCarriesTheEnginesSentence() {
+        assertEquals(
+            PairingError.Refused("That is not one ed25519 public key."),
+            refusal("""{"ok": false, "error": "bad_key", "message": "That is not one ed25519 public key."}"""),
+        )
+        assertEquals(PairingError.Refused("bash: no such file"), refusal("bash: no such file\n"))
+    }
+
+    // ---- The blog it leaves behind
+
+    /**
+     * Where a blog is, under its name: with its port where the port is
+     * not ssh's usual one.
+     */
+    @Test
+    fun whereABlogIsSaysItsPortWhenItIsNotTheUsualOne() {
+        var blog = Blog()
+        assertEquals("", blog.place)
+        blog = blog.copy(host = "blog.example")
+        assertEquals("blog.example", blog.place)
+        blog = blog.copy(user = "me")
+        assertEquals("me@blog.example", blog.place)
+        blog = blog.copy(port = 202)
+        assertEquals("me@blog.example:202", blog.place)
+        blog = blog.copy(host = "10.0.0.5", port = 2222)
+        assertEquals("me@10.0.0.5:2222", blog.place)
+        blog = blog.copy(host = "fe80::1")
+        assertEquals("me@[fe80::1]:2222", blog.place)
+        blog = blog.copy(port = 22)
+        assertEquals("me@fe80::1", blog.place)
+        // A port never set is the usual one.
+        blog = blog.copy(host = "blog.example", port = 0)
+        assertEquals("me@blog.example", blog.place)
+    }
+
+    /** A blog let in by a code comes whole, is the open one at once, and is there the next time the app starts. */
+    @Test
+    fun aBlogLetInByACodeIsTheOpenOneAtOnce() {
+        val notes = MemoryNotes()
+        val list = BlogList(notes) { }
+        val first = list.add()
+        val paired = Blog(host = "10.0.0.5", port = 2222, user = "me", name = "Můj blog")
+        list.adopt(paired)
+        assertEquals(paired.id, list.currentId)
+        assertEquals(listOf(first.id, paired.id), list.all.map { it.id })
+        val again = BlogList(notes) { }
+        assertEquals(paired, again.current)
+    }
+}

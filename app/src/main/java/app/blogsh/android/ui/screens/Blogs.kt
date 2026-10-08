@@ -62,6 +62,7 @@ import java.text.NumberFormat
 fun BlogsSheet(onDismiss: () -> Unit) {
     var removing by remember { mutableStateOf<Blog?>(null) }
     var settingUp by remember { mutableStateOf(false) }
+    var adding by remember { mutableStateOf(false) }
     val settings = stringResource(R.string.the_blog_s_settings)
     PaperSheet(
         onDismiss, scrolls = false, name = stringResource(R.string.blogs),
@@ -97,16 +98,15 @@ fun BlogsSheet(onDismiss: () -> Unit) {
             item {
                 PaperRow(rule = false) {
                     Box(Modifier.padding(vertical = 12.dp)) {
-                        Command(stringResource(R.string.add_a_blog), Symbols.plus) {
-                            Blogs.add()
-                            settingUp = true
-                        }
+                        // With a code from the server, or by hand: the next screen asks which.
+                        Command(stringResource(R.string.add_a_blog), Symbols.plus) { adding = true }
                     }
                 }
             }
         }
     }
     if (settingUp) BlogSettingsSheet(onBack = { settingUp = false }, onDone = { settingUp = false; onDismiss() })
+    if (adding) AddBlogSheet(onBack = { adding = false }, onDone = { adding = false; onDismiss() })
     removing?.let { blog ->
         Asks(
             stringResource(R.string.remove_from_the_app_its_key_is, blog.label),
@@ -135,7 +135,7 @@ fun BlogRow(blog: Blog, open: Boolean) {
             } else {
                 Text(blog.label, color = Theme.ink, style = ui(15f, FontWeight.Bold), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            val place = if (blog.host.isEmpty()) "" else (if (blog.user.isEmpty()) "" else blog.user + "@") + blog.host
+            val place = blog.place
             if (place.isNotEmpty()) Text(place, color = Theme.muted, style = mono(12f, bold = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (open) {

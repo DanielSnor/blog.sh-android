@@ -1,0 +1,73 @@
+{
+  "errors": 0,
+  "warnings": 3,
+  "oks": 8,
+  "findings": [
+    {
+      "level": "warn",
+      "kind": "placeholders",
+      "text": "Still the example's text: footer.links.",
+      "fix": "Harmless locally, but this is what visitors would read. ./style.sh asks for the bio, the footer and the links."
+    },
+    {
+      "level": "warn",
+      "kind": "scheduler",
+      "text": "1 post(s) are waiting in the queue, but nothing has ever run it here -- they will not publish on their own.",
+      "fix": "Schedule scripts/publish-scheduled.sh -- every fifteen minutes is what the wizard's times assume (*/15 * * * * /path/to/blog/scripts/publish-scheduled.sh). On a hosted install the panel's own cron section is the place; check that its path points at THIS blog and not another one."
+    },
+    {
+      "level": "warn",
+      "kind": "deploy",
+      "text": "No deploy target chosen, so the site is built locally and goes nowhere.",
+      "fix": "That is a fine place to start -- ./blog.sh preview shows the build. Run ./setup.sh when you want it online."
+    },
+    {
+      "level": "ok",
+      "kind": "env_sh",
+      "text": "env.sh is there and only you can read it.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "site_yml",
+      "text": "config/site.yml parses.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "identity",
+      "text": "The site's identity is filled in.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "timezone",
+      "text": "Timestamps are written in Europe/Prague.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "network",
+      "text": "No comments network configured -- posts are not announced anywhere.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "banner",
+      "text": "The banner image is there and its declared size matches the file.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "sidebar",
+      "text": "Sidebar: 1 card(s).",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "media_location",
+      "text": "No photo in the archive carries the place it was taken.",
+      "fix": null
+    }
+  ]
+}

@@ -391,7 +391,8 @@ fun TextSizePicker() {
             val chosen = size == reading.textSize
             if (index > 0) Box(Modifier.width(1.dp).fillMaxHeight().background(Theme.line))
             Box(
-                Modifier.weight(1f).heightIn(min = 52.dp).background(if (chosen) Theme.ink else Color.Transparent)
+                // The chosen one is filled with the accent, as a chosen filter is.
+                Modifier.weight(1f).heightIn(min = 52.dp).background(if (chosen) Theme.accent else Color.Transparent)
                     .clickable(role = Role.RadioButton) { reading.set(size) }
                     .semantics {
                         contentDescription = names[index]
@@ -400,7 +401,7 @@ fun TextSizePicker() {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    "Aa", color = if (chosen) Theme.onInk else Theme.ink,
+                    "Aa", color = if (chosen) Color.White else Theme.ink,
                     style = TextStyle(fontFamily = Faces.sans, fontWeight = FontWeight.Medium, fontSize = with(density) { size.sample(wide).dp.toSp() }),
                 )
             }

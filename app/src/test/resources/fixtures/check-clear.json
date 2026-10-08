@@ -1,0 +1,14 @@
+{
+  "errors": 0,
+  "warnings": 0,
+  "findings": [
+    {
+      "level": "ok",
+      "kind": "all_clear",
+      "data": {
+        "posts": 6590
+      },
+      "text": "Uvnitř archivu je vše v pořádku — příspěvků: 6590, média, odkazy i přesměrování sedí."
+    }
+  ]
+}

@@ -52,6 +52,22 @@ data class Blog(
             val folder = path.split("/").lastOrNull { it.isNotEmpty() } ?: ""
             return folder.ifEmpty { host.trim() }
         }
+
+    /**
+     * Where it is reached, as ssh would be told: the user, the server,
+     * and the port where it is not ssh's usual one -- a blog at home, or
+     * behind a host that moved its ssh, is on a port of its own, and two
+     * blogs can differ in nothing else.
+     */
+    val place: String
+        get() {
+            val server = host.trim(' ', '\t')
+            if (server.isEmpty()) return ""
+            val who = user.trim(' ', '\t').let { if (it.isEmpty()) "" else "$it@" }
+            if (port == 22 || port == 0) return who + server
+            // An address with colons of its own is set apart from the port's.
+            return who + (if (':' in server) "[$server]" else server) + ":$port"
+        }
 }
 
 /**
@@ -166,6 +182,16 @@ class BlogList(private val notes: Notes, private val hangUp: () -> Unit = {}, pr
         currentId = blog.id
         save()
         return blog
+    }
+
+    /**
+     * A blog that was let in by a code: it comes whole -- where it is and
+     * a key the server already knows -- and is the open one at once.
+     */
+    fun adopt(blog: Blog) {
+        all = all + blog
+        currentId = blog.id
+        save()
     }
 
     /** The blog leaves the app, and its key with it. The blog itself is not touched. */

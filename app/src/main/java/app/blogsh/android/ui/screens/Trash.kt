@@ -298,7 +298,7 @@ fun TrashRowView(row: TrashRow) {
         }
         Spacer(Modifier.width(8.dp))
         engineInstant(row.date)?.let { day ->
-            Text(RowDate.short(day), color = Theme.muted, style = mono(11f, bold = false), modifier = Modifier.padding(top = 3.dp))
+            Text(RowDate.short(day), color = Theme.accent, style = mono(11f, bold = false), modifier = Modifier.padding(top = 3.dp))
         }
     }
 }

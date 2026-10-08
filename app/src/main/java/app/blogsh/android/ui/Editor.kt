@@ -230,17 +230,18 @@ fun MarkBar(apply: (Marks.Kind) -> Unit) {
             )
             Pressable({ apply(kind) }, modifier = Modifier.semantics { contentDescription = name }) {
                 Box(Modifier.size(34.dp, 30.dp).border(1.dp, Theme.line, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                    // Keys, so in the accent like every other key.
                     when (kind) {
-                        Marks.Kind.Bold -> Text("B", color = Theme.ink, style = ui(14f, FontWeight.Bold))
-                        Marks.Kind.Italic -> Text("I", color = Theme.ink, style = ui(15f).copy(fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic))
-                        Marks.Kind.Strike -> Text("S", color = Theme.ink, style = ui(14f).copy(textDecoration = TextDecoration.LineThrough))
-                        Marks.Kind.Code -> Text("</>", color = Theme.ink, style = mono(11f))
-                        Marks.Kind.Link -> Mark(Symbols.link, 16.dp, Theme.ink)
-                        Marks.Kind.H2 -> Text("H", color = Theme.ink, style = ui(14f, FontWeight.Bold))
-                        Marks.Kind.Quote -> Text("❝", color = Theme.ink, style = ui(14f))
-                        Marks.Kind.Ul -> Text("•", color = Theme.ink, style = ui(16f, FontWeight.Bold))
-                        Marks.Kind.Ol -> Text("1.", color = Theme.ink, style = mono(12f))
-                        Marks.Kind.Fence -> Text("```", color = Theme.ink, style = mono(11f))
+                        Marks.Kind.Bold -> Text("B", color = Theme.accent, style = ui(14f, FontWeight.Bold))
+                        Marks.Kind.Italic -> Text("I", color = Theme.accent, style = ui(15f).copy(fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic))
+                        Marks.Kind.Strike -> Text("S", color = Theme.accent, style = ui(14f).copy(textDecoration = TextDecoration.LineThrough))
+                        Marks.Kind.Code -> Text("</>", color = Theme.accent, style = mono(11f))
+                        Marks.Kind.Link -> Mark(Symbols.link, 16.dp, Theme.accent)
+                        Marks.Kind.H2 -> Text("H", color = Theme.accent, style = ui(14f, FontWeight.Bold))
+                        Marks.Kind.Quote -> Text("❝", color = Theme.accent, style = ui(14f))
+                        Marks.Kind.Ul -> Text("•", color = Theme.accent, style = ui(16f, FontWeight.Bold))
+                        Marks.Kind.Ol -> Text("1.", color = Theme.accent, style = mono(12f))
+                        Marks.Kind.Fence -> Text("```", color = Theme.accent, style = mono(11f))
                     }
                 }
             }

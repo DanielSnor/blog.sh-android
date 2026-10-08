@@ -17,14 +17,18 @@ import app.blogsh.android.model.RebuildAnswer
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.plain
 import app.blogsh.android.model.said
+import app.blogsh.android.ui.CommandRow
 import app.blogsh.android.ui.Hint
+import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.MenuEntry
 import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.Plate
+import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.SwitchRow
+import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.ui
@@ -34,10 +38,12 @@ import kotlinx.coroutines.launch
  * "The site": the wizard's last entry, `./blog.sh rebuild` -- the whole
  * site built and deployed, not tied to a post. With the two switches the
  * command has: every page again, and the whole site uploaded past the
- * deploy's guards.
+ * deploy's guards. Under it the two looks that only read: `check` and
+ * `doctor` (see `DiagnosisScreen`).
  */
 @Composable
 fun SiteScreen() {
+    val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     var full by remember { mutableStateOf(false) }
     var force by remember { mutableStateOf(false) }
@@ -90,5 +96,21 @@ fun SiteScreen() {
                 for (line in answer.warnings.plain) row { Text(line, color = Theme.muted, style = ui(13f)) }
             }
         }
+
+        // A look that changes nothing, beside the two things that do.
+        SectionLabel(stringResource(R.string.diagnostics))
+        Plate {
+            row {
+                Pressable({ nav.push { DiagnosisScreen(Diagnosis.Archive) } }) {
+                    CommandRow(stringResource(R.string.check_the_archive), Symbols.checklist, leads = true)
+                }
+            }
+            row {
+                Pressable({ nav.push { DiagnosisScreen(Diagnosis.Installation) } }) {
+                    CommandRow(stringResource(R.string.check_the_installation), Symbols.stethoscope, leads = true)
+                }
+            }
+        }
+        Hint(stringResource(R.string.both_only_read_the_first_goes_through))
     }
 }

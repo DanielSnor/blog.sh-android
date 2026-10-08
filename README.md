@@ -24,8 +24,26 @@ server and Android 10 or later on the phone.
 
 ## Setting it up
 
+There are two ways in, both behind **Add a blog** in the list of blogs.
+
+**With a code.** On the server, `./blog.sh pair` shows a code -- a
+picture, and under it the same thing as a line of text. The app reads
+the picture with the camera, or is given the line (pasted, or as a
+`blogsh://` link opened from another app), asks "Connect to …?" and is
+connected: nobody types an address, an account or a key. Under the code
+the app is told where the blog is, which machine is to answer there
+(its keys' fingerprints -- another machine is turned away before
+anything is sent to it) and a key good once, for ten minutes, for one
+thing: handing in the public half of a key the app makes itself. The
+key the app lives on never leaves the phone, and the one that was on a
+screen opens nothing once it has been used. The camera is asked for
+only to read the code; refused, the line of text does the same.
+
+**By hand**, for a blog that lives in a container or a server whose
+`authorized_keys` somebody keeps themselves:
+
 1. Build and install the app (below), tap the name on the first screen, add
-   a blog there and enter the server's host, the account and the port.
+   a blog there by hand and enter the server's host, the account and the port.
 2. **Make the app's key.** It is made on the phone and never leaves it:
    an ed25519 key, kept in the app's own files, encrypted with a key that
    lives in the Android Keystore, and left out of every backup.
@@ -87,7 +105,7 @@ from another.
 | The scheduled-post queue | the rows in publish order; a row opens its post, as in the archive; up, down, carry to a position -- by its number or by dragging the row there -- publish now, reschedule, cancel the schedule: the last two under the names the properties screen has for them, with a line under the rows that says the keys are behind a hold |
 | The archive | newest first, with the search and the type, state and tag filters, which stay put over the rows however far down the archive has been read, and a post opening to its crossroads |
 | Trash | what is in it, a row restoring its post; under the rows the clearing out the terminal has two commands for -- empty the trash, remove the older versions -- each said in numbers and asked before it is done |
-| The site | rebuild and deploy, with the two switches the command has, each with what it is for said under it |
+| The site | rebuild and deploy, with the two switches the command has, each with what it is for said under it; and under them the two looks that only read -- `check` through the archive, `doctor` through the installation: what either finds, the problems first, each with the blog's own advice, a finding about a post a way to that post. An engine too old to offer `doctor` to a program is said so, not shown as an error |
 
 A picture or a video goes with a post only when the text names it: one
 picked and never put into the text stays on the device, and its card says
@@ -199,13 +217,23 @@ for every blog. Colours chosen so that the writing cannot be told from
 its ground lock nobody out: the part of the settings they are chosen in
 then keeps to the default scheme until they can be read.
 
-The first screen is the blog at one glance -- what
-waits in the queue, how many drafts are in progress -- over the six
-entries of the menu; a list is its filters as pills and
+The first screen is the blog at one glance -- what waits, in the order
+it wants a hand: the drafts in progress, what was begun on this phone and
+not finished (on the colour of what cannot be taken back, thinned to a
+wash), and last the queue, which goes out by itself -- over the six
+entries of the menu, the search, and a key that opens the blog in the
+browser; a list is its filters as pills and
 its rows; every other screen is plates on its ground -- rows that belong
 together on one card, a hairline between them -- with one filled button
 for the one thing the screen is for, and what cannot be taken back set
 apart in a colour of its own.
+
+What is in the accent goes by the rules of the blog's own pages: the
+accent is an action or something the engine says. So the marks of keys
+and tiles, the names of sections, the dates in a list, a pin, the filter
+that is on and the size of type that is chosen (those two filled with
+it) are in the accent; a title, a text and a plain number -- how many a
+list holds, how many wait on a card -- are in ink or grey.
 
 Three voices of type: a terminal's face in lower case for what a screen
 is (German keeps its capitals: its nouns are read by them) -- IBM Plex Mono -- a sans for what it holds -- Work Sans -- and a
@@ -216,7 +244,7 @@ License 1.1) in `licenses/`.
 Under the search the first screen says the blog in numbers: posts and the
 year of the first, words and the hours it takes to read them, tags, media,
 and what the trash and the versions hold -- those two are keys to the
-trash. The archive is counted (`stats --json`) after the screen itself is
+trash. A line whose number is nought is not said. The archive is counted (`stats --json`) after the screen itself is
 up, and the numbers are kept with the blog, so the next launch shows them
 at once.
 
@@ -245,6 +273,9 @@ at once.
   title as its subject; there is no preview of the link in it.
 - **One icon.** An Android app cannot choose among icons the way an iOS
   one can, so the icon is one, whatever the open blog's accent is.
+- **No pointer, no menu to hide.** On a Mac and an iPad a key answers to
+  the pointer over it, and the menu's column has a key that hides it;
+  both wait for the tablet's layout here.
 - **A phone.** The two-column layout an iPad has is not here yet; a tablet
   shows the phone's screens.
 - **The typewriter face** is Courier Prime, where iOS has the system's
@@ -284,7 +315,9 @@ Dropbox) should not hold a build: a line `build.root=/some/dir` in
 instead.
 
 The dependencies: sshj with BouncyCastle for SSH, Media3 for making a
-video into what travels, Reorderable for carrying a row of the queue.
+video into what travels, Reorderable for carrying a row of the queue,
+CameraX for the camera and ZXing for reading a pairing code out of its
+picture -- on the device, with nothing asked of anybody's services.
 Android carries a cut-down BouncyCastle of its own under the same name;
 the app puts the whole one in its place when it starts, and
 `app/proguard-rules.pro` keeps the shrinker from taking out the
@@ -295,14 +328,16 @@ algorithms it loads by name.
 What the app works out by itself is tested: the marks over the text,
 against the `/write/` page's own answers on some fifteen hundred cases;
 the preview, against what that page's own JavaScript renders;
-the line for `authorized_keys`; the engine's answers as they are read;
+the line for `authorized_keys`; the engine's answers as they are read,
+what `check` and `doctor` found among them;
 the blogs as they are written down; a post's file, its pictures' names,
 a description in its two places -- letter by letter, at random, with
 several pictures -- a mark put where the caret is, and the weight of a
 delivery against the server's limit; a row as the post it stands for is
 now, and a post's link; the colours a blog says and the ones the app
 wears, the ones chosen on the device and the line under which they
-cannot be read; the size of the type and the language as they are kept;
+cannot be read; a pairing code as it is read -- from its link, and out
+of a camera's picture -- and what the engine answers to it; the size of the type and the language as they are kept;
 the site built by the app itself; the connection kept to the server;
 writing kept until it is sent or saved, and what the first screen lists
 of it; the stamp of a build.

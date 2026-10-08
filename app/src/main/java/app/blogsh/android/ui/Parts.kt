@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -122,7 +123,9 @@ fun RowScope.BarName(name: String? = null, count: String? = null, title: String?
                     voiced(name), color = Theme.ink, style = display(21f), maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
                 )
-                if (count != null) Text(count, color = Theme.accent, style = mono(12f), maxLines = 1, modifier = Modifier.alignByBaseline())
+                // How many is said small and grey: the accent is for the
+                // thing itself, where a screen names one.
+                if (count != null) Text(count, color = Theme.muted, style = mono(12f), maxLines = 1, modifier = Modifier.alignByBaseline())
             }
         }
     }
@@ -379,10 +382,15 @@ fun PostSlug(text: String) {
     SelectionContainer { Text(text, color = Theme.muted, style = mono(12f, bold = false), modifier = Modifier.padding(top = 4.dp)) }
 }
 
-/** What the rows under it are, in the engine's voice. */
+/**
+ * What the rows under it are, in the engine's voice. The name of a
+ * section is in the accent, as the names of the boxes are on the blog's
+ * own pages; the names of the rows inside a plate stay muted -- those are
+ * fields, not sections.
+ */
 @Composable
 fun SectionLabel(text: String) {
-    EngineLabel(text, Modifier.gap(22, bottom = 8).semantics { heading() })
+    EngineLabel(text, Modifier.gap(22, bottom = 8).semantics { heading() }, color = Theme.accent)
 }
 
 /** A word of explanation under a plate. */
@@ -449,8 +457,38 @@ fun Plate(modifier: Modifier = Modifier, build: PlateScope.() -> Unit) {
     Column(modifier.fillMaxWidth().clip(shape).background(Theme.card).border(1.dp, Theme.line, shape)) {
         rows.forEachIndexed { index, row ->
             if (index > 0) Hairline()
-            Box(Modifier.fillMaxWidth().padding(horizontal = 13.dp, vertical = 12.dp)) { row() }
+            Box(Modifier.fillMaxWidth().padding(horizontal = PlateRow.side, vertical = PlateRow.above)) { row() }
         }
+    }
+}
+
+/** The room a plate leaves around each of its rows. */
+object PlateRow {
+    val side = 13.dp
+    val above = 12.dp
+}
+
+/**
+ * A row of a plate that says "done": the thing a key was for has just
+ * happened. Filled with the accent from one edge of the plate to the
+ * other, as a link that was copied is on the blog's own pages, and
+ * gone again when the key is a key once more.
+ */
+@Composable
+fun DoneRow(label: String) {
+    Row(
+        // Out to the plate's own edges: the fill is the row, not a box in it.
+        Modifier.layout { measurable, constraints ->
+            val side = PlateRow.side.roundToPx()
+            val above = PlateRow.above.roundToPx()
+            val placeable = measurable.measure(constraints.copy(maxWidth = constraints.maxWidth + 2 * side, minWidth = constraints.minWidth + 2 * side))
+            layout(placeable.width - 2 * side, placeable.height - 2 * above) { placeable.place(-side, -above) }
+        }.fillMaxWidth().background(Theme.accent).padding(horizontal = PlateRow.side, vertical = PlateRow.above)
+            .semantics(mergeDescendants = true) {},
+        horizontalArrangement = Arrangement.spacedBy(11.dp), verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.width(22.dp), contentAlignment = Alignment.Center) { Mark(Symbols.checkmark, 20.dp, Color.White) }
+        Text(label, color = Color.White, style = ui(15f, FontWeight.Medium), modifier = Modifier.weight(1f))
     }
 }
 

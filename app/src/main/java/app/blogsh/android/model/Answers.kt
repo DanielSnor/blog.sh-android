@@ -442,3 +442,62 @@ object ServerPaths {
 
 /** The engine's lines without the server's paths in them. */
 val List<String>.plain: List<String> get() = map(ServerPaths::plain)
+
+/**
+ * `check --json` and `doctor --json`: what a look at the archive, or at
+ * the installation, found. Both say how many problems and how many
+ * things worth a look, and then each finding: how grave, which check it
+ * came from, a sentence, and -- where there is one -- what to do about
+ * it. The sentences are the blog's own, in the blog's language.
+ */
+@Serializable
+data class DiagnosisAnswer(val errors: Int, val warnings: Int, val findings: List<Finding>) {
+    @Serializable(with = FindingReader::class)
+    data class Finding(
+        val level: Level,
+        /** The check it came from: `trash`, `post_entities`, `all_clear`. */
+        val kind: String,
+        val text: String,
+        val fix: String?,
+        /** The post it is about, where it is about one. */
+        val slug: String?,
+    ) {
+        enum class Level { Error, Warning, Fine }
+    }
+
+    /**
+     * The problems first, then what wants a look, then what is fine --
+     * each in the order the blog gave them.
+     */
+    val ordered: List<Finding>
+        get() = findings.withIndex().sortedWith(compareBy({ it.value.level.ordinal }, { it.index })).map { it.value }
+}
+
+/** A finding as the engine writes one: read key by key, since what it is about differs with its kind. */
+internal object FindingReader : kotlinx.serialization.KSerializer<DiagnosisAnswer.Finding> {
+    override val descriptor = kotlinx.serialization.descriptors.buildClassSerialDescriptor("Finding")
+
+    override fun deserialize(decoder: kotlinx.serialization.encoding.Decoder): DiagnosisAnswer.Finding {
+        val said = (decoder as kotlinx.serialization.json.JsonDecoder).decodeJsonElement() as? kotlinx.serialization.json.JsonObject
+            ?: throw kotlinx.serialization.SerializationException("a finding is an object")
+        fun word(of: kotlinx.serialization.json.JsonObject, key: String): String? =
+            (of[key] as? kotlinx.serialization.json.JsonPrimitive)?.takeIf { it.isString }?.content
+        val level = when (word(said, "level") ?: throw kotlinx.serialization.SerializationException("a finding has a level")) {
+            "error" -> DiagnosisAnswer.Finding.Level.Error
+            "ok" -> DiagnosisAnswer.Finding.Level.Fine
+            // A level this app has not heard of is not passed over as fine.
+            else -> DiagnosisAnswer.Finding.Level.Warning
+        }
+        return DiagnosisAnswer.Finding(
+            level = level,
+            kind = word(said, "kind") ?: "",
+            text = word(said, "text") ?: throw kotlinx.serialization.SerializationException("a finding has a sentence"),
+            fix = word(said, "fix")?.takeIf { it.isNotEmpty() },
+            // What a finding is about differs with its kind; only the post is asked for.
+            slug = (said["data"] as? kotlinx.serialization.json.JsonObject)?.let { word(it, "slug") },
+        )
+    }
+
+    override fun serialize(encoder: kotlinx.serialization.encoding.Encoder, value: DiagnosisAnswer.Finding) =
+        throw kotlinx.serialization.SerializationException("a finding is only read")
+}

@@ -160,6 +160,7 @@ object Doing {
         "toot", "bluesky" -> R.string.announcing
         "empty" -> R.string.clearing_out_2
         "rebuild" -> R.string.rebuilding
+        "check", "doctor" -> R.string.checking
         else -> R.string.saving
     }
 }

@@ -376,7 +376,10 @@ object Engine {
         return found
     }
 
-    private fun provider(seed: ByteArray): KeyProvider = object : KeyProvider {
+    private fun provider(seed: ByteArray): KeyProvider = keyProvider(seed)
+
+    /** An ed25519 key as the SSH library asks for one, from the 32 bytes it is made of. */
+    internal fun keyProvider(seed: ByteArray): KeyProvider = object : KeyProvider {
         override fun getPrivate(): PrivateKey = Ed25519KeyFactory.getPrivateKey(seed)
         override fun getPublic(): PublicKey = Ed25519KeyFactory.getPublicKey(KeyStore.publicBytes(seed))
         override fun getType(): KeyType = KeyType.ED25519

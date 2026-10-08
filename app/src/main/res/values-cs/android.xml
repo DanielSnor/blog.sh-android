@@ -8,4 +8,5 @@
     <string name="android_saturation">Sytost</string>
     <string name="android_brightness">Jas</string>
     <string name="android_colour_number">Barva číslem</string>
+    <string name="android_paste">Vložit</string>
 </resources>

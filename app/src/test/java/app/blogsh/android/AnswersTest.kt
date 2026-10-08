@@ -300,6 +300,9 @@ class AnswersTest {
         assertNull(PostLink.of("javascript:alert(1)", "x"))
         assertEquals("http://localhost:8000/draft/abc/x/", PostLink.of("http://localhost:8000/draft/abc/x/", "x")?.url)
         assertEquals("X", PostLink.of("https://sean.cz/posts/2026/x/", "X")?.title)
+        // A blog at home, on a port of its own: the address goes on whole.
+        val home = "http://10.0.0.5:8080/posts/2026/zkouska-portu/"
+        assertEquals(home, PostLink.of(home, "x")?.url)
     }
 
     /**
@@ -320,5 +323,97 @@ class AnswersTest {
         // A post without a title is called by its slug, as everywhere.
         val bare = Engine.decode<QueueRow>(json.replace("Plan D", "").toByteArray())
         assertNull(PostRow(bare).title)
+    }
+}
+
+/**
+ * What `check` and `doctor` answer, read as they are sent. A mistake
+ * here is a problem the blog reported and the app passed over.
+ */
+class DiagnosisTest {
+    private fun read(name: String): app.blogsh.android.model.DiagnosisAnswer =
+        Engine.decode(Fixture.text(name).toByteArray(Charsets.UTF_8))
+
+    private val error = app.blogsh.android.model.DiagnosisAnswer.Finding.Level.Error
+    private val warning = app.blogsh.android.model.DiagnosisAnswer.Finding.Level.Warning
+    private val fine = app.blogsh.android.model.DiagnosisAnswer.Finding.Level.Fine
+
+    /** As blogsh.app answered `check` on 8. 10. 2026. */
+    @Test
+    fun aFindingAboutAPostNamesThePost() {
+        val answer = read("check-warning")
+        assertEquals(0, answer.errors)
+        assertEquals(1, answer.warnings)
+        val finding = answer.findings.first()
+        assertEquals(warning, finding.level)
+        assertEquals("post_entities", finding.kind)
+        assertEquals("everything-else-in-1-6", finding.slug)
+        assertTrue(finding.text.startsWith("everything-else-in-1-6:"))
+        assertFalse(finding.fix.isNullOrEmpty())
+    }
+
+    /** As sean.cz answered: one finding, and it is the all-clear. */
+    @Test
+    fun anArchiveInOrderSaysSoInOneFinding() {
+        val answer = read("check-clear")
+        assertTrue(answer.errors == 0 && answer.warnings == 0)
+        assertEquals(listOf(fine), answer.findings.map { it.level })
+        assertEquals("all_clear", answer.findings.first().kind)
+        assertNull(answer.findings.first().slug)
+        assertNull(answer.findings.first().fix)
+    }
+
+    /**
+     * As the engine's `doctor --json` answers: a kind on every finding,
+     * a fix that is null where there is no advice, nothing about a post.
+     */
+    @Test
+    fun theInstallationsFindingsAreReadWithTheirKinds() {
+        val answer = read("doctor")
+        assertEquals(0, answer.errors)
+        assertEquals(answer.findings.count { it.level == warning }, answer.warnings)
+        assertTrue(answer.findings.all { it.kind.isNotEmpty() })
+        assertTrue(answer.findings.all { it.slug == null })
+        assertTrue(answer.findings.any { it.level == fine && it.fix == null })
+        assertTrue(answer.findings.any { it.kind == "scheduler" })
+    }
+
+    @Test
+    fun theProblemsComeFirstThenWhatWantsALookThenWhatIsFine() {
+        val mixed = """
+        {"errors": 1, "warnings": 2, "findings": [
+          {"level": "ok", "kind": "a", "text": "fine one", "fix": null},
+          {"level": "warn", "kind": "b", "text": "first warning"},
+          {"level": "error", "kind": "c", "text": "the error", "fix": "do this"},
+          {"level": "warn", "kind": "d", "text": "second warning", "data": {"slugs": ["x", "y"]}},
+          {"level": "notice", "text": "a level nobody knows"}
+        ]}
+        """.toByteArray(Charsets.UTF_8)
+        val answer = Engine.decode<app.blogsh.android.model.DiagnosisAnswer>(mixed)
+        assertEquals(listOf("the error", "first warning", "second warning", "a level nobody knows", "fine one"), answer.ordered.map { it.text })
+        assertEquals(error, answer.ordered.first().level)
+        // A level the app has not heard of is not passed over as fine.
+        assertEquals(warning, answer.findings.last().level)
+        assertEquals("", answer.findings.last().kind)
+        // What a finding is about differs with its kind: no post, no failure.
+        assertNull(answer.findings[3].slug)
+        // No advice, or advice that says nothing, is no advice.
+        assertNull(answer.findings[0].fix)
+        assertEquals("do this", answer.findings[2].fix)
+    }
+
+    /**
+     * The blog said no -- an engine without the check: that is a
+     * refusal, not a diagnosis with nothing in it.
+     */
+    @Test
+    fun aRefusalIsNotADiagnosis() {
+        val refusal = """{"ok":false,"error":"unknown_command","message":"\"doctor\" is not a command a program may run."}""".toByteArray(Charsets.UTF_8)
+        try {
+            Engine.decode<app.blogsh.android.model.DiagnosisAnswer>(refusal)
+            fail("a refusal was read as a diagnosis")
+        } catch (e: EngineError.Refused) {
+            assertEquals("unknown_command", e.refusal.error)
+        }
     }
 }

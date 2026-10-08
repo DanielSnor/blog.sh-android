@@ -16,8 +16,8 @@ android {
         applicationId = "app.blogsh.android"
         minSdk = 29
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3"
+        versionCode = 4
+        versionName = "0.4"
     }
 
     buildTypes {
@@ -143,7 +143,16 @@ dependencies {
   // The queue: a row carried to another position.
   implementation(libs.reorderable)
 
+  // A pairing code read by the camera: the camera, and a reader of QR
+  // codes that needs nothing of the device but the picture.
+  implementation(libs.camerax.core)
+  implementation(libs.camerax.camera2)
+  implementation(libs.camerax.lifecycle)
+  implementation(libs.camerax.view)
+  implementation(libs.zxing.core)
+
   testImplementation(libs.junit)
+  testImplementation(libs.zxing.core)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.kotlinx.serialization.json)
 }

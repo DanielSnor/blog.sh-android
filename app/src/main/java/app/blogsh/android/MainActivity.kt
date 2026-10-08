@@ -1,6 +1,7 @@
 package app.blogsh.android
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,6 +17,7 @@ import app.blogsh.android.model.Reading
 import app.blogsh.android.ui.BlogshTheme
 import app.blogsh.android.ui.HomeScreen
 import app.blogsh.android.ui.HomeState
+import app.blogsh.android.ui.Incoming
 import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.Nav
 import app.blogsh.android.ui.NavHost
@@ -37,6 +39,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         BlogshApp.speak(this)
+        take(intent)
         bars(Colours.own)
         setContent {
             // The bars at the screen's edges are the ground's own colour, by day and by
@@ -56,6 +59,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        take(intent)
+    }
+
+    /** A pairing code that came in as a link, opened from another app. */
+    private fun take(intent: Intent?) {
+        val link = intent?.takeIf { it.action == Intent.ACTION_VIEW }?.dataString ?: return
+        if (link.startsWith("blogsh:", ignoreCase = true)) Incoming.code = link
     }
 
     /**

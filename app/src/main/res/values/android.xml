@@ -9,4 +9,5 @@
     <string name="android_saturation">Saturation</string>
     <string name="android_brightness">Brightness</string>
     <string name="android_colour_number">The colour as a number</string>
+    <string name="android_paste">Paste</string>
 </resources>

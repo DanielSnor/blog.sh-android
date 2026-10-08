@@ -1,0 +1,19 @@
+{
+  "errors": 0,
+  "warnings": 1,
+  "findings": [
+    {
+      "level": "warn",
+      "kind": "post_entities",
+      "data": {
+        "slug": "everything-else-in-1-6",
+        "year": "2026",
+        "entities": [
+          "&#58;"
+        ]
+      },
+      "text": "everything-else-in-1-6: the text carries HTML entities (&#58;) instead of the characters they stand for.",
+      "fix": "Comes from an archive that escaped them (Twitter does this to &, < and >); the engine has decoded them since 1.4, older imports did not. `check --repair` offers to convert them. If you wrote the entities on purpose, leave them."
+    }
+  ]
+}

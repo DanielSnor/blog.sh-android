@@ -8,4 +8,5 @@
     <string name="android_saturation">Sättigung</string>
     <string name="android_brightness">Helligkeit</string>
     <string name="android_colour_number">Die Farbe als Zahl</string>
+    <string name="android_paste">Einfügen</string>
 </resources>

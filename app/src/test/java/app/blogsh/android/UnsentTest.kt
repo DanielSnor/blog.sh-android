@@ -266,17 +266,21 @@ class BegunTest {
         assertTrue(Begun.all(blog(), MemoryNotes()).isEmpty())
     }
 
+    /**
+     * The new post first, however long ago it was written; then the
+     * changes to posts, the last written first.
+     */
     @Test
-    fun everythingKeptForTheBlogIsListedTheLastWrittenFirst() {
+    fun theNewPostComesFirstThenTheChangesTheLastWrittenFirst() {
         val notes = MemoryNotes()
         val blog = blog()
         Unsent("Pes v trávě", "", "Plazí se.", at(100)).keep(blog, notes)
         Unsaved("změna", "b", at(300), "Venku").keep(blog, "venku", Unsaved.What.Text, notes)
         Unsaved("change", "b", at(200), "Doma").keep(blog, "doma", Unsaved.What.Language("en"), notes)
         val all = Begun.all(blog, notes)
-        assertEquals(listOf(Begun.What.Text("venku"), Begun.What.Language("doma", "en"), Begun.What.New), all.map { it.what })
-        assertEquals(listOf("Venku", "Doma", "Pes v trávě"), all.map { it.title })
-        assertEquals(listOf(at(300), at(200), at(100)), all.map { it.at })
+        assertEquals(listOf(Begun.What.New, Begun.What.Text("venku"), Begun.What.Language("doma", "en")), all.map { it.what })
+        assertEquals(listOf("Pes v trávě", "Venku", "Doma"), all.map { it.title })
+        assertEquals(listOf(at(100), at(300), at(200)), all.map { it.at })
     }
 
     @Test

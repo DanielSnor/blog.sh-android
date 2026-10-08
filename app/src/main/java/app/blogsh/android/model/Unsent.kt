@@ -197,18 +197,22 @@ data class Begun(
     }
 
     companion object {
-        /** All of them for a blog, the last written first. */
+        /**
+         * All of them for a blog: the new post first, then the changes to
+         * posts the blog has, the last written first.
+         */
         fun all(blog: String, notes: Notes): List<Begun> {
-            val all = mutableListOf<Begun>()
-            Unsent.kept(blog, notes)?.let { all.add(Begun(What.New, it.headline, it.at)) }
+            val changes = mutableListOf<Begun>()
             for (entry in Unsaved.all(blog, notes)) {
                 val title = entry.kept.title?.takeIf { it.isNotEmpty() } ?: entry.slug
                 when (val what = entry.what) {
-                    Unsaved.What.Text -> all.add(Begun(What.Text(entry.slug), title, entry.kept.at))
-                    is Unsaved.What.Language -> all.add(Begun(What.Language(entry.slug, what.code), title, entry.kept.at))
+                    Unsaved.What.Text -> changes.add(Begun(What.Text(entry.slug), title, entry.kept.at))
+                    is Unsaved.What.Language -> changes.add(Begun(What.Language(entry.slug, what.code), title, entry.kept.at))
                 }
             }
-            return all.sortedWith(compareByDescending<Begun> { it.at }.thenBy { it.title })
+            changes.sortWith(compareByDescending<Begun> { it.at }.thenBy { it.title })
+            val unsent = Unsent.kept(blog, notes) ?: return changes
+            return listOf(Begun(What.New, unsent.headline, unsent.at)) + changes
         }
     }
 }

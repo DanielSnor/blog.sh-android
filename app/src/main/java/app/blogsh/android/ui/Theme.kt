@@ -54,7 +54,9 @@ import androidx.compose.ui.unit.sp
 import app.blogsh.android.BlogshApp
 import app.blogsh.android.R
 import app.blogsh.android.model.Blogs
+import app.blogsh.android.model.Colours
 import app.blogsh.android.model.Reading
+import app.blogsh.android.model.Shades
 import app.blogsh.android.model.Tones
 import app.blogsh.android.model.engineInstant
 import java.time.Duration
@@ -100,18 +102,38 @@ private fun mixed(from: Color, to: Color, part: Float): Color = Color(
     blue = from.blue + (to.blue - from.blue) * part,
 )
 
-private fun palette(scheme: Tones.Scheme, dark: Boolean): Palette {
-    val paper = tone(scheme.bg)
-    val ink = tone(scheme.text)
+private fun palette(shades: Shades, dark: Boolean): Palette {
+    val paper = tone(shades.bg)
+    val ink = tone(shades.text)
     return Palette(
-        paper = paper, ink = ink, muted = tone(scheme.metaText), line = tone(scheme.border),
+        paper = paper, ink = ink, muted = tone(shades.metaText), line = tone(shades.border),
         card = ink.copy(alpha = if (dark) 0.05f else 0.03f), onInk = paper,
         danger = if (dark) Color(0xFFFF7A5C) else Color(0xFFA81800),
     )
 }
 
-private val LocalPalette = staticCompositionLocalOf { palette(Tones.ownLight, dark = false) }
-private val LocalAccent = staticCompositionLocalOf { tone(Tones.ownAccentLight) }
+private val LocalPalette = staticCompositionLocalOf { palette(Colours.own.light, dark = false) }
+private val LocalAccent = staticCompositionLocalOf { tone(Colours.own.light.accent) }
+
+/** What the open blog said of itself. */
+val Reading.blog: Colours
+    get() = Blogs.current.let { Colours.said(it?.tonesLight, it?.tonesDark, it?.accentLight ?: "", it?.accentDark ?: "") }
+
+/** The two schemes everything is drawn in now. */
+val Reading.worn: Colours get() = Colours.worn(wearing, chosen, blog)
+
+/**
+ * A part of a screen that does not wear the worn colours but the app's
+ * own: the place the colours are chosen in keeps to them once the chosen
+ * ones cannot be read, so there is always a way back.
+ */
+@Composable
+fun PlainGround(content: @Composable () -> Unit) {
+    val dark = isSystemInDarkTheme()
+    val shades = Colours.own.scheme(dark)
+    val palette = remember(dark) { palette(shades, dark) }
+    CompositionLocalProvider(LocalPalette provides palette, LocalAccent provides tone(shades.accent), content = content)
+}
 
 object Theme {
     val paper: Color @Composable get() = LocalPalette.current.paper
@@ -122,7 +144,7 @@ object Theme {
     val onInk: Color @Composable get() = LocalPalette.current.onInk
     val danger: Color @Composable get() = LocalPalette.current.danger
 
-    /** The blog's own accent, or the app's own: what the iOS app calls the tint. */
+    /** The one accent: every control of the app, its links, its counts. What the iOS app calls the tint. */
     val accent: Color @Composable get() = LocalAccent.current
 
     /**
@@ -130,6 +152,12 @@ object Theme {
      * value stands under its name and has the whole width.
      */
     val crowded: Boolean @Composable get() = LocalDensity.current.fontScale >= 1.6f
+
+    /**
+     * A screen with room for longer steps of type: a tablet, read from
+     * further away than a phone.
+     */
+    val wide: Boolean @Composable get() = LocalConfiguration.current.smallestScreenWidthDp >= 600
 
     val corner = 14.dp
     val gutter = 20.dp
@@ -149,6 +177,18 @@ fun voiced(text: String): String = BlogshApp.spoken.let { if (it.language == "de
 fun hexColor(hex: String?): Color? = Tones.value(hex ?: "")?.let { tone(it) }
 
 /**
+ * The distance between two parts of a screen -- a section and the one
+ * before it, a plate and its hint. It grows with the type: a gap that
+ * tells two groups apart at the usual size is lost between lines twice
+ * as tall, and a screen of large type reads as one unbroken column.
+ */
+@Composable
+fun Modifier.gap(top: Int, bottom: Int = 0): Modifier {
+    val grown = LocalDensity.current.fontScale
+    return padding(top = top.dp * grown, bottom = bottom.dp * grown)
+}
+
+/**
  * The type as large as was chosen in the settings: the system's size and
  * the steps above it. Said again inside every window the app opens -- a
  * sheet, a dialog and a menu are windows of their own, and each starts
@@ -158,28 +198,25 @@ fun hexColor(hex: String?): Color? = Tones.value(hex ?: "")?.let { tone(it) }
 fun Typed(content: @Composable () -> Unit) {
     val density = LocalDensity.current
     val system = LocalConfiguration.current.fontScale
-    val zoom = Reading.shared.textSize.zoom
+    val zoom = Reading.shared.textSize.zoom(Theme.wide)
     CompositionLocalProvider(LocalDensity provides Density(density.density, system * zoom), content = content)
 }
 
 /**
  * The look, around everything: whose colours the app wears -- the open
- * blog's, as its pages have them, or its own, when the blog has said none
- * or when it is asked to keep to its own -- the accent, and the system's
- * own controls -- a switch, a menu, a dialog -- dressed in both.
+ * blog's, as its pages have them, its own, or the ones chosen on this
+ * device -- the accent with them, and the system's own controls -- a
+ * switch, a menu, a dialog -- dressed in both.
  */
 @Composable
 fun BlogshTheme(content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
     val reading = Reading.shared
-    val blog = Blogs.current
-    val worn = Tones.worn(reading.ownColours, blog?.tonesLight, blog?.tonesDark)
+    val shades = reading.worn.scheme(dark)
     // The same palette while the colours are the same: everything on the screen is drawn
     // again when it is another, and a blog says its numbers far more often than new colours.
-    val scheme0 = if (dark) worn.second else worn.first
-    val palette = remember(scheme0, dark) { palette(scheme0, dark) }
-    val own = tone(if (dark) Tones.ownAccentDark else Tones.ownAccentLight)
-    val accent = if (reading.ownColours) own else hexColor(if (dark) blog?.accentDark else blog?.accentLight) ?: own
+    val palette = remember(shades, dark) { palette(shades, dark) }
+    val accent = tone(shades.accent)
     val paper = palette.paper
     val ink = palette.ink
     // The system's own surfaces -- a dialog, a menu -- a step off the ground, towards the light.
@@ -368,6 +405,9 @@ object RowDate {
 
     /** A time a post goes out, as a sentence says it: the day, the date, the hour. */
     fun spoken(date: Instant): String = pattern("EEEdMMMjm").format(date.atZone(ZoneId.systemDefault()))
+
+    /** A day and its hour in numbers: when a build was made. */
+    fun numeric(date: Instant): String = pattern("yMdjm").format(date.atZone(ZoneId.systemDefault()))
 
     /** A day and its hour, whole: what a properties screen says a post's date is. */
     fun full(date: Instant): String = pattern("yMMMdjm").format(date.atZone(ZoneId.systemDefault()))

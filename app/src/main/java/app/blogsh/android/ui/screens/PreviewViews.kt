@@ -114,7 +114,7 @@ fun PreviewSheet(title: String, markdown: String, shown: Map<String, Preview.Sho
     PaperSheet(onDismiss, name = stringResource(R.string.preview), actions = { DialogKey(stringResource(R.string.done), onClick = onDismiss) }, scrolls = false) {
         Hairline()
         // The page enlarged as the app's own type is.
-        WebPage(page, site.ifEmpty { null }, Reading.shared.textSize.zoom, Modifier.weight(1f).fillMaxWidth())
+        WebPage(page, site.ifEmpty { null }, Reading.shared.textSize.zoom(Theme.wide), Modifier.weight(1f).fillMaxWidth())
         Hairline()
         Hint(
             stringResource(R.string.near_enough_not_exact_the_blog_itself),

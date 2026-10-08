@@ -47,6 +47,7 @@ import app.blogsh.android.ui.Partial
 import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.PostSlug
 import app.blogsh.android.ui.ShareKey
+import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.humanDate
 import app.blogsh.android.model.Doing
 import app.blogsh.android.model.Herald
@@ -128,10 +129,10 @@ fun PropsScreen(slug: String, gone: (() -> Unit)? = null, renamed: ((PropsAnswer
                         if (props.state == PostState.Draft) stringResource(R.string.draft_not_on_the_site_preview_only)
                         else props.address.removePrefix("/")
                     )
-                    Rows(props, Modifier.padding(top = 12.dp))
+                    Rows(props, Modifier.gap(12))
                     if (props.url.isNotEmpty()) {
                         val label = stringResource(if (props.state == PostState.Draft) R.string.show_the_preview_on_the_web else R.string.show_on_the_web)
-                        Plate(Modifier.padding(top = 10.dp)) {
+                        Plate(Modifier.gap(10)) {
                             row {
                                 // Everything on the screen waits while the engine is asked; so does the way out to the web.
                                 Pressable({ runCatching { uri.openUri(props.url) } }, enabled = !still) {
@@ -154,7 +155,7 @@ fun PropsScreen(slug: String, gone: (() -> Unit)? = null, renamed: ((PropsAnswer
                     // What cannot be taken back sits apart, and last -- as [x] is the
                     // last key of the row.
                     if (PostAction.Delete in props.actions) {
-                        Plate(Modifier.padding(top = 10.dp)) {
+                        Plate(Modifier.gap(10)) {
                             row {
                                 Command(actionLabel(PostAction.Delete, props), actionSymbol(PostAction.Delete), danger = true, enabled = !still) {
                                     state.tapped(PostAction.Delete)

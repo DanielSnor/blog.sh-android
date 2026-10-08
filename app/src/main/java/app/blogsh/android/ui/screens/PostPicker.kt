@@ -59,6 +59,7 @@ import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.mono
+import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.ui
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -105,7 +106,12 @@ fun PostPickerScreen(languages: List<String> = emptyList()) {
     // Every time the screen is come to: a post may be another on the way back from it.
     OnShown { load() }
 
-    PaperScaffold(onBack = { nav.pop() }, name = stringResource(R.string.tile_post)) {
+    // How many are listed here, not how many the blog has: the number
+    // beside the name counts the rows under it, as the archive's does.
+    PaperScaffold(
+        onBack = { nav.pop() }, name = stringResource(R.string.tile_post),
+        count = if (posts.isEmpty()) null else NumberFormat.getIntegerInstance().format(posts.size),
+    ) {
         PullToRefreshBox(
             isRefreshing = refreshing,
             onRefresh = {
@@ -255,7 +261,7 @@ fun PostCrossroadsScreen(picked: PostRow, languages: List<String> = emptyList(),
         PostFacts(post)
         val text = entry?.text
         if (text != null || reading) {
-            Box(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+            Box(Modifier.fillMaxWidth().gap(12)) {
                 val style = ui(15f).copy(lineHeight = 21.sp)
                 if (text != null) {
                     val lede = remember(text) { Lede.of(text) }
@@ -320,7 +326,7 @@ fun PostCrossroadsScreen(picked: PostRow, languages: List<String> = emptyList(),
         // away, on a phone the page is only this far. A published post
         // opens at its address, a draft at the hidden page the build keeps.
         val web = stringResource(if (post.state == PostState.Published) R.string.show_on_the_web else R.string.show_the_preview_on_the_web)
-        Plate(Modifier.padding(top = 10.dp)) {
+        Plate(Modifier.gap(10)) {
             row { Command(web, Symbols.safari, busy = looking) { scope.launch { show() } } }
         }
         problem?.let { ProblemLine(it) }

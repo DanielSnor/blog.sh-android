@@ -26,13 +26,15 @@ import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.SwitchRow
 import app.blogsh.android.ui.Theme
+import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.ui
 import kotlinx.coroutines.launch
 
 /**
  * "The site": the wizard's last entry, `./blog.sh rebuild` -- the whole
  * site built and deployed, not tied to a post. With the two switches the
- * command has: every page again, and the deploy past its guards.
+ * command has: every page again, and the whole site uploaded past the
+ * deploy's guards.
  */
 @Composable
 fun SiteScreen() {
@@ -60,14 +62,20 @@ fun SiteScreen() {
     }
 
     PaperScreen(name = stringResource(MenuEntry.Rebuild.shortId)) {
+        // Each switch with what it is for under it: the engine's own
+        // names for them (--full, --force) say what they do to the
+        // engine, not when somebody would want them.
         Plate {
             row { SwitchRow(stringResource(R.string.build_every_page_again), full, { full = it }) }
-            row { SwitchRow(stringResource(R.string.let_the_deploy_past_its_guards), force, { force = it }) }
         }
-        Hint(stringResource(R.string.without_the_first_only_the_pages_that))
+        Hint(stringResource(R.string.usually_only_the_pages_that_changed_are))
+        Plate(Modifier.gap(14)) {
+            row { SwitchRow(stringResource(R.string.upload_the_whole_site_unchecked), force, { force = it }) }
+        }
+        Hint(stringResource(R.string.a_deploy_uploads_what_changed_and_stops))
         PrimaryButton(
             stringResource(if (running) R.string.rebuilding else R.string.rebuild_and_deploy),
-            modifier = Modifier.padding(top = 22.dp), busy = running,
+            modifier = Modifier.gap(22), busy = running,
         ) { scope.launch { rebuild() } }
         problem?.let { ProblemLine(it) }
         result?.let { answer ->

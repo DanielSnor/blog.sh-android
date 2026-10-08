@@ -56,7 +56,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.blogsh.android.BlogshApp
 import app.blogsh.android.R
+import app.blogsh.android.model.Begun
+import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
+import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.Facts
@@ -78,7 +81,10 @@ import app.blogsh.android.ui.screens.QueueScreen
 import app.blogsh.android.ui.screens.SettingsSheet
 import app.blogsh.android.ui.screens.SiteScreen
 import app.blogsh.android.ui.screens.StateFilter
+import app.blogsh.android.ui.screens.TextEditScreen
+import app.blogsh.android.ui.screens.TranslateScreen
 import app.blogsh.android.ui.screens.TrashScreen
+import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -270,6 +276,25 @@ fun HomeScreen(state: HomeState) {
         }
     }
 
+    // What was begun on this device for the open blog and not finished: a
+    // look into the device's own keeping, taken again when the desk says
+    // that changed -- and only while this screen is the one that is seen.
+    val begun = if (LocalShown.current) {
+        remember(Blogs.currentId, Desk.changes) { Blogs.currentId?.let { Begun.all(it, BlogShelf.notes) } ?: emptyList() }
+    } else {
+        emptyList()
+    }
+
+    // Straight to where it waits: the new post's form, or the editor of
+    // the post -- or of its language -- that was being changed.
+    fun resume(one: Begun) {
+        when (val what = one.what) {
+            Begun.What.New -> open(MenuEntry.Add)
+            is Begun.What.Text -> nav.push { TextEditScreen(what.slug) }
+            is Begun.What.Language -> nav.push { TranslateScreen(what.slug, what.lang) }
+        }
+    }
+
     // Another blog: its own name and colour are there before its server answers.
     LaunchedEffect(Blogs.currentId) {
         state.forget()
@@ -329,6 +354,14 @@ fun HomeScreen(state: HomeState) {
                     Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Pressable({ open(MenuEntry.Queue) }) { QueueCard(glance) }
                         Pressable({ open(MenuEntry.Browse, StateFilter.Draft) }) { DraftsCard(glance) }
+                    }
+                }
+
+                // Writing kept on this device from the last time: said here,
+                // or nobody knows of it before opening the form it waits in.
+                if (begun.isNotEmpty()) {
+                    Column(Modifier.padding(top = if (state.glance == null) 18.dp else 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (one in begun) Pressable({ resume(one) }) { BegunCard(one) }
                     }
                 }
 
@@ -401,6 +434,33 @@ private fun DraftsCard(glance: Glance) {
         } else {
             Text(stringResource(R.string.no_drafts_in_progress), color = Theme.muted, style = ui(15f))
         }
+    }
+}
+
+/**
+ * One thing begun: what it is and when it was last written in, and
+ * under that what it is called.
+ */
+@Composable
+private fun BegunCard(one: Begun) {
+    val kind = when (val what = one.what) {
+        Begun.What.New -> stringResource(R.string.unsent_new_post)
+        is Begun.What.Text -> stringResource(R.string.unsaved_changes)
+        is Begun.What.Language ->
+            stringResource(R.string.unsaved_translation, Locale.forLanguageTag(what.lang).getDisplayLanguage(Locale.getDefault()).ifEmpty { what.lang })
+    }
+    Card {
+        Mark(Symbols.squareAndPencil, 21.dp)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                "$kind · ${RowDate.spoken(Instant.ofEpochMilli(one.at))}", color = Theme.muted, style = ui(12f),
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+            if (one.title.isNotEmpty()) {
+                Text(one.title, color = Theme.ink, style = ui(15f, FontWeight.Medium), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        Mark(Symbols.chevronRight, 14.dp, Theme.muted)
     }
 }
 

@@ -1,3 +1,8 @@
+import java.io.ByteArrayOutputStream
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import javax.inject.Inject
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
@@ -11,8 +16,8 @@ android {
         applicationId = "app.blogsh.android"
         minSdk = 29
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2"
+        versionCode = 3
+        versionName = "0.3"
     }
 
     buildTypes {
@@ -50,6 +55,56 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+    }
+}
+
+/**
+ * The commit and the time of this build, for the lines at the foot of
+ * the settings that tell one copy of the app from another: two lines in
+ * a file that rides in the app. Written at every build -- the time is
+ * the build's, not the last change's.
+ */
+abstract class BuildStampTask : DefaultTask() {
+    @get:OutputDirectory
+    abstract val assets: DirectoryProperty
+
+    @get:Internal
+    abstract val root: DirectoryProperty
+
+    @get:Inject
+    abstract val exec: ExecOperations
+
+    private fun git(vararg args: String): String {
+        val said = ByteArrayOutputStream()
+        val result = runCatching {
+            exec.exec {
+                commandLine(listOf("git", "-C", root.get().asFile.path) + args)
+                standardOutput = said
+                errorOutput = ByteArrayOutputStream()
+                isIgnoreExitValue = true
+            }
+        }.getOrNull()
+        return if (result?.exitValue == 0) said.toString().trim() else ""
+    }
+
+    @TaskAction
+    fun write() {
+        var commit = git("rev-parse", "--short", "HEAD")
+        // A plus for a tree that had changes not committed.
+        if (commit.isNotEmpty() && git("status", "--porcelain").isNotEmpty()) commit += "+"
+        val built = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+        assets.get().asFile.resolve("BuildStamp.txt").writeText("$commit\n$built\n")
+    }
+}
+
+val buildStamp = tasks.register<BuildStampTask>("buildStamp") {
+    root.set(rootProject.layout.projectDirectory)
+    outputs.upToDateWhen { false }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(buildStamp, BuildStampTask::assets)
     }
 }
 

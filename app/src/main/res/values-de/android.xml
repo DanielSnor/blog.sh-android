@@ -3,10 +3,9 @@
     <string name="android_back">Zurück</string>
     <string name="android_close">Schließen</string>
     <string name="android_more">Mehr</string>
-    <string name="android_leave_unsaved_title">Verlassen, was hier geschrieben steht?</string>
-    <string name="android_leave_unsaved_text">Es ist weder gesendet noch gespeichert und wäre dann weg.</string>
-    <string name="android_leave">Verlassen</string>
-    <string name="android_stay">Bleiben</string>
-    <string name="android_draft_kept">Weiter, wo es aufgehört hat: was hier stand, bevor die App geschlossen wurde.</string>
     <string name="android_queue_hold">Eine Zeile öffnet ihren Beitrag. Gehalten zeigt sie ihre Tasten — und eine gehaltene Zeile lässt sich an eine andere Stelle der Warteschlange tragen.</string>
+    <string name="android_hue">Farbton</string>
+    <string name="android_saturation">Sättigung</string>
+    <string name="android_brightness">Helligkeit</string>
+    <string name="android_colour_number">Die Farbe als Zahl</string>
 </resources>

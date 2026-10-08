@@ -272,7 +272,7 @@ fun DeliveryNote(shots: List<Shot>, textBytes: Int, maxMb: Int) {
         val refusal = stringResource(R.string.once_encoded_for_the_wire_over_the, Delivery.size(Delivery.wireBytes(shots, textBytes)), maxMb)
         Text(
             if (over) "$line — $refusal" else line, color = if (over) Theme.danger else Theme.muted,
-            style = ui(13f, if (over) FontWeight.Medium else FontWeight.Normal), modifier = Modifier.padding(top = 8.dp),
+            style = ui(13f, if (over) FontWeight.Medium else FontWeight.Normal), modifier = Modifier.gap(8),
         )
     }
     Hint(stringResource(R.string.a_picture_is_shrunk_to_px_on, Pictures.MAX_EDGE.toString(), maxMb, (maxMb * 0.73).toInt()))

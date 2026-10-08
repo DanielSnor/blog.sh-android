@@ -119,4 +119,6 @@ object Symbols {
     val megaphone = R.drawable.ic_campaign
     /** square.and.arrow.up */
     val squareAndArrowUp = R.drawable.ic_ios_share
+    /** square.and.pencil */
+    val squareAndPencil = R.drawable.ic_edit_square
 }

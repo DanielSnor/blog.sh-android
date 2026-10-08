@@ -95,16 +95,6 @@ private fun Modifier.covered(): Modifier =
     }.clearAndSetSemantics {}
 
 /**
- * What a screen does with the back key itself -- asking before unsent
- * words are lost. Only the screen in front is asked: one that is covered
- * would otherwise answer for the one over it.
- */
-@Composable
-fun ScreenBack(enabled: Boolean = true, onBack: () -> Unit) {
-    BackHandler(enabled = enabled && LocalShown.current, onBack = onBack)
-}
-
-/**
  * Every time the screen comes to the front -- the first time, and again
  * when the one over it leaves: what a screen below may have changed is
  * read again here.

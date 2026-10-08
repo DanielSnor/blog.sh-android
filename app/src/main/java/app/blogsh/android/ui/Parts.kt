@@ -85,6 +85,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextOverflow
+import app.blogsh.android.model.Unsaved
+import java.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -380,19 +382,45 @@ fun PostSlug(text: String) {
 /** What the rows under it are, in the engine's voice. */
 @Composable
 fun SectionLabel(text: String) {
-    EngineLabel(text, Modifier.padding(top = 22.dp, bottom = 8.dp).semantics { heading() })
+    EngineLabel(text, Modifier.gap(22, bottom = 8).semantics { heading() })
 }
 
 /** A word of explanation under a plate. */
 @Composable
 fun Hint(text: String, modifier: Modifier = Modifier) {
-    Text(text, color = Theme.muted, style = ui(13f), modifier = modifier.padding(top = 8.dp))
+    Text(text, color = Theme.muted, style = ui(13f), modifier = modifier.gap(8))
+}
+
+/**
+ * Said at the head of a form that opened with something in it nobody
+ * typed just now: writing that was kept from the last time, brought
+ * back -- and the one key that puts it away again.
+ */
+@Composable
+fun BroughtBack(words: String, key: String, modifier: Modifier = Modifier, putAway: () -> Unit) {
+    Plate(modifier) {
+        row { Text(words, color = Theme.muted, style = ui(14f)) }
+        row { Command(key, Symbols.xmark, danger = true, onClick = putAway) }
+    }
+}
+
+/**
+ * What a screen says of changes it brought back: when they were written,
+ * that the post has moved on under them where it has, and that pictures
+ * chosen for them have to be chosen again.
+ */
+@Composable
+fun broughtBackWords(kept: Unsaved, base: String, media: List<String>?): String {
+    var words = stringResource(R.string.back_in_the_editor_the_changes_written, RowDate.spoken(Instant.ofEpochMilli(kept.at)))
+    if (kept.base != base) words += " " + stringResource(R.string.the_post_has_changed_on_the_blog)
+    if (media != null && kept.namesPictures(media)) words += " " + stringResource(R.string.its_pictures_were_not_kept_add_them)
+    return words
 }
 
 /** What went wrong, where it went wrong. */
 @Composable
 fun ProblemLine(text: String) {
-    SelectionContainer { Text(text, color = Theme.danger, style = ui(14f), modifier = Modifier.padding(top = 10.dp)) }
+    SelectionContainer { Text(text, color = Theme.danger, style = ui(14f), modifier = Modifier.gap(10)) }
 }
 
 /** The rows of a plate, as they are said: one that is not said takes no place and leaves no rule behind. */

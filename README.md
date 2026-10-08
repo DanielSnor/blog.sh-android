@@ -65,22 +65,29 @@ What is the app's own and no blog's is under the gear; a blog's settings
 the list of blogs. The app's own are three: the colours (under *How it
 looks*), and these two. The size of the type: the app follows the size
 the system has, and under **Text size** it can be set one to four steps
-above that. Rows that hold a name beside a value put the value under the
-name at the largest sizes, and the preview of a post is enlarged with the
-rest. And the language: the app is written in English, Czech and German
+above that -- in longer strides on a tablet, which is read from further
+away. The gaps between the parts of a screen grow with the type. Rows
+that hold a name beside a value put the value under the name at the
+largest sizes, and the preview of a post is enlarged with the rest. And
+the language: the app is written in English, Czech and German
 and speaks the system's unless told another under **Language** -- taken
 up when the app is next started.
+
+At the foot of the settings stand the engine's mark, when this copy of
+the app was built and from which commit (with a plus for a tree that had
+changes not committed): what is read out when one copy has to be told
+from another.
 
 ## What is where
 
 | the wizard says | the app |
 |---|---|
 | New post | a title, the text with the marks `/write/` offers over it, a key that opens it over the whole screen for writing and a preview of the post as the blog would show it, the tags, pictures and video with their descriptions -- sent as one delivery, the post arrives as a draft |
-| A post -- edit the text, its properties and the actions on it | the last fifty posts -- under them, that they are the last fifty and that the archive has the rest -- then the crossroads: what the post is, in one table, and how it begins, to know it is the one meant, and under that the text, a language, the properties with every key of that screen; the crossroads asks what the post is now every time it is come to, so a post renamed or retitled from the screens above it is the same post under its new name |
+| A post -- edit the text, its properties and the actions on it | the last fifty posts, counted beside the screen's name -- under them, that they are the last fifty and that the archive has the rest -- then the crossroads: what the post is, in one table, and how it begins, to know it is the one meant, and under that the text, a language, the properties with every key of that screen; the crossroads asks what the post is now every time it is come to, so a post renamed or retitled from the screens above it is the same post under its new name |
 | The scheduled-post queue | the rows in publish order; a row opens its post, as in the archive; up, down, carry to a position -- by its number or by dragging the row there -- publish now, reschedule, cancel the schedule: the last two under the names the properties screen has for them, with a line under the rows that says the keys are behind a hold |
 | The archive | newest first, with the search and the type, state and tag filters, which stay put over the rows however far down the archive has been read, and a post opening to its crossroads |
 | Trash | what is in it, a row restoring its post; under the rows the clearing out the terminal has two commands for -- empty the trash, remove the older versions -- each said in numbers and asked before it is done |
-| The site | rebuild and deploy, with the two switches the command has |
+| The site | rebuild and deploy, with the two switches the command has, each with what it is for said under it |
 
 A picture or a video goes with a post only when the text names it: one
 picked and never put into the text stays on the device, and its card says
@@ -108,6 +115,25 @@ preview, and **Share the link** in the menu of a row of the archive. It
 opens the system's own sheet with the address and the title. The address
 is the engine's to say (`props --json`, `url`): a published post's own,
 and for a draft the hidden page the build keeps for it.
+
+What is written is kept on the phone at every letter: a new post until it
+is sent, changes to a post's text or to one of its languages until they
+are saved. Nothing is asked on the way out of a form -- leaving it loses
+nothing, and neither does Android closing an app that is out of sight.
+The next time the form opens the writing is back in it, with a line that
+says so and when it was written, and one key that puts it away. Pictures
+chosen for it are not kept, and the line says that too where the text
+names one; a post that has changed on the blog meanwhile is said as well.
+The first screen lists what was begun and not finished -- an unsent new
+post, unsaved changes, an unsaved translation -- each a way straight back
+to where it waits.
+
+One connection to the server is opened with the first call and kept for
+the ones after it: a server counts the connections an address opens, and
+turns the ones over its count away. Every command is a channel of its own
+on it. It is closed after five minutes unused, when another blog is
+opened, when the key or the server's key is changed, and when the app
+leaves the screen.
 
 ## Looking before sending
 
@@ -164,9 +190,16 @@ open blog's own. The engine says them with its identity (`version
 beside it and the rules, for light and for dark), so each blog looks in
 the app as its pages do -- with its favicon beside its name. A blog whose
 engine says no palette yet, and the app before any blog, wear the app's
-own: the blue the engine ships with. **Use the default colour scheme** in
-Settings keeps the app to its own whatever blog is open -- for eyes a
-blog's palette does not serve. The first screen is the blog at one glance -- what
+own: the blue the engine ships with. Under **Colours** in Settings the
+app wears the open blog's colours, its own default scheme whatever blog
+is open -- for eyes a blog's palette does not serve -- or ones of your
+own: five colours by day and five by night, each a swatch that opens a
+picker, starting from the ones worn until then. They hold on the device,
+for every blog. Colours chosen so that the writing cannot be told from
+its ground lock nobody out: the part of the settings they are chosen in
+then keeps to the default scheme until they can be read.
+
+The first screen is the blog at one glance -- what
 waits in the queue, how many drafts are in progress -- over the six
 entries of the menu; a list is its filters as pills and
 its rows; every other screen is plates on its ground -- rows that belong
@@ -201,13 +234,15 @@ at once.
   app's other settings, on every Android the app runs on; the system's
   own per-app language, where there is one, is another setting.
 - **The steps of the type** multiply the system's size (by 1.12, 1.24,
-  1.35 and 1.65), where iOS moves up the system's own scale.
+  1.35 and 1.65; on a tablet by 1.24, 1.65, 1.94 and 2.35), where iOS
+  moves up the system's own scale.
+- **The colour picker is the app's own.** Android has none to offer: a
+  strip for the hue, one for how far from grey, one for how far from
+  black, and the number as a palette writes it. It covers the foot of
+  the screen, so the app is seen changing over it, and keeps to the
+  default scheme whatever is worn.
 - **Sharing** opens Android's sheet with the address as text and the
   title as its subject; there is no preview of the link in it.
-- **The back key asks.** A screen holding words that have not been sent
-  asks before it is left, and a new post half written is kept on the
-  phone until it is sent or emptied -- Android may close an app in the
-  background, and the post would be gone with it.
 - **One icon.** An Android app cannot choose among icons the way an iOS
   one can, so the icon is one, whatever the open blog's accent is.
 - **A phone.** The two-column layout an iPad has is not here yet; a tablet
@@ -266,8 +301,11 @@ a description in its two places -- letter by letter, at random, with
 several pictures -- a mark put where the caret is, and the weight of a
 delivery against the server's limit; a row as the post it stands for is
 now, and a post's link; the colours a blog says and the ones the app
-wears; the size of the type and the language as they are kept; the site
-built by the app itself.
+wears, the ones chosen on the device and the line under which they
+cannot be read; the size of the type and the language as they are kept;
+the site built by the app itself; the connection kept to the server;
+writing kept until it is sent or saved, and what the first screen lists
+of it; the stamp of a build.
 The screens are not -- they are looked at.
 
 ```

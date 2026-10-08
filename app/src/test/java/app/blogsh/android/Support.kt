@@ -39,6 +39,7 @@ object English {
 class MemoryNotes : app.blogsh.android.model.Notes {
     private val map = HashMap<String, String>()
     override fun read(key: String): String? = map[key]
+    override fun keys(): Set<String> = map.keys.toSet()
     override fun write(key: String, value: String?) {
         if (value == null) map.remove(key) else map[key] = value
     }

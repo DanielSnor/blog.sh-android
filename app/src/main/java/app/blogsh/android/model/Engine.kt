@@ -2,7 +2,12 @@ package app.blogsh.android.model
 
 import app.blogsh.android.R
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -98,6 +103,9 @@ class TrustOnFirstUse(private val host: String, private val port: Int, private v
  * forced command there (scripts/remote.sh, `run`): the argv goes over as
  * one line of JSON, the answer comes back as one object. Nothing here is
  * a shell; the server checks every word before the engine sees it.
+ *
+ * Every command is a channel of its own on one connection, which is kept
+ * between them (`Line`) rather than opened for each.
  */
 object Engine {
     /**
@@ -158,8 +166,14 @@ object Engine {
      * the fourth one away. A command that fails ends the batch; what was
      * answered before it is lost with it.
      */
-    suspend fun batch(commands: List<List<String>>): List<ByteArray> = connected { ssh ->
-        commands.map { exec(it, ssh) }
+    suspend fun batch(commands: List<List<String>>): List<ByteArray> = onTheLine { ssh, wary ->
+        val answers = mutableListOf<ByteArray>()
+        for (args in commands) {
+            // Only the first can find the connection dead without having
+            // said anything; after it, the connection has just been heard from.
+            answers.add(exec(args, ssh, wary = wary && answers.isEmpty(), said = answers.isNotEmpty()))
+        }
+        answers
     }
 
     /**
@@ -168,45 +182,128 @@ object Engine {
      * line saying `end` -- scripts/remote.sh's `deliver`. One answer per
      * file comes back; the last is the engine's own for the markdown.
      */
-    suspend fun deliver(files: List<DeliveryFile>): List<ByteArray> = connected { ssh -> send(files, ssh) }
+    suspend fun deliver(files: List<DeliveryFile>): List<ByteArray> = onTheLine { ssh, wary -> send(files, ssh, wary) }
 
-    private suspend fun <T> connected(block: (SSHClient) -> T): T = withContext(Dispatchers.IO) {
+    // ---- The connection
+
+    private val wires = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * Kept for five minutes after its last call: somebody reading through
+     * the app asks the server every few seconds, and a server that counts
+     * connections stops answering the tenth. See `Line`.
+     */
+    val line = Line<SSHClient>(
+        keep = 300_000, scope = wires,
+        open = { door -> connect(door) },
+        close = { ssh -> runCatching { ssh.disconnect() } },
+    )
+
+    /**
+     * Lets go of the kept connection: the app left the screen, or what a
+     * connection is opened with was changed.
+     */
+    fun hangUp() {
+        wires.launch { line.drop() }
+    }
+
+    /**
+     * The connection failed before the call had said anything on it, so
+     * nothing was done on the server and the call can be made again.
+     */
+    private class NothingSaid(val reason: Throwable) : Exception()
+
+    /**
+     * Runs `work` on the kept connection, opening one where none is kept.
+     * A kept connection can be dead without anybody knowing -- the network
+     * changed under it, a router forgot it: if it fails before the call
+     * said anything, the call is made once more on a new one. A call that
+     * had begun to speak is never repeated; whether a publish arrived is
+     * not something to guess at.
+     */
+    private suspend fun <T> onTheLine(work: (SSHClient, Boolean) -> T): T = withContext(Dispatchers.IO) { ride(work) }
+
+    private suspend fun <T> ride(work: (SSHClient, Boolean) -> T): T {
         val settings = ServerSettings.load() ?: throw EngineError.NotConfigured
+        val door = Door(settings.host, settings.port, settings.user, settings.keyAccount)
+        var again = true
+        while (true) {
+            val hold = line.take(door)
+            try {
+                val result = work(hold.wire, hold.rested)
+                line.give(hold)
+                return result
+            } catch (nothing: NothingSaid) {
+                line.give(hold, broken = true)
+                if (!again) throw EngineError.Stage("exec (0 bytes so far)", nothing.reason)
+                again = false
+            } catch (e: Throwable) {
+                // Whatever broke, this is not a connection to hand on --
+                // except where the engine itself answered and the close
+                // after it complained, which never comes here.
+                line.give(hold, broken = true)
+                throw e
+            }
+        }
+    }
+
+    private fun connect(door: Door): SSHClient {
         val seed = try {
-            KeyStore.seed(settings.keyAccount)
+            KeyStore.seed(door.keyAccount)
         } catch (e: Exception) {
             throw EngineError.NoKey
         }
-        val trust = TrustOnFirstUse(settings.host, settings.port)
+        val trust = TrustOnFirstUse(door.host, door.port)
         val ssh = SSHClient(DefaultConfig())
         ssh.connectTimeout = 15_000
         ssh.timeout = 0
         ssh.addHostKeyVerifier(trust)
         try {
-            try {
-                ssh.connect(settings.host, settings.port)
-                ssh.authPublickey(settings.user, provider(seed))
-            } catch (e: UserAuthException) {
-                throw EngineError.KeyNotKnown
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                trust.changed?.let { throw EngineError.HostKeyChanged(it) }
-                throw EngineError.Stage("connect", e)
-            }
-            block(ssh)
-        } finally {
+            ssh.connect(door.host, door.port)
+            ssh.authPublickey(door.user, provider(seed))
+        } catch (e: Exception) {
             runCatching { ssh.disconnect() }
+            if (e is UserAuthException) throw EngineError.KeyNotKnown
+            if (e is CancellationException) throw e
+            trust.changed?.let { throw EngineError.HostKeyChanged(it) }
+            throw EngineError.Stage("connect", e)
+        }
+        return ssh
+    }
+
+    /**
+     * Watches a call's first step on a connection that has lain unused:
+     * one that has not let the call in after ten seconds is closed, which
+     * ends the wait -- and the call is made again on a new one.
+     */
+    private class Watch(ssh: SSHClient, wary: Boolean, scope: CoroutineScope) {
+        @Volatile
+        private var done = false
+        private val waiting: Job? = if (!wary) null else scope.launch {
+            delay(10_000)
+            if (!done) runCatching { ssh.disconnect() }
+        }
+
+        /** The call was let in: the connection lives. */
+        fun letIn() {
+            done = true
+            waiting?.cancel()
         }
     }
 
-    private fun exec(args: List<String>, ssh: SSHClient): ByteArray {
+    /**
+     * `said`: an earlier command of the same batch has already run on
+     * this connection, so a failure here is not one to start over from.
+     */
+    private fun exec(args: List<String>, ssh: SSHClient, wary: Boolean, said: Boolean): ByteArray {
         val request = buildJsonObject { put("args", JsonArray(args.map { JsonPrimitive(it) })) }.toString() + "\n"
         var answer = ByteArray(0)
         var stage = "exec"
+        val watch = Watch(ssh, wary, wires)
         try {
             ssh.startSession().use { session ->
                 val command = session.exec("run")
+                watch.letIn()
                 stage = "write"
                 command.outputStream.write(request.toByteArray(Charsets.UTF_8))
                 command.outputStream.flush()
@@ -216,19 +313,23 @@ object Engine {
                 command.join(30, TimeUnit.SECONDS)
             }
         } catch (e: Exception) {
+            watch.letIn()
             // The answer may be whole even when the close after it complains.
             if (stage == "close" && answer.isNotEmpty()) return answer
+            if (stage == "exec" && !said) throw NothingSaid(e)
             throw EngineError.Stage("$stage (${answer.size} bytes so far)", e)
         }
         return answer
     }
 
-    private fun send(files: List<DeliveryFile>, ssh: SSHClient): List<ByteArray> {
+    private fun send(files: List<DeliveryFile>, ssh: SSHClient, wary: Boolean): List<ByteArray> {
         var output = ByteArray(0)
         var stage = "exec"
+        val watch = Watch(ssh, wary, wires)
         try {
             ssh.startSession().use { session ->
                 val command = session.exec("deliver")
+                watch.letIn()
                 stage = "write"
                 val out = command.outputStream
                 // 76 columns and a newline, the way base64 is written on
@@ -247,7 +348,9 @@ object Engine {
                 command.join(30, TimeUnit.SECONDS)
             }
         } catch (e: Exception) {
+            watch.letIn()
             if (stage == "close" && output.isNotEmpty()) return objects(output)
+            if (stage == "exec") throw NothingSaid(e)
             throw EngineError.Stage("$stage (${output.size} bytes so far)", e)
         }
         return objects(output)

@@ -19,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,9 +27,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
+import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.Delivery
 import app.blogsh.android.model.DeliveryFile
+import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Herald
 import app.blogsh.android.model.EditAnswer
 import app.blogsh.android.model.EditEntry
@@ -38,10 +41,12 @@ import app.blogsh.android.model.Media
 import app.blogsh.android.model.PostState
 import app.blogsh.android.model.Preview
 import app.blogsh.android.model.Shot
+import app.blogsh.android.model.Unsaved
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.plain
 import app.blogsh.android.model.said
 import app.blogsh.android.ui.Asks
+import app.blogsh.android.ui.BroughtBack
 import app.blogsh.android.ui.Busy
 import app.blogsh.android.ui.Choice
 import app.blogsh.android.ui.Command
@@ -54,12 +59,14 @@ import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
-import app.blogsh.android.ui.ScreenBack
 import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
+import app.blogsh.android.ui.broughtBackWords
+import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.ui
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 /**
@@ -69,6 +76,9 @@ import kotlinx.coroutines.launch
  * phone goes -- new pictures first, then the text as a file whose header
  * says which post it edits and which version it started from. A draft
  * gets its preview rebuilt; a published post is rebuilt and deployed.
+ *
+ * Changes written and not saved are kept on the device (`Unsaved`) and
+ * are back in the editor the next time the post is opened.
  *
  * `loaded` is the text already handed out to the screen before this one,
  * so the first look need not ask the engine again.
@@ -93,7 +103,10 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     var confirmingLoss by remember { mutableStateOf(false) }
     var previewing by remember { mutableStateOf(false) }
     var looking by remember { mutableStateOf<String?>(null) }
-    var asking by remember { mutableStateOf(false) }
+    // The changes brought back when the text was opened, for the line that says so.
+    var broughtBack by remember { mutableStateOf<Unsaved?>(null) }
+    // The blog the screen was opened for: what is kept is kept under it.
+    val blog = remember { Blogs.currentId }
     val unreadable = stringResource(R.string.one_picture_could_not_be_read)
     val textMissing = stringResource(R.string.the_text_did_not_come_with_the)
 
@@ -106,8 +119,37 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     // The save would leave the post with fewer pictures than it had.
     val fewer = Kept.fewer(media, shots, text)
     val sent = Kept.sent(shots, text)
-    // What the engine does not have yet: words changed since it handed them out, or a shot picked here.
-    val unsent = entry.let { it != null && (text != (it.text ?: "") || shots.isNotEmpty()) }
+
+    // ---- Kept until saved
+
+    // The text the editor opens with: the blog's, or -- where changes to
+    // it were written here and never saved -- those.
+    fun opened(post: EditEntry, fresh: String): String {
+        val kept = if (post.editable) blog?.let { Unsaved.kept(it, slug, Unsaved.What.Text, BlogShelf.notes) } else null
+        if (kept == null || kept.text == fresh) {
+            broughtBack = null
+            return fresh
+        }
+        broughtBack = kept
+        return kept.text
+    }
+
+    // At every letter; a text that is the blog's again is nothing to keep.
+    fun keep(written: String) {
+        val post = entry ?: return
+        val fresh = post.text
+        if (!post.editable || fresh == null || blog == null) return
+        if (written == fresh) Unsaved.forget(blog, slug, Unsaved.What.Text, BlogShelf.notes)
+        else Unsaved(written, post.base, System.currentTimeMillis(), post.title).keep(blog, slug, Unsaved.What.Text, BlogShelf.notes)
+        Desk.changed()
+    }
+
+    fun takeTheBlogs() {
+        broughtBack = null
+        shots = emptyList()
+        state.set(entry?.text ?: "")
+        blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes) }
+    }
 
     suspend fun load() {
         // Once: after a save the text is asked for afresh, with its new version.
@@ -115,14 +157,14 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
         if (loaded != null && !tookLoaded && handed != null) {
             tookLoaded = true
             entry = loaded
-            state.set(handed)
+            state.set(opened(loaded, handed))
             return
         }
         tookLoaded = true
         try {
             val answer = Engine.call<EditAnswer>("edit", slug)
             entry = answer.post
-            state.set(answer.post.text ?: "")
+            state.set(opened(answer.post, answer.post.text ?: ""))
             problem = if (answer.post.text == null) textMissing else null
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
@@ -185,6 +227,10 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
             val answer = delivered(Engine.deliver(files))
             saved = answer
             shots = emptyList()
+            // Saved: nothing is left to bring back.
+            blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes) }
+            broughtBack = null
+            Desk.changed()
             // Saving a published post builds the site: nothing is owed after it.
             if (answer.state == PostState.Published) Herald.shared.settled()
             load()
@@ -199,20 +245,24 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     }
 
     LaunchedEffect(Unit) { load() }
+    LaunchedEffect(Unit) { snapshotFlow { state.text }.drop(1).collect { keep(it) } }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { items ->
         scope.launch { loadPictures(items) }
     }
 
-    fun leave() {
-        if (unsent) asking = true else nav.pop()
-    }
-    ScreenBack(enabled = unsent) { asking = true }
+    fun leave() = nav.pop()
 
     Box(Modifier.fillMaxSize()) {
-        PaperScreen(onBack = { leave() }, title = entry?.title, answered = answered) {
+        PaperScreen(title = entry?.title, answered = answered) {
             val post = entry
             if (post != null) {
+                broughtBack?.let { back ->
+                    BroughtBack(
+                        broughtBackWords(back, post.base, post.media), stringResource(R.string.take_the_text_as_the_blog_has),
+                        Modifier.gap(0, bottom = 14),
+                    ) { takeTheBlogs() }
+                }
                 if (!post.editable) {
                     Hint(
                         post.problem?.let { stringResource(R.string.this_post_cannot_be_edited_here_at, it) }
@@ -223,7 +273,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                     row { PaperEditor(state, minHeight = 320.dp, enabled = post.editable) }
                 }
                 Hint(stringResource(R.string.the_header_and_the_text_as_the))
-                Plate(Modifier.padding(top = 10.dp)) {
+                Plate(Modifier.gap(10)) {
                     row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }
                 }
 
@@ -279,7 +329,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                         else if (post.scheduled || isDraft) R.string.save_the_draft
                         else R.string.save_and_publish_the_change
                     ),
-                    modifier = Modifier.padding(top = 22.dp),
+                    modifier = Modifier.gap(22),
                     enabled = !(saving || importing || !post.editable || text == post.text || Delivery.over(sent, textBytes, maxMb)),
                     busy = saving,
                 ) {
@@ -338,5 +388,4 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
             onDismiss = { confirmingLoss = false },
         )
     }
-    if (asking) AsksToLeave(onLeave = { nav.pop() }, onDismiss = { asking = false })
 }

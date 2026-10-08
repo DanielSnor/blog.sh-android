@@ -78,12 +78,16 @@ data class Facts(
 interface Notes {
     fun read(key: String): String?
     fun write(key: String, value: String?)
+
+    /** Every key something is kept under. */
+    fun keys(): Set<String>
 }
 
 /** The app's own preferences. */
 class PreferenceNotes(context: Context, name: String = "blogsh") : Notes {
     private val prefs = context.getSharedPreferences(name, Context.MODE_PRIVATE)
-    override fun read(key: String): String? = prefs.getString(key, null)
+    override fun read(key: String): String? = runCatching { prefs.getString(key, null) }.getOrNull()
+    override fun keys(): Set<String> = prefs.all.keys
     override fun write(key: String, value: String?) {
         prefs.edit().apply { if (value == null) remove(key) else putString(key, value) }.apply()
     }
@@ -119,7 +123,7 @@ object BlogShelf {
 }
 
 /** The blogs as the screens see them: which there are, which one is open. */
-class BlogList(private val notes: Notes, private val forgetKey: (String) -> Unit) {
+class BlogList(private val notes: Notes, private val hangUp: () -> Unit = {}, private val forgetKey: (String) -> Unit) {
     var all by mutableStateOf(emptyList<Blog>())
         private set
     var currentId by mutableStateOf<String?>(null)
@@ -168,6 +172,10 @@ class BlogList(private val notes: Notes, private val forgetKey: (String) -> Unit
     fun remove(id: String) {
         val blog = all.firstOrNull { it.id == id } ?: return
         runCatching { forgetKey(blog.keyAccount) }
+        // What was being written for it goes with it, and the connection to its server.
+        Unsent.forget(id, notes)
+        Unsaved.forgetAll(id, notes)
+        hangUp()
         all = all.filter { it.id != id }
         if (currentId == id) currentId = all.firstOrNull()?.id
         save()
@@ -177,4 +185,4 @@ class BlogList(private val notes: Notes, private val forgetKey: (String) -> Unit
 }
 
 /** The one list the app has. */
-val Blogs: BlogList by lazy { BlogList(BlogShelf.notes) { KeyStore.deleteKey(it) } }
+val Blogs: BlogList by lazy { BlogList(BlogShelf.notes, hangUp = { Engine.hangUp() }) { KeyStore.deleteKey(it) } }

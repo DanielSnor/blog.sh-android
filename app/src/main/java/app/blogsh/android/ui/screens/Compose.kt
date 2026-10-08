@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,20 +51,20 @@ import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.Delivery
 import app.blogsh.android.model.DeliveryFile
+import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
-import app.blogsh.android.model.EngineJson
 import app.blogsh.android.model.Kept
 import app.blogsh.android.model.Markdown
 import app.blogsh.android.model.Media
 import app.blogsh.android.model.Preview
 import app.blogsh.android.model.Shot
 import app.blogsh.android.model.TagStore
+import app.blogsh.android.model.Unsent
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.plain
 import app.blogsh.android.model.said
-import app.blogsh.android.ui.Asks
-import app.blogsh.android.ui.Choice
+import app.blogsh.android.ui.BroughtBack
 import app.blogsh.android.ui.Command
 import app.blogsh.android.ui.DeliveryNote
 import app.blogsh.android.ui.EditorState
@@ -79,42 +80,17 @@ import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
-import app.blogsh.android.ui.ScreenBack
+import app.blogsh.android.ui.RowDate
 import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.TagSuggestions
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.mono
+import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.ui
-import kotlinx.coroutines.delay
+import java.time.Instant
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-
-/**
- * What is typed into a new post -- its title, its tags, its text; not its
- * shots -- as the app keeps it between two runs. Android may close an app
- * that is out of sight, and a post half written would be gone with it:
- * so the words are written down as they change, under the blog they were
- * written for, and are there when the form is opened again.
- */
-@Serializable
-private data class KeptWords(val title: String = "", val tags: String = "", val text: String = "") {
-    val none: Boolean get() = title.isEmpty() && tags.isEmpty() && text.isEmpty()
-
-    companion object {
-        private fun place(blog: String) = "compose.draft.$blog"
-
-        fun read(blog: String?): KeptWords? {
-            val written = BlogShelf.notes.read(place(blog ?: return null)) ?: return null
-            return runCatching { EngineJson.decodeFromString<KeptWords>(written) }.getOrNull()?.takeIf { !it.none }
-        }
-
-        /** Nothing to keep is nothing kept: the note is taken away. */
-        fun write(blog: String?, words: KeptWords?) {
-            BlogShelf.notes.write(place(blog ?: return), if (words == null || words.none) null else EngineJson.encodeToString(words))
-        }
-    }
-}
 
 /**
  * What a delivery answered. A refusal anywhere among the answers is the
@@ -134,24 +110,14 @@ internal fun delivered(answers: List<ByteArray>): ActionAnswer {
 }
 
 /**
- * Android has a back key, and the bar an arrow: either would take unsent
- * words with it. So before it does, the screen asks.
- */
-@Composable
-internal fun AsksToLeave(onLeave: () -> Unit, onDismiss: () -> Unit) {
-    Asks(
-        stringResource(R.string.android_leave_unsaved_title), stringResource(R.string.android_leave_unsaved_text),
-        choices = listOf(Choice(stringResource(R.string.android_leave), danger = true, run = onLeave)),
-        cancel = stringResource(R.string.android_stay), onDismiss = onDismiss,
-    )
-}
-
-/**
  * "New post": what /write/ offers, as a form -- a title, the text, the
  * tags, photographs each with its description -- sent the way the page
  * sends it: the pictures first, the markdown last, one delivery. The
  * post arrives as a draft with a preview; publishing is its properties'
  * decision, the way it is at the desk.
+ *
+ * What is written is kept on the device at every letter (`Unsent`) and
+ * is back in the form the next time it opens, until it is sent.
  */
 @Composable
 fun ComposeScreen() {
@@ -163,14 +129,16 @@ fun ComposeScreen() {
     val maxMb = Blogs.current?.maxMb ?: 24
     // The blog the form was opened for: what is kept is kept under it.
     val blog = remember { Blogs.currentId }
-    val kept = remember { KeptWords.read(blog) }
+    // Once, when the form opens: what was written for this blog and not
+    // sent is put back.
+    val kept = remember {
+        blog?.let { Unsent.kept(it, BlogShelf.notes) ?: Unsent.carriedOver(it, BlogShelf.notes, System.currentTimeMillis()) }
+    }
     var title by remember { mutableStateOf(kept?.title ?: "") }
     var tags by remember { mutableStateOf(kept?.tags ?: "") }
     val state = remember { EditorState(kept?.text ?: "") }
-    // What is shown was picked up from the last time, and the form says so.
-    var pickedUp by remember { mutableStateOf(kept != null) }
-    // The author chose to leave: nothing more is written down behind them.
-    var left by remember { mutableStateOf(false) }
+    // What was brought back when the form opened, for the line that says so.
+    var broughtBack by remember { mutableStateOf(kept) }
     var shots by remember { mutableStateOf(emptyList<Shot>()) }
     var importing by remember { mutableStateOf(false) }
     var sending by remember { mutableStateOf(false) }
@@ -180,7 +148,6 @@ fun ComposeScreen() {
     var answered by remember { mutableStateOf(0) }
     var previewing by remember { mutableStateOf(false) }
     var looking by remember { mutableStateOf<String?>(null) }
-    var asking by remember { mutableStateOf(false) }
     val unreadable = stringResource(R.string.one_picture_could_not_be_read)
 
     val text = state.text
@@ -188,7 +155,6 @@ fun ComposeScreen() {
     // The shots the text names: only those go.
     val sent = Kept.sent(shots, text)
     val overweight = Delivery.over(sent, textBytes, maxMb)
-    val unsent = title.isNotEmpty() || tags.isNotEmpty() || text.isNotEmpty() || shots.isNotEmpty()
 
     // ---- Pictures
 
@@ -246,13 +212,12 @@ fun ComposeScreen() {
             val files = Kept.sent(shots, body).map { DeliveryFile(it.name, it.data) } +
                 DeliveryFile(Markdown.fileName(title, body), markdown.toByteArray(Charsets.UTF_8))
             made = delivered(Engine.deliver(files))
-            // The form is the next post's now, and nothing of this one is kept.
+            // The form is the next post's now, and nothing is left to bring back.
             title = ""
             tags = ""
             state.set("")
             shots = emptyList()
-            pickedUp = false
-            KeptWords.write(blog, null)
+            broughtBack = null
             answered += 1
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
@@ -263,35 +228,41 @@ fun ComposeScreen() {
         }
     }
 
-    // The words are written down a moment after the last of them; a form
-    // emptied by its author keeps nothing, and says nothing of the last time.
-    LaunchedEffect(title, tags, text) {
-        val words = KeptWords(title, tags, text)
-        if (words.none) {
-            pickedUp = false
-            KeptWords.write(blog, null)
-            return@LaunchedEffect
+    // Kept at every letter: there is no moment at which an app is told
+    // it is about to be closed. Not when the form opens -- a form that
+    // was only opened was not written in.
+    LaunchedEffect(Unit) {
+        snapshotFlow { Triple(title, tags, state.text) }.drop(1).collect { (title, tags, text) ->
+            blog?.let { Unsent(title, tags, text, System.currentTimeMillis()).keep(it, BlogShelf.notes) }
+            Desk.changed()
         }
-        delay(400)
-        if (!left) KeptWords.write(blog, words)
+    }
+
+    fun startEmpty() {
+        title = ""
+        tags = ""
+        state.set("")
+        shots = emptyList()
+        broughtBack = null
     }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { items ->
         scope.launch { load(items) }
     }
 
-    fun leave() {
-        if (unsent) asking = true else nav.pop()
-    }
-
     fun forget() {
         made = null
     }
-    ScreenBack(enabled = unsent) { asking = true }
 
-    PaperScreen(onBack = { leave() }, name = stringResource(R.string.new_post), answered = answered) {
-        if (pickedUp) Hint(stringResource(R.string.android_draft_kept))
-        Plate(Modifier.padding(top = if (pickedUp) 14.dp else 0.dp)) {
+    PaperScreen(name = stringResource(R.string.new_post), answered = answered) {
+        broughtBack?.let { back ->
+            // Said, because it was not asked for: the form opens with
+            // something in it that was not typed just now.
+            val words = stringResource(R.string.back_in_the_form_what_was_written, RowDate.spoken(Instant.ofEpochMilli(back.at))) +
+                if (back.namesPictures) " " + stringResource(R.string.its_pictures_were_not_kept_add_them) else ""
+            BroughtBack(words, stringResource(R.string.start_with_an_empty_form)) { startEmpty() }
+        }
+        Plate(Modifier.gap(if (broughtBack != null) 14 else 0)) {
             row {
                 PlainField(
                     title, { title = it }, prompt = stringResource(R.string.title),
@@ -315,7 +286,7 @@ fun ComposeScreen() {
         }
         // Said as it is typed: the marks in the sentence are examples, not marks.
         Hint(stringResource(R.string.markdown_a_picture_goes_in_as_description))
-        Plate(Modifier.padding(top = 10.dp)) {
+        Plate(Modifier.gap(10)) {
             row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }
         }
 
@@ -344,7 +315,7 @@ fun ComposeScreen() {
 
         PrimaryButton(
             stringResource(if (sending) R.string.sending else R.string.send_to_the_blog_as_a_draft),
-            modifier = Modifier.padding(top = 22.dp),
+            modifier = Modifier.gap(22),
             enabled = !(sending || importing || (title.isEmpty() && text.trim().isEmpty()) || overweight),
             busy = sending,
         ) { scope.launch { send() } }
@@ -381,17 +352,6 @@ fun ComposeScreen() {
         ShotsViewer(
             shots, current = one, onShot = { describe(it) },
             onDismiss = { looking = null },
-        )
-    }
-    if (asking) {
-        AsksToLeave(
-            onLeave = {
-                // Asked and answered: what was written is let go of here too.
-                left = true
-                KeptWords.write(blog, null)
-                nav.pop()
-            },
-            onDismiss = { asking = false },
         )
     }
 }

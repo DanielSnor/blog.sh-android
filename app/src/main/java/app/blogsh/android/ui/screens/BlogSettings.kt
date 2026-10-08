@@ -49,6 +49,7 @@ import app.blogsh.android.ui.SectionLabel
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.mono
+import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.ui
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -96,6 +97,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
         val account = Blogs.current?.keyAccount ?: return
         try {
             KeyStore.makeKey(account)
+            Engine.hangUp()
             publicKey = KeyStore.publicKeyLine(account)
             probe = Probe.Idle
         } catch (e: Exception) {
@@ -190,7 +192,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
         when (val now = probe) {
             is Probe.Answered -> {
                 val answer = now.answer
-                Plate(Modifier.padding(top = 12.dp)) {
+                Plate(Modifier.gap(12)) {
                     row {
                         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text("./blog.sh ${answer.engine}", color = Theme.ink, style = mono(13f))
@@ -209,7 +211,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
 
         val known = remember(host, port, keyTick) { TrustOnFirstUse.known(host, port) }
         if (known != null) {
-            Plate(Modifier.padding(top = 12.dp)) {
+            Plate(Modifier.gap(12)) {
                 row {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         EngineLabel(stringResource(R.string.server_key))
@@ -219,6 +221,8 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
                 row {
                     Command(stringResource(R.string.forget_the_server_s_key), Symbols.xmarkCircle, danger = true) {
                         TrustOnFirstUse.forget(host, port)
+                        // The kept connection was opened to the key just forgotten.
+                        Engine.hangUp()
                         keyTick += 1
                     }
                 }
@@ -227,7 +231,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
 
         // The blog leaves the app; nothing on the server is touched.
         if (blog != null) {
-            Plate(Modifier.padding(top = 28.dp)) {
+            Plate(Modifier.gap(28)) {
                 row { Command(stringResource(R.string.remove_this_blog), Symbols.minusCircle, danger = true) { confirmingRemoval = true } }
             }
         }

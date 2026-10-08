@@ -14,13 +14,26 @@ import java.util.Locale
  * steps above that. The steps stand on the system's size: somebody who
  * already reads large gets larger, never smaller.
  */
-enum class TextSize(
-    /** How much larger every face is drawn, and a page of the blog with it. */
-    val zoom: Float,
+enum class TextSize {
+    System, One, Two, Three, Four;
+
+    /**
+     * How many sizes of the system's own scale it stands above the
+     * system's: one after another on a phone, in longer strides on a
+     * wide screen -- a tablet is read from further away and has the room,
+     * so its last step is a good deal past where a phone's ends.
+     */
+    fun strides(wide: Boolean = false): Int = if (wide) listOf(0, 2, 4, 5, 6)[ordinal] else ordinal
+
+    /**
+     * How much larger every face is drawn, and a page of the blog with
+     * it: what that many sizes of the system's scale come to, from its
+     * usual one.
+     */
+    fun zoom(wide: Boolean = false): Float = listOf(1f, 1.12f, 1.24f, 1.35f, 1.65f, 1.94f, 2.35f)[strides(wide)]
+
     /** The two letters that stand for it where it is chosen, in sp. */
-    val sample: Float,
-) {
-    System(1f, 14f), One(1.12f, 16f), Two(1.24f, 18f), Three(1.35f, 21f), Four(1.65f, 25f);
+    fun sample(wide: Boolean = false): Float = (if (wide) listOf(14f, 18f, 23f, 27f, 32f) else listOf(14f, 16f, 18f, 21f, 25f))[ordinal]
 
     companion object {
         /** Where the choice is kept. */
@@ -73,15 +86,18 @@ enum class AppLanguage(
 }
 
 /**
- * Whose colours the app wears: the open blog's -- its ground, its ink,
- * its rules, as its pages have them -- or its own, when the blog has
- * said none or when it is asked to keep to its own. The last is for eyes
- * that a blog's palette does not serve: the app's own are always the
- * same, whatever a blog chose.
+ * How the app is read on this device, as it is chosen in the settings
+ * and kept: whose colours it wears and the ones chosen here -- the open
+ * blog's, the app's own, or the ones somebody chose on this device,
+ * colour by colour -- the size of its type, and its language. The
+ * device's, not a blog's: eyes do not change with the blog.
  */
 class Reading(private val notes: Notes) {
-    /** Keep to the app's own colours, the accent included. */
-    var ownColours by mutableStateOf(notes.read(OWN_KEY) == "yes")
+    var wearing by mutableStateOf(Colouring.kept(notes.read(Colouring.KEY), switchedToOwn = notes.read(Colouring.SWITCH_KEY) == "yes"))
+        private set
+
+    /** The ones chosen here; null until somebody chose. */
+    var chosen by mutableStateOf(Colours.kept(notes.read(Colours.KEY)))
         private set
 
     var textSize by mutableStateOf(TextSize.kept(notes.read(TextSize.KEY)?.toIntOrNull()))
@@ -91,9 +107,23 @@ class Reading(private val notes: Notes) {
     var language by mutableStateOf(AppLanguage.read(notes))
         private set
 
-    fun keepOwnColours(own: Boolean) {
-        ownColours = own
-        notes.write(OWN_KEY, if (own) "yes" else null)
+    fun wear(choice: Colouring) {
+        wearing = choice
+        notes.write(Colouring.KEY, choice.word)
+    }
+
+    /**
+     * Wears the chosen ones -- which, the first time, are the ones worn
+     * until then, so that choosing starts from a screen that reads.
+     */
+    fun wearChosen(worn: Colours) {
+        if (chosen == null) choose(worn)
+        wear(Colouring.Chosen)
+    }
+
+    fun choose(colours: Colours?) {
+        chosen = colours
+        notes.write(Colours.KEY, colours?.kept)
     }
 
     fun set(size: TextSize) {
@@ -107,8 +137,6 @@ class Reading(private val notes: Notes) {
     }
 
     companion object {
-        const val OWN_KEY = "ownColours"
-
         /** The one the app has. */
         val shared: Reading by lazy { Reading(BlogShelf.notes) }
     }

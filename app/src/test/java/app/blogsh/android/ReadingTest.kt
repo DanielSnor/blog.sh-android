@@ -1,7 +1,10 @@
 package app.blogsh.android
 
 import app.blogsh.android.model.AppLanguage
+import app.blogsh.android.model.Colouring
+import app.blogsh.android.model.Colours
 import app.blogsh.android.model.Reading
+import app.blogsh.android.model.Shades
 import app.blogsh.android.model.TextSize
 import app.blogsh.android.model.Tones
 import org.junit.Assert.assertEquals
@@ -83,21 +86,39 @@ class TextSizeTest {
         assertEquals(TextSize.System, TextSize.kept(null))
     }
 
-    /** The type, a page of the blog and the letters in the picker grow with the steps. */
+    /**
+     * The type, a page of the blog and the letters in the picker grow
+     * with the steps, on a phone and on a wide screen.
+     */
     @Test
     fun everyStepIsLargerThanTheOneBefore() {
         val all = TextSize.entries
-        assertEquals(1f, TextSize.System.zoom)
-        for ((smaller, larger) in all.zip(all.drop(1))) {
-            assertTrue(smaller.zoom < larger.zoom)
-            assertTrue(smaller.sample < larger.sample)
+        for (wide in listOf(false, true)) {
+            assertEquals(1f, TextSize.System.zoom(wide))
+            for ((smaller, larger) in all.zip(all.drop(1))) {
+                assertTrue(smaller.zoom(wide) < larger.zoom(wide))
+                assertTrue(smaller.sample(wide) < larger.sample(wide))
+            }
         }
+    }
+
+    /**
+     * A tablet's steps are longer: its second is where a phone's last
+     * is, and its last a good deal past that.
+     */
+    @Test
+    fun aWideScreenTakesLongerSteps() {
+        assertEquals(listOf(0, 1, 2, 3, 4), TextSize.entries.map { it.strides() })
+        assertEquals(listOf(0, 2, 4, 5, 6), TextSize.entries.map { it.strides(wide = true) })
+        assertEquals(TextSize.Four.zoom(), TextSize.Two.zoom(wide = true))
+        assertEquals(2.35f, TextSize.Four.zoom(wide = true))
+        for (step in TextSize.entries) assertTrue(step.zoom(wide = true) >= step.zoom())
     }
 
     /** The steps stand on what the system has: somebody who already reads large gets larger, never smaller. */
     @Test
     fun noStepMakesTheTypeSmaller() {
-        for (step in TextSize.entries) assertTrue(step.zoom >= 1f)
+        for (step in TextSize.entries) assertTrue(step.zoom() >= 1f)
     }
 }
 
@@ -165,18 +186,51 @@ class AppLanguageTest {
     fun howTheAppIsReadIsKept() {
         val notes = MemoryNotes()
         val reading = Reading(notes)
-        assertFalse(reading.ownColours)
+        assertEquals(Colouring.Blog, reading.wearing)
+        assertNull(reading.chosen)
         assertEquals(TextSize.System, reading.textSize)
-        reading.keepOwnColours(true)
+        reading.wear(Colouring.Own)
         reading.set(TextSize.Three)
         reading.speak(AppLanguage.De)
         val again = Reading(notes)
-        assertTrue(again.ownColours)
+        assertEquals(Colouring.Own, again.wearing)
         assertEquals(TextSize.Three, again.textSize)
         assertEquals(AppLanguage.De, again.language)
-        again.keepOwnColours(false)
+        again.wear(Colouring.Blog)
         again.set(TextSize.System)
-        assertFalse(Reading(notes).ownColours)
+        assertEquals(Colouring.Blog, Reading(notes).wearing)
         assertEquals(TextSize.System, Reading(notes).textSize)
+    }
+
+    /**
+     * The chosen colours start, the first time, as the ones worn until
+     * then -- choosing begins on a screen that reads -- and are kept as
+     * they are changed; worn again later, they are the ones that were chosen.
+     */
+    @Test
+    fun theChosenColoursStartFromTheOnesWornAndAreKept() {
+        val notes = MemoryNotes()
+        val reading = Reading(notes)
+        reading.wearChosen(Colours.own)
+        assertEquals(Colouring.Chosen, Reading(notes).wearing)
+        assertEquals(Colours.own, Reading(notes).chosen)
+        val mine = Colours.own.with(dark = false, Shades.Part.Bg, 0x123456)
+        reading.choose(mine)
+        reading.wear(Colouring.Blog)
+        reading.wearChosen(Colours.own)
+        assertEquals(mine, Reading(notes).chosen)
+        reading.choose(null)
+        assertNull(Reading(notes).chosen)
+        assertNull(notes.read(Colours.KEY))
+    }
+
+    /** From before there were three: the switch that stood for the app's own. */
+    @Test
+    fun theOldSwitchIsReadAsTheAppsOwn() {
+        val notes = MemoryNotes()
+        notes.write(Colouring.SWITCH_KEY, "yes")
+        assertEquals(Colouring.Own, Reading(notes).wearing)
+        Reading(notes).wear(Colouring.Blog)
+        assertEquals(Colouring.Blog, Reading(notes).wearing)
     }
 }

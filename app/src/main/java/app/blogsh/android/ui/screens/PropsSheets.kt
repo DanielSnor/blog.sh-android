@@ -81,6 +81,7 @@ import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.TagSuggestions
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.dialogGround
+import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.ui
 import kotlinx.coroutines.launch
@@ -174,7 +175,7 @@ fun ScheduleSheet(slug: String, offered: String?, current: String? = null, sched
             }
         }
         if (offered != null) Hint(stringResource(R.string.the_time_offered_is_the_next_free))
-        PrimaryButton(title, Modifier.padding(top = 22.dp), busy = busy) { scope.launch { schedule() } }
+        PrimaryButton(title, Modifier.gap(22), busy = busy) { scope.launch { schedule() } }
         problem?.let { ProblemLine(it) }
     }
 
@@ -387,7 +388,7 @@ fun PropertiesForm(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
                 ChoiceRow(stringResource(R.string.type), typeWord(type), type, types.map { it to typeWord(it) }) { type = it }
             }
         }
-        Plate(Modifier.padding(top = 10.dp)) {
+        Plate(Modifier.gap(10)) {
             row { SwitchRow(stringResource(R.string.unlisted), unlisted, { unlisted = it }, property = true) }
             row {
                 ChoiceRow(stringResource(R.string.lead_image), flagWord(hero), hero, threeStates.map { it to flagWord(it) }) { hero = it }
@@ -397,7 +398,7 @@ fun PropertiesForm(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
             }
         }
         Hint(stringResource(R.string.properties_are_what_the_post_is_not))
-        PrimaryButton(stringResource(R.string.save), Modifier.padding(top = 22.dp), enabled = sets().isNotEmpty(), busy = busy) {
+        PrimaryButton(stringResource(R.string.save), Modifier.gap(22), enabled = sets().isNotEmpty(), busy = busy) {
             scope.launch { save() }
         }
         problem?.let { ProblemLine(it) }

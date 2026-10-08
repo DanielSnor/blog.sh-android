@@ -152,10 +152,16 @@ data class BuildStamp(
 ) {
     companion object {
         /** This build's own, as its build wrote it into the app. */
-        val own: BuildStamp by lazy {
-            runCatching { of(app.blogsh.android.BlogshApp.context.assets.open("BuildStamp.txt").bufferedReader().use { it.readText() }) }
-                .getOrDefault(BuildStamp(null, null))
-        }
+        var own: BuildStamp
+            get() = said ?: runCatching { of(app.blogsh.android.BlogshApp.context.assets.open("BuildStamp.txt").bufferedReader().use { it.readText() }) }
+                .getOrDefault(BuildStamp(null, null)).also { said = it }
+            /** Only a test says another: a picture of the settings is not to change with every build. */
+            internal set(value) {
+                said = value
+            }
+
+        @Volatile
+        private var said: BuildStamp? = null
 
         /** The two lines of the stamp. Anything else is no stamp. */
         fun of(text: String): BuildStamp {

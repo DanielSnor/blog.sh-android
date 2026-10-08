@@ -1,0 +1,86 @@
+{
+  "ok": true,
+  "posts": [
+    {
+      "slug": "vikend-na-chalupe",
+      "year": "2026",
+      "date": "2026-10-21T10:00:00+02:00",
+      "title": "Víkend na chalupě",
+      "type": "text",
+      "tags": [
+        "chalupa",
+        "víkend"
+      ],
+      "state": "draft",
+      "scheduled": true,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "dobehnuto",
+      "year": "2026",
+      "date": "2026-10-20T10:00:00+02:00",
+      "title": "Doběhnuto",
+      "type": "text",
+      "tags": [
+        "běhání"
+      ],
+      "state": "draft",
+      "scheduled": true,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "seznam-na-zimu",
+      "year": "2026",
+      "date": "2026-10-05T21:43:49+02:00",
+      "title": "Seznam na zimu",
+      "type": "text",
+      "tags": [
+        "plány"
+      ],
+      "state": "draft",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "titulek-testovaciho-prispevku-z-android-aplikace",
+      "year": "2026",
+      "date": "2026-10-05T21:43:47+02:00",
+      "title": "Titulek testovacího příspěvku z Android aplikace",
+      "type": "text",
+      "tags": [
+        "pokus",
+        "aplikace",
+        "android"
+      ],
+      "state": "draft",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "rozepsane-poznamky",
+      "year": "2026",
+      "date": "2026-10-05T21:43:47+02:00",
+      "title": "Rozepsané poznámky",
+      "type": "text",
+      "tags": [
+        "poznámky"
+      ],
+      "state": "draft",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    }
+  ],
+  "count": 5,
+  "drafts": 5,
+  "search": null
+}

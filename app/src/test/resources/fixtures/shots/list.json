@@ -1,0 +1,197 @@
+{
+  "ok": true,
+  "posts": [
+    {
+      "slug": "vikend-na-chalupe",
+      "year": "2026",
+      "date": "2026-10-21T10:00:00+02:00",
+      "title": "Víkend na chalupě",
+      "type": "text",
+      "tags": [
+        "chalupa",
+        "víkend"
+      ],
+      "state": "draft",
+      "scheduled": true,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "dobehnuto",
+      "year": "2026",
+      "date": "2026-10-20T10:00:00+02:00",
+      "title": "Doběhnuto",
+      "type": "text",
+      "tags": [
+        "běhání"
+      ],
+      "state": "draft",
+      "scheduled": true,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "seznam-na-zimu",
+      "year": "2026",
+      "date": "2026-10-05T21:43:49+02:00",
+      "title": "Seznam na zimu",
+      "type": "text",
+      "tags": [
+        "plány"
+      ],
+      "state": "draft",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "rozepsane-poznamky",
+      "year": "2026",
+      "date": "2026-10-05T21:43:47+02:00",
+      "title": "Rozepsané poznámky",
+      "type": "text",
+      "tags": [
+        "poznámky"
+      ],
+      "state": "draft",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "titulek-testovaciho-prispevku-z-android-aplikace",
+      "year": "2026",
+      "date": "2026-10-05T21:43:47+02:00",
+      "title": "Titulek testovacího příspěvku z Android aplikace",
+      "type": "text",
+      "tags": [
+        "pokus",
+        "aplikace",
+        "android"
+      ],
+      "state": "draft",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "poznamky-z-konference",
+      "year": "2026",
+      "date": "2026-10-04T21:43:56+02:00",
+      "title": "Poznámky z konference",
+      "type": "text",
+      "tags": [
+        "linux",
+        "konference"
+      ],
+      "state": "published",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "prochazka-kolem-rybnika",
+      "year": "2026",
+      "date": "2026-09-20T21:43:55+02:00",
+      "title": "Procházka kolem rybníka",
+      "type": "text",
+      "tags": [
+        "procházky",
+        "les"
+      ],
+      "state": "published",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "pokusny-post-na-novem-blogu",
+      "year": "2026",
+      "date": "2026-07-23T21:43:50+02:00",
+      "title": "Pokusný post na novém blogu",
+      "type": "text",
+      "tags": [
+        "pokus",
+        "blog"
+      ],
+      "state": "published",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "pokus-o-kvaskovy-chleba",
+      "year": "2026",
+      "date": "2026-06-14T21:43:51+02:00",
+      "title": "Pokus o kváskový chleba",
+      "type": "text",
+      "tags": [
+        "pečení",
+        "kuchyně"
+      ],
+      "state": "published",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "druhy-pokus-o-ranni-beh",
+      "year": "2026",
+      "date": "2026-05-02T21:43:52+02:00",
+      "title": "Druhý pokus o ranní běh",
+      "type": "text",
+      "tags": [
+        "běhání",
+        "ráno"
+      ],
+      "state": "published",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "prvni-pokus-s-novym-fotakem",
+      "year": "2026",
+      "date": "2026-03-16T21:43:53+02:00",
+      "title": "První pokus s novým foťákem",
+      "type": "text",
+      "tags": [
+        "fotky",
+        "technika"
+      ],
+      "state": "published",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    },
+    {
+      "slug": "pokus-o-klus",
+      "year": "2026",
+      "date": "2026-02-07T21:43:54+02:00",
+      "title": "Pokus o klus",
+      "type": "text",
+      "tags": [
+        "běhání"
+      ],
+      "state": "published",
+      "scheduled": false,
+      "series": null,
+      "pinned": false,
+      "match": null
+    }
+  ],
+  "count": 12,
+  "drafts": 5,
+  "search": null
+}

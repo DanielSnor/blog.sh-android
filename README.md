@@ -352,7 +352,23 @@ of a camera's picture -- and what the engine answers to it; the size of the type
 the site built by the app itself; the connection kept to the server;
 writing kept until it is sent or saved, and what the first screen lists
 of it; the stamp of a build.
-The screens are not -- they are looked at.
+The screens are drawn on the desk and compared with how they were last
+looked at: sixteen of them -- the first screen, the lists, a post, the
+forms, the sheets -- in seven looks: a phone in each of the three
+languages, by night, with the largest type, and a tablet on its side and
+upright. What the engine would answer comes from a test blog's own
+answers (`app/src/test/resources/fixtures/shots/`), and the clock stands
+still, so a picture changes only when a screen does. The pictures are in
+`app/src/test/shots/`; a run that finds a screen changed fails, names it,
+and draws the two side by side in the build's `shots-changed/`. When the
+change was meant, the pictures are taken anew:
+
+```
+tools/gw :app:testDebugUnitTest -Pshots=record
+```
+
+What a picture cannot say -- a camera, a keyboard, what a real phone does
+with a window -- is still looked at on a device.
 
 ```
 tools/gw :app:testDebugUnitTest

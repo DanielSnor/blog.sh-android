@@ -57,6 +57,7 @@ import app.blogsh.android.BlogshApp
 import app.blogsh.android.R
 import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.Colours
+import app.blogsh.android.model.Now
 import app.blogsh.android.model.Reading
 import app.blogsh.android.model.Shades
 import app.blogsh.android.model.Tones
@@ -422,14 +423,14 @@ object RowDate {
     private fun pattern(skeleton: String): DateTimeFormatter =
         DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton), Locale.getDefault())
 
-    fun short(date: Instant, now: Instant = Instant.now()): String {
+    fun short(date: Instant, now: Instant = Now.instant()): String {
         val zone = ZoneId.systemDefault()
         val day = date.atZone(zone)
         val sameYear = day.year == now.atZone(zone).year
         return pattern(if (sameYear) "Md" else "yMd").format(day)
     }
 
-    fun soon(date: Instant, now: Instant = Instant.now()): String {
+    fun soon(date: Instant, now: Instant = Now.instant()): String {
         val ahead = Duration.between(now, date).seconds
         if (ahead <= -86_400 || ahead >= 6 * 86_400) return short(date, now)
         return pattern("EEEjm").format(date.atZone(ZoneId.systemDefault()))

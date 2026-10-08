@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "engine": "1.10.pre",
+  "max_mb": 24,
+  "site": {
+    "name": "blog.sh",
+    "claim": "Zkušební blog",
+    "url": "https://blog.invalid",
+    "lang": "cs",
+    "locales": [],
+    "accent": {
+      "light": "#b5451b",
+      "dark": "#ff8a5c"
+    },
+    "palette": {
+      "light": {
+        "bg": "#fff7eb",
+        "text": "#1e1d1c",
+        "meta_text": "#6b6862",
+        "border": "#d7d0c6"
+      },
+      "dark": {
+        "bg": "#000000",
+        "text": "#e6dccb",
+        "meta_text": "#a1988a",
+        "border": "#3c3935"
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "posts": {
+    "total": 12,
+    "published": 7,
+    "drafts": 3,
+    "scheduled": 2,
+    "pages": 0
+  },
+  "span": {
+    "first": "2026-02-07",
+    "last": "2026-10-21",
+    "days": 255,
+    "busiest_year": {
+      "year": "2026",
+      "posts": 12
+    }
+  },
+  "years": {
+    "2026": 12
+  },
+  "types": {
+    "text": 12
+  },
+  "words": {
+    "total": 128,
+    "mean": 10.7,
+    "median": 5,
+    "longest": {
+      "slug": "vikend-na-chalupe",
+      "words": 71
+    },
+    "reading_hours": 0.0
+  },
+  "tags": {
+    "unique": 18,
+    "per_post": 1.8,
+    "top": [
+      [
+        "běhání",
+        3
+      ],
+      [
+        "pokus",
+        2
+      ],
+      [
+        "android",
+        1
+      ],
+      [
+        "aplikace",
+        1
+      ],
+      [
+        "blog",
+        1
+      ],
+      [
+        "chalupa",
+        1
+      ],
+      [
+        "fotky",
+        1
+      ],
+      [
+        "konference",
+        1
+      ]
+    ]
+  },
+  "media": {
+    "files": 0,
+    "bytes": 0,
+    "referenced": 0,
+    "posts_with_media": 0
+  },
+  "sources": {
+    "manual": 12
+  }
+}

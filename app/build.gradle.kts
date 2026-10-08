@@ -55,6 +55,8 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        // The screens are drawn on the desk, from the app's own resources.
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
@@ -108,6 +110,45 @@ androidComponents {
     }
 }
 
+// The Android the screens are drawn on comes through Gradle like every
+// other dependency, and the tests are told where it lies: left to fetch
+// it themselves they would go to the network on their own, past whatever
+// Gradle was told about proxies and certificates.
+val robolectricAndroid by configurations.creating
+
+val robolectricAndroidDir = layout.buildDirectory.dir("robolectric-android")
+
+val fetchRobolectricAndroid = tasks.register<Copy>("fetchRobolectricAndroid") {
+    from(robolectricAndroid)
+    into(robolectricAndroidDir)
+}
+
+tasks.withType<Test>().configureEach {
+    dependsOn(fetchRobolectricAndroid)
+    // The Android drawn on the desk reaches into the JVM where a JVM no longer lets it by itself.
+    jvmArgs(
+        "--add-opens=java.base/java.io=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED", "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/java.net=ALL-UNNAMED", "--add-opens=java.base/java.text=ALL-UNNAMED",
+        "--add-exports=java.base/jdk.internal.access=ALL-UNNAMED", "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
+    )
+    systemProperty("robolectric.offline", "true")
+    systemProperty("robolectric.dependency.dir", robolectricAndroidDir.get().asFile.path)
+    // The pictures are kept with the tests, not with what a build leaves
+    // behind. A run compares the screens with them and fails where one has
+    // changed; `-Pshots=record` takes the pictures anew instead.
+    val shots = layout.projectDirectory.dir("src/test/shots").asFile
+    val recording = providers.gradleProperty("shots").orNull == "record"
+    systemProperty("blogsh.shots", shots.path)
+    // Where a screen that has changed is drawn beside its picture, to be looked at.
+    systemProperty("blogsh.shots.changed", layout.buildDirectory.dir("shots-changed").get().asFile.path)
+    systemProperty("roborazzi.test.record", recording.toString())
+    systemProperty("roborazzi.test.verify", (!recording).toString())
+    inputs.dir(shots).withPropertyName("shots").optional()
+    if (recording) outputs.upToDateWhen { false }
+}
+
 dependencies {
   val composeBom = platform(libs.androidx.compose.bom)
   implementation(composeBom)
@@ -152,6 +193,17 @@ dependencies {
   implementation(libs.zxing.core)
 
   testImplementation(libs.junit)
+
+  // The screens, drawn on the desk and compared with how they were last
+  // looked at (tools/shots says how): Robolectric draws them, Roborazzi
+  // keeps the pictures.
+  testImplementation(libs.robolectric)
+  testImplementation(libs.roborazzi)
+  testImplementation(libs.roborazzi.compose)
+  testImplementation(composeBom)
+  testImplementation(libs.androidx.compose.ui.test.junit4)
+  debugImplementation(libs.androidx.compose.ui.test.manifest)
+  robolectricAndroid(libs.robolectric.android)
   testImplementation(libs.zxing.core)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.kotlinx.serialization.json)

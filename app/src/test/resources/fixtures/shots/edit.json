@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "post": {
+    "slug": "dobehnuto",
+    "title": "Doběhnuto",
+    "date": "2026-10-20T10:00:00+02:00",
+    "scheduled": true,
+    "editable": true,
+    "problem": null,
+    "text": "---\ntitle: Doběhnuto\ntags: běhání\n---\n\nDeset kilometrů kolem rybníka, tentokrát bez zastávky.",
+    "media": [],
+    "preview": "/draft/5dddc3f0aa0a4195/dobehnuto/",
+    "base": "b70477b98f773c31c4dcd354cfab7789e4aea9a9309856ed17024ecbb4054049"
+  }
+}

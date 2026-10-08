@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "queue": [
+    {
+      "position": 1,
+      "date": "2026-10-20T10:00:00+02:00",
+      "slug": "dobehnuto",
+      "year": "2026",
+      "title": "Doběhnuto",
+      "overdue": false
+    },
+    {
+      "position": 2,
+      "date": "2026-10-21T10:00:00+02:00",
+      "slug": "vikend-na-chalupe",
+      "year": "2026",
+      "title": "Víkend na chalupě",
+      "overdue": false
+    }
+  ]
+}

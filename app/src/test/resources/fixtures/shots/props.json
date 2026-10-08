@@ -1,0 +1,41 @@
+{
+  "ok": true,
+  "slug": "dobehnuto",
+  "year": "2026",
+  "path": "/srv/blog/content.nosync/posts/2026/dobehnuto.json",
+  "title": "Doběhnuto",
+  "state": "draft",
+  "scheduled": true,
+  "date": "2026-10-20T10:00:00+02:00",
+  "url": "http://localhost:8000/draft/5dddc3f0aa0a4195/dobehnuto/",
+  "address": "/draft/5dddc3f0aa0a4195/dobehnuto/",
+  "type": "text",
+  "type_set": null,
+  "hero": "default",
+  "toc": "default",
+  "tags": [
+    "běhání"
+  ],
+  "series": null,
+  "series_part": null,
+  "pinned": false,
+  "unlisted": false,
+  "languages": {
+    "own": "cs",
+    "others": {}
+  },
+  "announced": null,
+  "announces": "nowhere",
+  "network": null,
+  "slot": null,
+  "addresses": [],
+  "actions": [
+    "publish",
+    "schedule",
+    "properties",
+    "rename",
+    "delete",
+    "unschedule",
+    "versions"
+  ]
+}

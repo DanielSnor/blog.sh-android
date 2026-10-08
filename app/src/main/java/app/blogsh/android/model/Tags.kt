@@ -44,12 +44,12 @@ object TagStore {
         take(answer.posts)
     }
 
-    fun take(posts: List<PostRow>, now: Instant = Instant.now()) {
+    fun take(posts: List<PostRow>, now: Instant = Now.instant()) {
         asked = true
         tags = counted(posts, now)
     }
 
-    fun counted(posts: List<PostRow>, now: Instant = Instant.now()): List<TagUse> {
+    fun counted(posts: List<PostRow>, now: Instant = Now.instant()): List<TagUse> {
         val since = now.minus(Duration.ofDays(365))
         val counts = LinkedHashMap<String, IntArray>()
         for (post in posts) {

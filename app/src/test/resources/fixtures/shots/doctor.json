@@ -1,0 +1,85 @@
+{
+  "errors": 0,
+  "warnings": 6,
+  "oks": 7,
+  "findings": [
+    {
+      "level": "warn",
+      "kind": "identity",
+      "text": "Adresa webu je pořád https://blog.invalid ze šablony.",
+      "fix": "Dokud se na web díváš jen lokálně, nevadí to. Před nasazením nastav skutečnou, jinak každý odkaz, který web sám o sobě zveřejní, míří na example.com."
+    },
+    {
+      "level": "warn",
+      "kind": "placeholders",
+      "text": "Pořád je tam text ze šablony: footer.links.",
+      "fix": "Lokálně to nevadí, ale tohle by četli návštěvníci. Na bio, patičku a odkazy se zeptá ./style.sh."
+    },
+    {
+      "level": "warn",
+      "kind": "colors",
+      "text": "V paletě light chybí nav_bg, pill_bg; ty spadnou na výchozí modrou enginu.",
+      "fix": "Buď nastav všech sedm, nebo sekci vynech celou — půlka palety míchá dva návrhy dohromady."
+    },
+    {
+      "level": "warn",
+      "kind": "colors",
+      "text": "V paletě dark chybí nav_bg, pill_bg; ty spadnou na výchozí modrou enginu.",
+      "fix": "Buď nastav všech sedm, nebo sekci vynech celou — půlka palety míchá dva návrhy dohromady."
+    },
+    {
+      "level": "warn",
+      "kind": "scheduler",
+      "text": "Ve frontě čeká příspěvků: 2, ale tady ji nikdy nic nespustilo — samy se nezveřejní.",
+      "fix": "Naplánuj scripts/publish-scheduled.sh — každých patnáct minut, s tím počítají časy z průvodce (*/15 * * * * /cesta/k/blogu/scripts/publish-scheduled.sh). Na hostingu k tomu slouží sekce cron v panelu; zkontroluj, že cesta míří na TENHLE blog, ne na jiný."
+    },
+    {
+      "level": "warn",
+      "kind": "deploy",
+      "text": "Není vybraný cíl nasazení, web se tedy sestavuje lokálně a nikam neputuje.",
+      "fix": "Jako začátek to úplně stačí — sestavený web ukáže ./blog.sh preview. Až ho budeš chtít online, spusť ./setup.sh."
+    },
+    {
+      "level": "ok",
+      "kind": "env_sh",
+      "text": "env.sh existuje a čte ho jen tvůj účet.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "site_yml",
+      "text": "config/site.yml se načítá.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "timezone",
+      "text": "Časy se zapisují v zóně Europe/Prague.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "network",
+      "text": "Není nastavená žádná síť pro komentáře — příspěvky se nikam neoznamují.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "banner",
+      "text": "Obrázek hlavičky existuje a uvedené rozměry sedí se souborem.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "sidebar",
+      "text": "Postranní panel: karet 1.",
+      "fix": null
+    },
+    {
+      "level": "ok",
+      "kind": "media_location",
+      "text": "Žádná fotka v archivu nenese místo, kde vznikla.",
+      "fix": null
+    }
+  ]
+}

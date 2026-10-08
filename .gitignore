@@ -12,3 +12,7 @@ captures/
 .cxx/
 # macOS
 .DS_Store
+
+# What a failed comparison of a screen leaves beside its picture.
+app/src/test/shots/**/*_compare.png
+app/src/test/shots/**/*_actual.png

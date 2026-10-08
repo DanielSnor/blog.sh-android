@@ -166,7 +166,14 @@ object Engine {
      * the fourth one away. A command that fails ends the batch; what was
      * answered before it is lost with it.
      */
-    suspend fun batch(commands: List<List<String>>): List<ByteArray> = onTheLine { ssh, wary ->
+    /**
+     * In a test, what stands in for the server: a command's words in, the
+     * engine's answer out. Nothing sets it in the app.
+     */
+    @Volatile
+    internal var stand: ((List<String>) -> ByteArray)? = null
+
+    suspend fun batch(commands: List<List<String>>): List<ByteArray> = stand?.let { answer -> commands.map(answer) } ?: onTheLine { ssh, wary ->
         val answers = mutableListOf<ByteArray>()
         for (args in commands) {
             // Only the first can find the connection dead without having

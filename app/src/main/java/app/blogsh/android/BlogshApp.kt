@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import app.blogsh.android.model.AppLanguage
 import app.blogsh.android.model.Engine
+import app.blogsh.android.model.NetworkWatch
 import app.blogsh.android.model.PreferenceNotes
 import java.util.Locale
 
@@ -23,6 +24,7 @@ class BlogshApp : Application() {
         context = if (chosen == null) applicationContext
         else applicationContext.createConfigurationContext(Configuration(resources.configuration).apply { setLocale(chosen) })
         Engine.installCrypto()
+        NetworkWatch.begin(this)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

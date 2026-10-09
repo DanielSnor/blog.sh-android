@@ -44,6 +44,13 @@ sealed class EngineError : Exception() {
     class Refused(val refusal: Refusal) : EngineError()
     class Unreadable(val text: String) : EngineError()
 
+    /**
+     * Nobody answered at the server's address. What the network said of
+     * it is kept for whoever reads a log, not shown: it is the library's
+     * own English.
+     */
+    class Unreachable(val server: String, val detail: String) : EngineError()
+
     /** Where on the way to the engine it broke, for the message that says so. */
     class Stage(val stage: String, val error: Throwable) : EngineError()
 
@@ -58,6 +65,7 @@ sealed class EngineError : Exception() {
                 // terminal has; on a phone neither is anything one can do.
                 is Refused -> if (refusal.error == "ambiguous_slug") Spoken.say(R.string.two_posts_in_different_years_share_this) else refusal.message
                 is Unreadable -> Spoken.say(R.string.the_engine_did_not_answer_as_data, text)
+                is Unreachable -> Spoken.say(R.string.the_server_did_not_answer_is_this, server)
                 is Stage -> "$stage: ${error.message ?: error.javaClass.simpleName}"
             }
         }
@@ -173,7 +181,14 @@ object Engine {
     @Volatile
     internal var stand: ((List<String>) -> ByteArray)? = null
 
-    suspend fun batch(commands: List<List<String>>): List<ByteArray> = stand?.let { answer -> commands.map(answer) } ?: onTheLine { ssh, wary ->
+    suspend fun batch(commands: List<List<String>>): List<ByteArray> {
+        val answers = stand?.let { answer -> commands.map(answer) } ?: asked(commands)
+        // The first screen reads its cards again where a command changed the blog.
+        if (commands.any { changesTheBlog(it) }) Desk.wrote()
+        return answers
+    }
+
+    private suspend fun asked(commands: List<List<String>>): List<ByteArray> = onTheLine { ssh, wary ->
         val answers = mutableListOf<ByteArray>()
         for (args in commands) {
             // Only the first can find the connection dead without having
@@ -188,8 +203,57 @@ object Engine {
      * receiver's frame (a name, its base64, a line with a dot), ended by a
      * line saying `end` -- scripts/remote.sh's `deliver`. One answer per
      * file comes back; the last is the engine's own for the markdown.
+     *
+     * `to`: whose delivery it is, where it was not written just now on
+     * the open blog's own form. With another blog open by the time it
+     * goes, it does not go.
      */
-    suspend fun deliver(files: List<DeliveryFile>): List<ByteArray> = onTheLine { ssh, wary -> send(files, ssh, wary) }
+    suspend fun deliver(files: List<DeliveryFile>, to: String? = null): List<ByteArray> {
+        val answers = onTheLine(only = to) { ssh, wary -> send(files, ssh, wary) }
+        Desk.wrote()
+        return answers
+    }
+
+    /**
+     * A delivery's answers, read: the engine's own for the markdown, which
+     * is the last -- or the first no among them, thrown. A picture the
+     * receiver would not take ends the delivery.
+     */
+    fun made(answers: List<ByteArray>): ActionAnswer {
+        for (answer in answers) {
+            try {
+                element(answer)
+            } catch (e: EngineError.Unreadable) {
+                // Not an object, so not a refusal either.
+            }
+        }
+        val last = answers.lastOrNull() ?: throw EngineError.Unreadable("")
+        return decode<ActionAnswer>(last)
+    }
+
+    /**
+     * The request as the forced command reads it: the argv, and -- for
+     * the two commands that answer in sentences, `check` and `doctor` --
+     * the language the app speaks. An engine that has it says its
+     * findings in it; one that has not, or an older one, which reads the
+     * argv and nothing else, says them in the blog's own.
+     */
+    fun request(args: List<String>, lang: String? = app.blogsh.android.BlogshApp.spoken.language): JsonObject = buildJsonObject {
+        put("args", JsonArray(args.map { JsonPrimitive(it) }))
+        if (args.firstOrNull() in listOf("check", "doctor") && lang != null && Regex("^[a-z]{2,3}$").matches(lang)) put("lang", JsonPrimitive(lang))
+    }
+
+    /**
+     * The command changes what the first screen says of the blog: its
+     * drafts, its queue, what the trash and the versions hold.
+     */
+    fun changesTheBlog(args: List<String>): Boolean = when (args.firstOrNull() ?: "") {
+        "publish", "unpublish", "delete", "restore", "schedule" -> true
+        "queue" -> args.size > 1
+        "props" -> args.any { it in listOf("--set", "--rename", "--drop-address", "--restore-version") }
+        "empty" -> "--yes" in args
+        else -> false
+    }
 
     // ---- The connection
 
@@ -228,17 +292,29 @@ object Engine {
      * had begun to speak is never repeated; whether a publish arrived is
      * not something to guess at.
      */
-    private suspend fun <T> onTheLine(work: (SSHClient, Boolean) -> T): T = withContext(Dispatchers.IO) { ride(work) }
+    private suspend fun <T> onTheLine(only: String? = null, work: (SSHClient, Boolean) -> T): T = withContext(Dispatchers.IO) { ride(only, work) }
 
-    private suspend fun <T> ride(work: (SSHClient, Boolean) -> T): T {
-        val settings = ServerSettings.load() ?: throw EngineError.NotConfigured
+    private suspend fun <T> ride(only: String?, work: (SSHClient, Boolean) -> T): T {
+        // What was written for one blog is never sent to the next: a call
+        // meant for a blog that is not the open one any more is called off.
+        val settings = ServerSettings.load(only = only) ?: throw if (only != null) CancellationException() else EngineError.NotConfigured
         val door = Door(settings.host, settings.port, settings.user, settings.keyAccount)
+        // What became of the call is said to whoever shows the blog as
+        // within reach or not: a server nobody answered at is silent
+        // until a call gets through to it again.
+        val server = Reach.server(door.host, door.port)
         var again = true
         while (true) {
-            val hold = line.take(door)
+            val hold = try {
+                line.take(door)
+            } catch (e: Throwable) {
+                if (e is EngineError.Unreachable) Reach.shared.nothing(server)
+                throw e
+            }
             try {
                 val result = work(hold.wire, hold.rested)
                 line.give(hold)
+                Reach.shared.heard(server)
                 return result
             } catch (nothing: NothingSaid) {
                 line.give(hold, broken = true)
@@ -262,7 +338,9 @@ object Engine {
         }
         val trust = TrustOnFirstUse(door.host, door.port)
         val ssh = SSHClient(DefaultConfig())
-        ssh.connectTimeout = 15_000
+        // An address nobody answers on is given up after ten seconds:
+        // somebody is waiting for the screen.
+        ssh.connectTimeout = 10_000
         ssh.timeout = 0
         ssh.addHostKeyVerifier(trust)
         try {
@@ -273,7 +351,7 @@ object Engine {
             if (e is UserAuthException) throw EngineError.KeyNotKnown
             if (e is CancellationException) throw e
             trust.changed?.let { throw EngineError.HostKeyChanged(it) }
-            throw EngineError.Stage("connect", e)
+            throw EngineError.Unreachable(door.host, e.toString())
         }
         return ssh
     }
@@ -303,7 +381,7 @@ object Engine {
      * this connection, so a failure here is not one to start over from.
      */
     private fun exec(args: List<String>, ssh: SSHClient, wary: Boolean, said: Boolean): ByteArray {
-        val request = buildJsonObject { put("args", JsonArray(args.map { JsonPrimitive(it) })) }.toString() + "\n"
+        val request = request(args).toString() + "\n"
         var answer = ByteArray(0)
         var stage = "exec"
         val watch = Watch(ssh, wary, wires)

@@ -139,4 +139,8 @@ object Symbols {
     val docOnClipboard = R.drawable.ic_content_paste
     /** sidebar.left */
     val sidebarLeft = R.drawable.ic_side_navigation
+    /** wifi.slash */
+    val wifiSlash = R.drawable.ic_wifi_off
+    /** tray.and.arrow.up */
+    val trayAndArrowUp = R.drawable.ic_outbox
 }

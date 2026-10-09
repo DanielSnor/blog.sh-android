@@ -37,8 +37,12 @@ class Shot(
      */
     val mark: String get() = (if (kind == Kind.Video) "!!" else "!") + "[${Kept.oneLine(alt)}]($name)"
 
-    /** The shot's mark wherever the text has it, whatever it says there. */
-    val markPattern: Regex get() = Regex("""!{1,2}\[[^\]]*\]\(""" + Regex.escape(name) + """\)""")
+    /** The shot's mark wherever the text has it, whatever it says there -- to the end of its caption, where it has one. */
+    /**
+     * The description runs up to the mark's own "](", not to the first
+     * bracket: a description may hold brackets of its own.
+     */
+    val markPattern: Regex get() = Regex("""!{1,2}\[(?:(?!\]\().)*\]""" + Kept.target(name))
 }
 
 /** A word folded the way a file name is: accents off, lower case. */
@@ -84,12 +88,37 @@ object Pictures {
  * The post as a markdown file, the way /write/ writes it: a header of
  * what the form has fields for, then the text.
  */
+/**
+ * A delivery's own name, as the engine takes one: sixteen lowercase hex
+ * digits. A post keeps the one it was given for as long as it is the same
+ * post; the next post gets another -- the engine writes a delivery with a
+ * receipt it knows over the draft it wrote for it.
+ */
+object Receipt {
+    fun mint(): String = ByteArray(8).also { java.security.SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
+
+    fun isOne(text: String): Boolean = Regex("^[0-9a-f]{16}$").matches(text)
+}
+
 object Markdown {
-    fun frontMatter(title: String, tags: String, publish: Boolean = false): String {
+    /**
+     * `written`: when the post was written, where that is not when it is
+     * sent -- one that waited on the device for its blog. The engine dates
+     * a post by the moment it arrives unless its header says otherwise.
+     *
+     * `receipt`: the delivery's own name, by which the engine knows a
+     * delivery it has seen before -- one whose answer was lost on the way
+     * back and which is sent again -- and answers with the post it
+     * already wrote instead of writing a second.
+     */
+    fun frontMatter(title: String, tags: String, publish: Boolean = false, written: Long? = null, receipt: String? = null): String {
         val lines = mutableListOf<String>()
         val cleanTitle = title.trim()
-            .replace(Regex("""^(["'])(.*)\1$"""), "$2")
-            .replace(Regex("""^\[(.*)\]$"""), "$1")
+            // Unwrapped only where the whole title is wrapped once: a title
+            // that merely begins and ends with a bracket or a quote of its
+            // own -- "[foto] Sobota [Brno]" -- goes as it was typed.
+            .replace(Regex("""^(["'])((?:(?!\1).)*)\1$"""), "$2")
+            .replace(Regex("""^\[([^\[\]]*)\]$"""), "$1")
             .trim(' ', '\t')
         if (cleanTitle.isNotEmpty()) lines.add("title: $cleanTitle")
         val cleanTags = tags.trim(' ', '\t')
@@ -105,12 +134,22 @@ object Markdown {
             .filter { it.isNotEmpty() }
         if (cleanTags.isNotEmpty()) lines.add("tags: " + cleanTags.joinToString(", "))
         if (publish) lines.add("publish: yes")
+        if (written != null) lines.add("date: " + stamp(written))
+        if (receipt != null && Receipt.isOne(receipt)) lines.add("receipt: $receipt")
         return if (lines.isEmpty()) "" else "---\n" + lines.joinToString("\n") + "\n---\n\n"
     }
 
-    fun file(title: String, tags: String, body: String, publish: Boolean = false): String {
+    /**
+     * A moment as the header says it: to the second, with the device's
+     * own offset -- the day it was where it was written.
+     */
+    fun stamp(moment: Long, zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): String =
+        java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(Math.floorDiv(moment, 1000L)), zone)
+            .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
+    fun file(title: String, tags: String, body: String, publish: Boolean = false, written: Long? = null, receipt: String? = null): String {
         val text = body.trim()
-        val header = frontMatter(title, tags, publish)
+        val header = frontMatter(title, tags, publish, written, receipt)
         // A body that itself opens with --- would be read as a header.
         val guarded = if (header.isEmpty() && text.startsWith("---")) "---\n---\n\n" else header
         return guarded + text + "\n"
@@ -139,7 +178,28 @@ object Kept {
 
     fun isVideo(name: String): Boolean = videoEndings.contains(name.substringAfterLast('.', "").lowercase())
 
-    fun named(name: String, text: String): Boolean = text.contains("($name)")
+    /**
+     * A picture's caption, as the engine takes one: after the name, in
+     * quotes -- straight ones, or the pair a Czech, a German or an
+     * English keyboard types. `![description](photo.jpg "caption")`.
+     */
+    const val CAPTION = """(?:\s+(?:"(?:\\.|[^"\\])*"|\u201E[^\u201C]*\u201C|\u201C[^\u201D]*\u201D))?"""
+
+    /** What a file's name in a mark may not hold: the bracket that ends the mark, a space, a quote that opens a caption. */
+    const val NAME = """[^)\s"\u201E\u201C\u201D]+"""
+
+    /**
+     * What stands in a mark's round brackets for this file: its name,
+     * and a caption or none.
+     */
+    fun target(name: String): String = """\(""" + Regex.escape(name) + CAPTION + """\)"""
+
+    /**
+     * The text names the file: with a caption after the name or without.
+     * A picture read as "not named" is one the app would not send, would
+     * call deleted on the next save, and would ask about for nothing.
+     */
+    fun named(name: String, text: String): Boolean = Regex(target(name)).containsMatchIn(text)
 
     /**
      * A shot's mark put into the text where the caret is -- at its end
@@ -194,12 +254,12 @@ object Kept {
      * to its first closing bracket.
      */
     fun described(name: String, text: String): String? {
-        val file = Regex.escape(name)
+        val target = target(name)
         // A line that holds another mark before this one is not this mark's line:
         // what was read as its description has the other's end in it.
-        val line = Regex("""^[ \t]*!{1,2}\[(.*)\]\(""" + file + """\)[ \t]*$""", RegexOption.MULTILINE).find(text)
+        val line = Regex("""^[ \t]*!{1,2}\[(.*)\]""" + target + """[ \t]*$""", RegexOption.MULTILINE).find(text)
             ?.takeIf { !it.groupValues[1].contains("](") }
-        val inline = Regex("""!\[([^\]\n]*)\]\(""" + file + """\)""").find(text)
+        val inline = Regex("""!\[([^\]\n]*)\]""" + target).find(text)
         // Whichever stands first in the text is the picture's first mark.
         if (line != null && inline != null) return (if (line.range.first <= inline.range.first) line else inline).groupValues[1]
         return (line ?: inline)?.groupValues?.get(1)
@@ -224,7 +284,10 @@ object Kept {
     fun typed(text: String, name: String, after: String): String {
         val words = described(name, text) ?: return text
         if (oneLine(words) == oneLine(after)) return text
-        return text.replace("![$words]($name)", "![${oneLine(after)}]($name)")
+        // The description alone is rewritten: the name and whatever caption
+        // stands after it are put back as they were.
+        val said = Regex(Regex.escape("![$words]($name") + "(" + CAPTION + """\))""")
+        return said.replace(text) { "![${oneLine(after)}]($name" + it.groupValues[1] }
     }
 
     /**
@@ -250,9 +313,17 @@ object Kept {
     fun dropped(media: List<String>, text: String): List<String> = media.filter { !named(it, text) }
 
     /**
+     * A save of this text would delete a picture of the post's from the
+     * blog: somebody is asked first, every time. Pictures are not kept
+     * among a post's versions; one deleted is gone.
+     */
+    fun asksBeforeSaving(media: List<String>, text: String): Boolean = dropped(media, text).isNotEmpty()
+
+    /**
      * True when the text names fewer pictures, or fewer videos, than the
      * post has -- counting what it has and still names, and what is new
-     * and named. That save the engine refuses.
+     * and named. An engine before 1.10 refuses that save; a newer one
+     * takes it, and deletes what is no longer named.
      */
     fun fewer(media: List<String>, shots: List<Shot>, text: String): Boolean {
         fun count(video: Boolean): Pair<Int, Int> {

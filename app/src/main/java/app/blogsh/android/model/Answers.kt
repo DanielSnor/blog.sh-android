@@ -386,7 +386,25 @@ data class TrashRow(
 
 /** `queue --json`. */
 @Serializable
-data class QueueAnswer(val ok: Boolean, val queue: List<QueueRow>)
+data class QueueAnswer(
+    val ok: Boolean,
+    val queue: List<QueueRow>,
+    /** What the blog knows of whatever sends the queue out by itself; an older engine does not say. */
+    val scheduler: Scheduler? = null,
+) {
+    @Serializable
+    data class Scheduler(
+        /** When a scheduled run last went through the queue; null where none ever has -- a blog with no cron set up. */
+        @SerialName("last_run") val lastRun: String? = null,
+    )
+
+    /**
+     * The blog says that nothing has ever sent its queue out: a post
+     * whose time has come will not go by waiting. False where the blog
+     * does not say either way.
+     */
+    val unattended: Boolean get() = scheduler?.let { it.lastRun == null } ?: false
+}
 
 @Serializable
 data class QueueRow(

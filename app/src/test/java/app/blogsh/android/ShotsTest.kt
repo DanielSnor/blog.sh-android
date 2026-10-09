@@ -15,11 +15,16 @@ import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.BuildStamp
 import app.blogsh.android.model.Colouring
 import app.blogsh.android.model.Engine
+import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.Now
+import app.blogsh.android.model.Reach
 import app.blogsh.android.model.Reading
+import app.blogsh.android.model.Shot
 import app.blogsh.android.model.TextSize
 import app.blogsh.android.model.Unsaved
 import app.blogsh.android.model.Unsent
+import app.blogsh.android.model.Waiting
+import app.blogsh.android.model.WaitingRoom
 import app.blogsh.android.ui.BlogshTheme
 import app.blogsh.android.ui.HomeScreen
 import app.blogsh.android.ui.HomeState
@@ -40,6 +45,7 @@ import app.blogsh.android.ui.screens.SettingsSheet
 import app.blogsh.android.ui.screens.SiteScreen
 import app.blogsh.android.ui.screens.TextEditScreen
 import app.blogsh.android.ui.screens.TrashScreen
+import app.blogsh.android.ui.screens.WaitingSheet
 import app.blogsh.android.ui.worn
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
@@ -120,6 +126,7 @@ class ShotsTest(private val look: Look) {
         /** Thursday 8 October 2026, noon in Prague. */
         private val noon: Instant = Instant.parse("2026-10-08T10:00:00Z")
         private const val BLOG = "shots"
+        private val SERVER = Reach.server("blog.invalid", 2222)
     }
 
     @get:Rule
@@ -151,6 +158,8 @@ class ShotsTest(private val look: Look) {
         Blogs.adopt(Blog(id = BLOG, host = "blog.invalid", port = 2222, user = "me", name = "blog.sh"))
         Unsent.forget(BLOG, BlogShelf.notes)
         Unsaved.forgetAll(BLOG, BlogShelf.notes)
+        WaitingRoom.removeAll(BLOG)
+        Reach.shared.heard(SERVER)
         Reading.shared.wear(Colouring.Blog)
         Reading.shared.choose(null)
         Reading.shared.set(look.type)
@@ -158,6 +167,8 @@ class ShotsTest(private val look: Look) {
 
     @After
     fun undress() {
+        WaitingRoom.removeAll(BLOG)
+        Reach.shared.heard(SERVER)
         Engine.stand = null
         Now.clock = { Instant.now() }
         TimeZone.setDefault(zone)
@@ -210,8 +221,39 @@ class ShotsTest(private val look: Look) {
             .keep(BLOG, "dobehnuto", Unsaved.What.Text, BlogShelf.notes)
     }
 
+    /** The server is silent, and two posts were finished meanwhile: one with a picture, one the blog turned away. */
+    private fun silence() {
+        Reach.shared.nothing(SERVER)
+        Engine.stand = { throw EngineError.Unreachable("blog.invalid", "") }
+        WaitingRoom.put(
+            Waiting(id = "one", title = "Ráno u rybníka", text = "Mlha.\n\n![Hladina](photo-1.jpg)\n", at = noon.minusSeconds(2 * 3600).toEpochMilli(), receipt = "0123456789abcdef"),
+            listOf(Shot("photo-1.jpg", ByteArray(3), 4, 3)), BLOG,
+        )
+        WaitingRoom.put(Waiting(id = "two", text = "Jen pár slov bez titulku.", at = noon.minusSeconds(600).toEpochMilli(), receipt = "fedcba9876543210"), emptyList(), BLOG)
+        WaitingRoom.note("The delivery is larger than this blog takes: 31 MB, at most 24 MB.", "two", BLOG)
+    }
+
     @Test
     fun home() = shot("home")
+
+    @Test
+    fun homeWithASilentServer() {
+        begin()
+        silence()
+        shot("home-offline")
+    }
+
+    @Test
+    fun whatWaitsToBeSent() {
+        silence()
+        shot("waiting", over = { WaitingSheet(onDismiss = {}, write = {}) })
+    }
+
+    @Test
+    fun newPostWithASilentServer() {
+        silence()
+        shot("new-post-offline", MenuEntry.Add) { ComposeScreen() }
+    }
 
     @Test
     fun homeWithWritingBegun() {

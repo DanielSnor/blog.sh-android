@@ -54,6 +54,13 @@ data class Blog(
         }
 
     /**
+     * The server as a connection takes it: the host without the space
+     * typed after it, no port as ssh's own. Whatever is remembered of a
+     * server -- its key, its silence -- is remembered under these.
+     */
+    val reached: Pair<String, Int> get() = host.trim() to (if (port == 0) 22 else port)
+
+    /**
      * Where it is reached, as ssh would be told: the user, the server,
      * and the port where it is not ssh's usual one -- a blog at home, or
      * behind a host that moved its ssh, is on a port of its own, and two
@@ -132,6 +139,20 @@ object BlogShelf {
         to.write(CURRENT_KEY, current)
     }
 
+    /**
+     * The list with one blog a step up or down it. A step off either
+     * end, or of a blog that is not there, leaves the list as it was.
+     */
+    fun shifted(blogs: List<Blog>, id: String, by: Int): List<Blog> {
+        val at = blogs.indexOfFirst { it.id == id }
+        val to = at + by
+        if (at < 0 || to !in blogs.indices) return blogs
+        return blogs.toMutableList().apply {
+            this[at] = blogs[to]
+            this[to] = blogs[at]
+        }
+    }
+
     fun current(from: Notes = notes): Blog? {
         val (blogs, current) = read(from)
         return blogs.firstOrNull { it.id == current }
@@ -139,7 +160,13 @@ object BlogShelf {
 }
 
 /** The blogs as the screens see them: which there are, which one is open. */
-class BlogList(private val notes: Notes, private val hangUp: () -> Unit = {}, private val forgetKey: (String) -> Unit) {
+class BlogList(
+    private val notes: Notes,
+    private val hangUp: () -> Unit = {},
+    /** Lets go of the posts that wait on the device for a blog. */
+    private val forgetWaiting: (String) -> Unit = {},
+    private val forgetKey: (String) -> Unit,
+) {
     var all by mutableStateOf(emptyList<Blog>())
         private set
     var currentId by mutableStateOf<String?>(null)
@@ -194,6 +221,17 @@ class BlogList(private val notes: Notes, private val hangUp: () -> Unit = {}, pr
         save()
     }
 
+    /**
+     * One blog a place up or down the list; at the list's end, nowhere.
+     * Which one is open does not change with it.
+     */
+    fun shift(id: String, by: Int) {
+        val shifted = BlogShelf.shifted(all, id, by)
+        if (shifted == all) return
+        all = shifted
+        save()
+    }
+
     /** The blog leaves the app, and its key with it. The blog itself is not touched. */
     fun remove(id: String) {
         val blog = all.firstOrNull { it.id == id } ?: return
@@ -201,6 +239,7 @@ class BlogList(private val notes: Notes, private val hangUp: () -> Unit = {}, pr
         // What was being written for it goes with it, and the connection to its server.
         Unsent.forget(id, notes)
         Unsaved.forgetAll(id, notes)
+        runCatching { forgetWaiting(id) }
         hangUp()
         all = all.filter { it.id != id }
         if (currentId == id) currentId = all.firstOrNull()?.id
@@ -211,4 +250,4 @@ class BlogList(private val notes: Notes, private val hangUp: () -> Unit = {}, pr
 }
 
 /** The one list the app has. */
-val Blogs: BlogList by lazy { BlogList(BlogShelf.notes, hangUp = { Engine.hangUp() }) { KeyStore.deleteKey(it) } }
+val Blogs: BlogList by lazy { BlogList(BlogShelf.notes, hangUp = { Engine.hangUp() }, forgetWaiting = { WaitingRoom.removeAll(it) }) { KeyStore.deleteKey(it) } }

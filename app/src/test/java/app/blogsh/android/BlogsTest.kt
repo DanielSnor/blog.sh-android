@@ -119,4 +119,66 @@ class BlogsTest {
         assertEquals(listOf(second.keyAccount), forgotten)
         assertEquals(first.id, list.currentId)
     }
+
+    /**
+     * The order somebody put the blogs in is the order they are kept in,
+     * and which one is open does not change with it.
+     */
+    @Test
+    fun blogsKeepTheOrderTheyWerePutIn() {
+        val notes = MemoryNotes()
+        val list = BlogList(notes) {}
+        val one = Blog(host = "one.example")
+        val two = Blog(host = "two.example")
+        val three = Blog(host = "three.example")
+        for (blog in listOf(one, two, three)) list.adopt(blog)
+        list.select(two.id)
+        // The last carried to the first place, a step at a time.
+        list.shift(three.id, -1)
+        list.shift(three.id, -1)
+        // And nowhere past the end.
+        list.shift(three.id, -1)
+
+        val (blogs, current) = BlogShelf.read(notes)
+        assertEquals(listOf("three.example", "one.example", "two.example"), blogs.map { it.host })
+        assertEquals(two.id, current)
+        assertEquals(two, BlogShelf.current(notes))
+        assertEquals(two.id, list.currentId)
+    }
+
+    /**
+     * A held row's "Up" and "Down": one place at a time, and nowhere
+     * past either end of the list.
+     */
+    @Test
+    fun aBlogStepsUpAndDownTheListButNotOffIt() {
+        val one = Blog(host = "one.example")
+        val two = Blog(host = "two.example")
+        val three = Blog(host = "three.example")
+        val blogs = listOf(one, two, three)
+
+        assertEquals(listOf("one.example", "three.example", "two.example"), BlogShelf.shifted(blogs, three.id, -1).map { it.host })
+        assertEquals(listOf("two.example", "one.example", "three.example"), BlogShelf.shifted(blogs, one.id, 1).map { it.host })
+        assertEquals(blogs, BlogShelf.shifted(blogs, one.id, -1))
+        assertEquals(blogs, BlogShelf.shifted(blogs, three.id, 1))
+        assertEquals(blogs, BlogShelf.shifted(blogs, UUID.randomUUID().toString(), 1))
+    }
+
+    /**
+     * What is remembered of a server is remembered under the host and
+     * port the connection uses -- and the settings look there too, or
+     * "forget the server's key" would look beside it.
+     */
+    @Test
+    fun aServerIsRememberedUnderWhatTheConnectionUses() {
+        val notes = MemoryNotes()
+        val blog = Blog(host = "one.example ", port = 0, user = "dan")
+        BlogShelf.write(listOf(blog), blog.id, notes)
+        val settings = app.blogsh.android.model.ServerSettings.load(notes)
+        assertEquals("one.example", blog.reached.first)
+        assertEquals(22, blog.reached.second)
+        assertEquals(blog.reached.first, settings?.host)
+        assertEquals(blog.reached.second, settings?.port)
+        assertEquals("hostkey.one.example:22", app.blogsh.android.model.TrustOnFirstUse.notesKey(blog.reached.first, blog.reached.second))
+    }
 }

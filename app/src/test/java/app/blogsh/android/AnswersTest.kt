@@ -327,6 +327,71 @@ class AnswersTest {
 }
 
 /**
+ * What the engine says since 1.10 and the app now uses. A mistake here
+ * is a queue said to wait for a clock that is not there, or a check
+ * answered in a language nobody asked for.
+ */
+class EngineSaysTest {
+    private fun queue(scheduler: String): app.blogsh.android.model.QueueAnswer =
+        Engine.decode(("{\"ok\":true,\"queue\":[]" + scheduler + "}").toByteArray())
+
+    /**
+     * The queue says whether anything sends it out by itself; an older
+     * engine does not say, and nothing is concluded from its silence.
+     */
+    @Test
+    fun theQueueSaysWhetherAnythingSendsItOut() {
+        assertTrue(queue(",\"scheduler\":{\"last_run\":null}").unattended)
+        assertFalse(queue(",\"scheduler\":{\"last_run\":\"2026-10-09T12:40:00+02:00\"}").unattended)
+        assertEquals("2026-10-09T12:40:00+02:00", queue(",\"scheduler\":{\"last_run\":\"2026-10-09T12:40:00+02:00\"}").scheduler?.lastRun)
+        // Before the engine said either way.
+        assertFalse(queue("").unattended)
+        assertNull(queue("").scheduler)
+        // The answer to a move carries it too, beside what it always had.
+        assertTrue(queue(",\"scheduler\":{\"last_run\":null},\"warnings\":[]").unattended)
+    }
+
+    private fun lang(args: List<String>, lang: String?): String? =
+        (Engine.request(args, lang)["lang"] as? kotlinx.serialization.json.JsonPrimitive)?.content
+
+    /**
+     * check and doctor are asked in the app's language; nothing else is,
+     * and what is not a language's code is not sent as one.
+     */
+    @Test
+    fun theTwoThatAnswerInSentencesAreAskedInTheAppsLanguage() {
+        assertEquals("cs", lang(listOf("check"), "cs"))
+        assertEquals("de", lang(listOf("doctor", "--json"), "de"))
+        assertEquals("[\"check\"]", Engine.request(listOf("check"), "cs")["args"].toString())
+        assertNull(lang(listOf("queue"), "cs"))
+        assertNull(lang(listOf("publish", "venku", "--yes"), "cs"))
+        assertNull(lang(listOf("check"), null))
+        assertNull(lang(listOf("check"), "cs-CZ"))
+        assertNull(lang(listOf("check"), "Base"))
+        assertNull(lang(emptyList(), "cs"))
+    }
+
+    /**
+     * The commands after which the first screen reads its cards again:
+     * the ones that change the drafts, the queue, the trash or the versions.
+     */
+    @Test
+    fun theCommandsThatChangeWhatTheFirstScreenSays() {
+        for (args in listOf(
+            listOf("publish", "venku", "--yes"), listOf("unpublish", "venku", "--yes"), listOf("delete", "venku", "--yes"),
+            listOf("restore", "venku"), listOf("schedule", "venku", "--at", "2026-10-10T08:00:00+02:00"), listOf("schedule", "venku", "--cancel"),
+            listOf("queue", "--up", "2026/venku"), listOf("queue", "--move", "2026/venku", "--to", "1"),
+            listOf("props", "venku", "--set", "pinned=yes"), listOf("props", "venku", "--rename", "outside", "--yes"),
+            listOf("props", "venku", "--restore-version", "v1", "--yes"), listOf("empty", "trash", "--yes"),
+        )) assertTrue(args.toString(), Engine.changesTheBlog(args))
+        for (args in listOf(
+            listOf("queue"), listOf("list", "--drafts"), listOf("version"), listOf("stats"), listOf("props", "venku"), listOf("props", "venku", "--versions"),
+            listOf("empty", "trash"), listOf("empty", "versions"), listOf("edit", "venku"), listOf("check"), listOf("doctor"), listOf("rebuild"), emptyList(),
+        )) assertFalse(args.toString(), Engine.changesTheBlog(args))
+    }
+}
+
+/**
  * What `check` and `doctor` answer, read as they are sent. A mistake
  * here is a problem the blog reported and the app passed over.
  */

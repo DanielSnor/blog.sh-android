@@ -60,6 +60,7 @@ import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.SectionLabel
+import app.blogsh.android.ui.Stranded
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.broughtBackWords
@@ -108,6 +109,9 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     // The blog the screen was opened for: what is kept is kept under it.
     val blog = remember { Blogs.currentId }
     val unreadable = stringResource(R.string.one_picture_could_not_be_read)
+    val needsNetwork = stringResource(R.string.android_picture_needs_network)
+    // Why the last picture chosen is not among the shots.
+    var unread by remember { mutableStateOf<String?>(null) }
     val textMissing = stringResource(R.string.the_text_did_not_come_with_the)
 
     val text = state.text
@@ -116,8 +120,6 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     val isDraft = entry?.preview?.startsWith("/draft/") ?: true
     // Pictures the post has that the text stops naming.
     val dropped = Kept.dropped(media, text)
-    // The save would leave the post with fewer pictures than it had.
-    val fewer = Kept.fewer(media, shots, text)
     val sent = Kept.sent(shots, text)
 
     // ---- Kept until saved
@@ -140,7 +142,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
         val fresh = post.text
         if (!post.editable || fresh == null || blog == null) return
         if (written == fresh) Unsaved.forget(blog, slug, Unsaved.What.Text, BlogShelf.notes)
-        else Unsaved(written, post.base, System.currentTimeMillis(), post.title).keep(blog, slug, Unsaved.What.Text, BlogShelf.notes)
+        else Unsaved.now(written, post.title, post.base, broughtBack, System.currentTimeMillis()).keep(blog, slug, Unsaved.What.Text, BlogShelf.notes)
         Desk.changed()
     }
 
@@ -175,15 +177,16 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     suspend fun loadPictures(items: List<Uri>) {
         if (items.isEmpty()) return
         importing = true
+        unread = null
         try {
             for (item in items) {
                 val taken = (entry?.media ?: emptyList()) + shots.map { it.name }
-                val shot = Media.shot(context, item, taken.size + 1, taken)
-                if (shot == null) {
-                    problem = unreadable
-                    continue
+                try {
+                    shots = shots + Media.shot(context, item, taken.size + 1, taken)
+                } catch (e: Media.NotRead) {
+                    // Said at the key that was pressed, not at the form's end.
+                    unread = if (e.why == Media.Unread.NeedsNetwork) needsNetwork else unreadable
                 }
-                shots = shots + shot
             }
         } finally {
             importing = false
@@ -220,19 +223,22 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
 
     suspend fun save() {
         saving = true
+        // Whose post it is and what goes, said before anything is waited for.
+        val going = state.text
         try {
             problem = null
-            val files = Kept.sent(shots, state.text).map { DeliveryFile(it.name, it.data) } +
+            val files = Kept.sent(shots, going).map { DeliveryFile(it.name, it.data) } +
                 DeliveryFile("$slug.md", fileText().toByteArray(Charsets.UTF_8))
-            val answer = delivered(Engine.deliver(files))
+            val answer = Engine.made(Engine.deliver(files, to = blog))
             saved = answer
             shots = emptyList()
-            // Saved: nothing is left to bring back.
-            blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes) }
+            // Saved: what went is not left to bring back.
+            blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, going, BlogShelf.notes) }
             broughtBack = null
             Desk.changed()
-            // Saving a published post builds the site: nothing is owed after it.
-            if (answer.state == PostState.Published) Herald.shared.settled()
+            // Saving a published post builds the site: nothing is owed
+            // after it -- to the blog the post is on, whichever is open by now.
+            if (answer.state == PostState.Published) Herald.shared.settled(blog)
             load()
             answered += 1
         } catch (e: Throwable) {
@@ -270,7 +276,9 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                     )
                 }
                 Plate(Modifier.padding(top = if (post.editable) 0.dp else 14.dp)) {
-                    row { PaperEditor(state, minHeight = 320.dp, enabled = post.editable) }
+                    // Left alone while a save is on its way: what is typed
+                    // then would be neither in what was saved nor kept.
+                    row { PaperEditor(state, minHeight = 320.dp, enabled = post.editable && !saving) }
                 }
                 Hint(stringResource(R.string.the_header_and_the_text_as_the))
                 Plate(Modifier.gap(10)) {
@@ -286,18 +294,15 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                                     Text(name, color = Theme.ink, style = mono(13f, bold = false), modifier = Modifier.weight(1f).alignByBaseline())
                                     if (Kept.named(name, text)) {
                                         Text(stringResource(R.string.in_the_text), color = Theme.muted, style = ui(13f), modifier = Modifier.alignByBaseline())
-                                    } else if (fewer) {
-                                        // Not a promise the blog would not keep: see the hint under the list.
-                                        Text(stringResource(R.string.not_in_the_text), color = Theme.danger, style = ui(13f), modifier = Modifier.alignByBaseline())
                                     } else {
+                                        // Whether or not another takes its place: the
+                                        // blog deletes a picture its text stopped naming.
                                         Text(stringResource(R.string.not_named_deleted_on_save), color = Theme.danger, style = ui(13f), modifier = Modifier.alignByBaseline())
                                     }
                                 }
                             }
                         }
                     }
-                    // Said before the save, not after it: what the blog will answer.
-                    if (fewer) Hint(stringResource(R.string.the_text_names_fewer_pictures_than_the))
                 }
 
                 SectionLabel(stringResource(R.string.pictures_and_video))
@@ -321,6 +326,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                         ) { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
                     }
                 }
+                unread?.let { ProblemLine(it) }
                 DeliveryNote(sent, textBytes, maxMb)
 
                 PrimaryButton(
@@ -333,10 +339,14 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                     enabled = !(saving || importing || !post.editable || text == post.text || Delivery.over(sent, textBytes, maxMb)),
                     busy = saving,
                 ) {
-                    // The question is asked where the answer counts: a swap deletes
-                    // the picture it replaces. Fewer than before is the blog's to
-                    // refuse, and the hint above has said so.
-                    if (dropped.isEmpty() || fewer) scope.launch { save() } else confirmingLoss = true
+                    // Asked whenever the save would delete a picture -- one
+                    // swapped for another, or one simply taken out. The blog
+                    // used to refuse a save that left the post with fewer, and
+                    // the app left that case to it; it takes such a save now,
+                    // and deletes the picture for good.
+                    // The save does not end with the screen: what went is
+                    // forgotten here whether or not anybody is still looking.
+                    if (Kept.asksBeforeSaving(media, text)) confirmingLoss = true else Desk.outliving.launch { save() }
                 }
                 val wrong = problem
                 if (wrong != null) {
@@ -363,6 +373,14 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                 }
             } else {
                 problem?.let { ProblemLine(it) }
+                // What is kept for this post while the post itself did not open.
+                val stranded = remember(Desk.changes) { blog?.let { Unsaved.kept(it, slug, Unsaved.What.Text, BlogShelf.notes) } }
+                if (problem != null && stranded != null) {
+                    Stranded(stranded) {
+                        blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes) }
+                        Desk.changed()
+                    }
+                }
             }
         }
         if (entry == null && problem == null) Busy(modifier = Modifier.align(Alignment.Center))
@@ -384,7 +402,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     if (confirmingLoss) {
         Asks(
             stringResource(R.string.pictures_the_text_no_longer_names_are, dropped.joinToString(", ")),
-            choices = listOf(Choice(stringResource(R.string.save_and_delete_them), danger = true) { scope.launch { save() } }),
+            choices = listOf(Choice(stringResource(R.string.save_and_delete_them), danger = true) { Desk.outliving.launch { save() } }),
             onDismiss = { confirmingLoss = false },
         )
     }

@@ -12,7 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
+import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.Engine
+import app.blogsh.android.model.Herald
 import app.blogsh.android.model.RebuildAnswer
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.plain
@@ -50,6 +52,8 @@ fun SiteScreen() {
     var running by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<RebuildAnswer?>(null) }
     var problem by remember { mutableStateOf<String?>(null) }
+    // The blog this screen was opened for: its site is the one that is built.
+    val home = remember { Blogs.currentId }
 
     suspend fun rebuild() {
         running = true
@@ -59,6 +63,9 @@ fun SiteScreen() {
             if (force) args.add("--force")
             result = Engine.call<RebuildAnswer>(args)
             problem = null
+            // Built here, by hand: nothing is owed, and a build that
+            // failed before this one has been tried again.
+            Herald.shared.settled(home)
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             problem = e.said
@@ -67,7 +74,7 @@ fun SiteScreen() {
         }
     }
 
-    PaperScreen(name = stringResource(MenuEntry.Rebuild.shortId)) {
+    PaperScreen(name = stringResource(MenuEntry.Rebuild.shortId), symbol = MenuEntry.Rebuild.symbol) {
         // Each switch with what it is for under it: the engine's own
         // names for them (--full, --force) say what they do to the
         // engine, not when somebody would want them.

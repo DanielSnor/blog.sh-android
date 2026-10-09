@@ -24,7 +24,7 @@ class PairingTest {
     private fun link(change: (MutableMap<String, String?>) -> Unit = {}): String {
         val parts = mutableMapOf<String, String?>(
             "v" to "1", "h" to "blog.example.org", "p" to "2222", "u" to "me", "k" to key,
-            "f" to "abc-DEF_123.zzz", "n" to "M%C5%AFj%20blog",
+            "f" to "abc-DEF_123AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.zzzZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", "n" to "M%C5%AFj%20blog",
         )
         change(parts)
         return "blogsh://pair?" + listOf("v", "h", "p", "u", "k", "f", "n").mapNotNull { name -> parts[name]?.let { "$name=$it" } }.joinToString("&")
@@ -45,7 +45,7 @@ class PairingTest {
         assertEquals(2222, code.port)
         assertEquals("me", code.user)
         assertArrayEquals(ByteArray(32) { it.toByte() }, code.seed)
-        assertEquals(listOf("abc-DEF_123", "zzz"), code.fingerprints)
+        assertEquals(listOf("abc-DEF_123AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "zzzZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"), code.fingerprints)
         assertEquals("Můj blog", code.site)
     }
 
@@ -121,9 +121,9 @@ class PairingTest {
     fun aFingerprintIsComparedInTheCodesSpelling() {
         assertEquals("ab-_cd", PairingCode.urlSafe("SHA256:ab+/cd=="))
         assertEquals("ab-_cd", PairingCode.urlSafe("ab-_cd"))
-        val code = PairingCode(link { it["f"] = "ab-_cd.other" })
-        assertTrue(code.expects("SHA256:ab+/cd"))
-        assertTrue(code.expects("SHA256:other"))
+        val code = PairingCode(link { it["f"] = "ab-_cdBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB.otherOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO" })
+        assertTrue(code.expects("SHA256:ab+/cdBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"))
+        assertTrue(code.expects("SHA256:otherOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"))
         assertFalse(code.expects("SHA256:somebody+else"))
     }
 
@@ -221,5 +221,35 @@ class PairingTest {
         assertEquals(listOf(first.id, paired.id), list.all.map { it.id })
         val again = BlogList(notes) { }
         assertEquals(paired, again.current)
+    }
+
+    /**
+     * A code cut off inside its fingerprint is not whole -- taken, it
+     * would turn its own server away as another machine.
+     */
+    @Test
+    fun aCodeCutInsideItsFingerprintIsNotWhole() {
+        val whole = link { it["n"] = null }
+        assertEquals(PairingCode.Problem.Incomplete, problem(whole.dropLast(20)))
+        assertEquals(PairingCode.Problem.Incomplete, problem(link { it["f"] = "short" }))
+        assertEquals(PairingCode.Problem.Incomplete, problem(link { it["f"] = "a".repeat(42) + "!" }))
+        assertEquals(2, PairingCode(whole).fingerprints.size)
+    }
+
+    /**
+     * A line break or a space inside a pasted code was put there on the
+     * way, and is no part of it: the code reads as it was written.
+     */
+    @Test
+    fun aLineBreakInsideAPastedCodeIsNoPartOfIt() {
+        val good = PairingCode(link())
+        val text = link()
+        fun same(code: PairingCode?): Boolean = code != null && code.host == good.host && code.port == good.port && code.user == good.user &&
+            code.seed.contentEquals(good.seed) && code.fingerprints == good.fingerprints && code.site == good.site
+        for (at in 14 until text.length step 9) {
+            val broken = text.substring(0, at) + "\n " + text.substring(at)
+            assertTrue("a break at $at", same(runCatching { PairingCode(broken) }.getOrNull()))
+        }
+        assertTrue(same(runCatching { PairingCode("  \n" + text + "\n") }.getOrNull()))
     }
 }

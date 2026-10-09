@@ -210,7 +210,11 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
             else -> {}
         }
 
-        val known = remember(host, port, keyTick) { TrustOnFirstUse.known(host, port) }
+        // As the connection takes them -- the host without the space typed
+        // after it, no port as ssh's own: the server's key is remembered
+        // under these, and has to be looked up and forgotten under these.
+        val (reachedHost, reachedPort) = blog?.reached ?: ("" to 22)
+        val known = remember(reachedHost, reachedPort, keyTick) { TrustOnFirstUse.known(reachedHost, reachedPort) }
         if (known != null) {
             Plate(Modifier.gap(12)) {
                 row {
@@ -221,7 +225,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
                 }
                 row {
                     Command(stringResource(R.string.forget_the_server_s_key), Symbols.xmarkCircle, danger = true) {
-                        TrustOnFirstUse.forget(host, port)
+                        TrustOnFirstUse.forget(reachedHost, reachedPort)
                         // The kept connection was opened to the key just forgotten.
                         Engine.hangUp()
                         keyTick += 1

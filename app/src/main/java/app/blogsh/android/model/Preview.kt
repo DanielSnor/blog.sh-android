@@ -90,7 +90,9 @@ object Preview {
     private val teaserEnd = Regex("""^[ \t]*//--more--//[ \t]*$""")
     private val heading = Regex("""^(#{1,3})\s+(.+)$""")
     private val clip = Regex("""^!!\[([^\n]*)\]\(([^)\s]+)\)\s*$""")
-    private val picture = Regex("""^!\[([^\n]*)\]\(([^)\s]+)\)\s*$""")
+    // A picture, with a caption after its name or without: the caption
+    // in straight quotes or in a typed pair, as the engine reads it.
+    private val picture = Regex("""^!\[([^\n]*)\]\((""" + Kept.NAME + """)(?:\s+(?:"((?:\\.|[^"\\])*)"|\u201E([^\u201C]*)\u201C|\u201C([^\u201D]*)\u201D))?\)\s*$""")
     private val quoted = Regex("""^>\s?""")
     private val listed = Regex("""^\s*([-*+]|[0-9]+\.)\s+""")
     private val numberedItem = Regex("""^\s*[0-9]+\.""")
@@ -175,7 +177,10 @@ object Preview {
                 }
                 fun figure(m: List<String>): String {
                     val shown = shots[m[2]] ?: return box(words.missing(m[2]))
-                    return "<figure><img src=\"" + escape(shown.source) + "\" alt=\"" + escape(m[1]) + "\"></figure>"
+                    // The caption under the picture, where the mark has one.
+                    val caption = m.drop(3).firstOrNull { it.isNotEmpty() }?.replace(Regex("""\\(.)""")) { it.groupValues[1] } ?: ""
+                    return "<figure><img src=\"" + escape(shown.source) + "\" alt=\"" + escape(m[1]) + "\">" +
+                        (if (caption.isEmpty()) "" else "<figcaption>" + escape(caption) + "</figcaption>") + "</figure>"
                 }
                 // The second place this leaves the page's rendering, and
                 // follows the blog's: pictures in a row, with nothing but
@@ -327,6 +332,12 @@ object Preview {
         }
         return title to text.substring(end + 5)
     }
+
+    /**
+     * A text with no title and no words: saved, it takes the language
+     * off the post -- the engine's own rule, and the editor's hint.
+     */
+    fun takesOff(text: String): Boolean = parts(text).let { it.first.isEmpty() && it.second.isBlank() }
 }
 
 /**
@@ -347,9 +358,9 @@ data class Lede(
         const val LIMIT = 600
 
         private val cut = Regex("""^[ \t]*//--more--//[ \t]*$""")
-        private val media = Regex("""^!{1,2}\[([^\n]*)\]\(([^)\s]+)\)\s*$""")
+        private val media = Regex("""^!{1,2}\[([^\n]*)\]\((""" + Kept.NAME + ")" + Kept.CAPTION + """\)\s*$""")
         private val fence = Regex("^```")
-        private val labelled = Regex("""!{0,2}\[([^\]]*)\]\((?:\([^()\s]*\)|[^)\s])+\)""")
+        private val labelled = Regex("""!{0,2}\[([^\]]*)\]\((?:\([^()\s]*\)|[^)\s])+""" + Kept.CAPTION + """\)""")
         private val lead = Regex("""^\s*(?:#{1,6}\s+|>\s?)""")
         private val emphasis = Regex("""(^|[^*])\*([^*\n]+)\*(?!\*)""")
 

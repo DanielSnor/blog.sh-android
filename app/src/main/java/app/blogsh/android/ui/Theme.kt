@@ -92,6 +92,8 @@ class Palette(
      * beside the accent, and never a fill.
      */
     val danger: Color,
+    /** What is out of reach, in every part of it: see `Shades.faded`. */
+    val faded: Color,
 )
 
 /** A colour of a palette, `0xRRGGBB`, as one to draw with. */
@@ -110,6 +112,7 @@ private fun palette(shades: Shades, dark: Boolean): Palette {
         paper = paper, ink = ink, muted = tone(shades.metaText), line = tone(shades.border),
         card = ink.copy(alpha = if (dark) 0.05f else 0.03f),
         danger = if (dark) Color(0xFFFF7A5C) else Color(0xFFA81800),
+        faded = tone(shades.faded),
     )
 }
 
@@ -136,19 +139,44 @@ fun PlainGround(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalPalette provides palette, LocalAccent provides tone(shades.accent), content = content)
 }
 
+/** This is part of something that cannot be used just now. */
+val LocalOutOfReach = compositionLocalOf { false }
+
+/**
+ * The state "out of reach": the thing keeps its place and its outline
+ * and goes quiet. Everything in it is drawn in one tone -- the accent
+ * says "a key", and what cannot be pressed does not wear it -- it has no
+ * fill, and it answers to nothing. Never done by making the whole thing
+ * transparent: that fades a fill, an outline and a picture each its own
+ * way, and comes out differently over every ground.
+ */
+@Composable
+fun OutOfReach(out: Boolean, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalOutOfReach provides (out || LocalOutOfReach.current), content = content)
+}
+
 object Theme {
     val paper: Color @Composable get() = LocalPalette.current.paper
-    val ink: Color @Composable get() = LocalPalette.current.ink
-    val muted: Color @Composable get() = LocalPalette.current.muted
+
+    // A colour of a thing's own -- which it gives up when it is out of
+    // reach, for the one tone everything out of reach is drawn in.
+    val ink: Color @Composable get() = if (LocalOutOfReach.current) faded else LocalPalette.current.ink
+    val muted: Color @Composable get() = if (LocalOutOfReach.current) faded else LocalPalette.current.muted
     val line: Color @Composable get() = LocalPalette.current.line
     val card: Color @Composable get() = LocalPalette.current.card
-    val danger: Color @Composable get() = LocalPalette.current.danger
+    val danger: Color @Composable get() = if (LocalOutOfReach.current) faded else LocalPalette.current.danger
 
-    /** The hairline around a key: the rules' colour, the accent under the pointer. */
-    val keyLine: Color @Composable get() = if (LocalUnderPointer.current) LocalAccent.current else LocalPalette.current.line
+    /** What is out of reach is written in: the ink mixed into the ground. */
+    val faded: Color @Composable get() = LocalPalette.current.faded
+
+    /**
+     * The hairline around a key: the rules' colour, the accent under the
+     * pointer. Out of reach it answers to nothing, the pointer included.
+     */
+    val keyLine: Color @Composable get() = if (LocalUnderPointer.current && !LocalOutOfReach.current) LocalAccent.current else LocalPalette.current.line
 
     /** The one accent: every control of the app, its links, its counts. What the iOS app calls the tint. */
-    val accent: Color @Composable get() = LocalAccent.current
+    val accent: Color @Composable get() = if (LocalOutOfReach.current) faded else LocalAccent.current
 
     /**
      * Type so large that a name and its value no longer share a row: the
@@ -333,11 +361,13 @@ fun Pressable(
     // Where there is a pointer -- a tablet with a mouse -- what the key is
     // made of is told that the pointer is over it.
     val over by source.collectIsHoveredAsState()
+    // What is out of reach is deaf to a tap, whoever made the key.
+    val live = enabled && !LocalOutOfReach.current
     Box(
         modifier
             .alpha(if (pressed) 0.55f else 1f)
-            .clickable(interactionSource = source, indication = null, enabled = enabled, onClickLabel = label, role = Role.Button, onClick = onClick)
-    ) { CompositionLocalProvider(LocalUnderPointer provides (over && enabled), content = content) }
+            .clickable(interactionSource = source, indication = null, enabled = live, onClickLabel = label, role = Role.Button, onClick = onClick)
+    ) { CompositionLocalProvider(LocalUnderPointer provides (over && live), content = content) }
 }
 
 /** The pointer is over the key this is a part of. */
@@ -367,12 +397,14 @@ fun Card(
     content: @Composable RowScope.() -> Unit,
 ) {
     val shape: Shape = if (capsule) CircleShape else RoundedCornerShape(Theme.corner)
+    val out = LocalOutOfReach.current
     Row(
         modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (warning) Theme.danger.copy(alpha = 0.10f) else if (highlighted) Theme.accent.copy(alpha = 0.12f) else Theme.card)
-            .border(1.dp, if (warning) Theme.danger.copy(alpha = 0.55f) else if (highlighted) Theme.accent else Theme.keyLine, shape)
+            // Out of reach: no fill, and the plain outline.
+            .background(if (out) Color.Transparent else if (warning) Theme.danger.copy(alpha = 0.10f) else if (highlighted) Theme.accent.copy(alpha = 0.12f) else Theme.card)
+            .border(1.dp, if (out) Theme.line else if (warning) Theme.danger.copy(alpha = 0.55f) else if (highlighted) Theme.accent else Theme.keyLine, shape)
             .padding(horizontal = 13.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,

@@ -56,7 +56,11 @@ class PairingCode(text: String) {
     class Unreadable(val problem: Problem) : Exception(problem.name)
 
     init {
-        val link = text.trim()
+        // Nothing the engine writes into a code is ever a space or a line
+        // break: one found inside a pasted code was put there on the way
+        // -- a mail that wraps, a note that breaks the line -- and is no
+        // part of it.
+        val link = text.filterNot { it.isWhitespace() }
         val scheme = link.indexOf("://")
         if (scheme <= 0 || !link.substring(0, scheme).equals("blogsh", ignoreCase = true)) throw Unreadable(Problem.NotACode)
         val rest = link.substring(scheme + 3)
@@ -80,7 +84,13 @@ class PairingCode(text: String) {
         this.port = port
         this.user = user
         this.seed = seed
-        fingerprints = (said["f"] ?: "").split('.').filter { it.isNotEmpty() }
+        // A fingerprint is whole or it is not one: 43 characters, SHA-256
+        // without its padding. A code cut off inside its last fingerprint
+        // would otherwise be taken, and then turn its own server away as
+        // another machine.
+        val prints = (said["f"] ?: "").split('.').filter { it.isNotEmpty() }
+        if (prints.any { !Regex("^[A-Za-z0-9_-]{43}$").matches(it) }) throw Unreadable(Problem.Incomplete)
+        fingerprints = prints
         site = said["n"]?.takeIf { it.trim(' ', '\t').isNotEmpty() }
     }
 

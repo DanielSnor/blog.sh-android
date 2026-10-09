@@ -9,4 +9,6 @@
     <string name="android_brightness">Helligkeit</string>
     <string name="android_colour_number">Die Farbe als Zahl</string>
     <string name="android_paste">Einfügen</string>
+    <string name="android_queue_unattended">Auf diesem Blog schickt nichts die Warteschlange von selbst hinaus: Ein geplanter Lauf ist noch nie durch sie gegangen. Ein Beitrag, dessen Zeit gekommen ist, wartet, bis er von Hand veröffentlicht wird – halte seine Zeile.</string>
+    <string name="android_picture_needs_network">Das Bild konnte nicht gelesen werden: Es liegt wohl nur in der Cloud und lässt sich ohne Netz nicht laden. Hinzufügen lässt sich eines, das ganz auf diesem Gerät liegt – etwa ein eben aufgenommenes.</string>
 </resources>

@@ -58,13 +58,49 @@ import kotlin.math.roundToInt
  * converted goes as it is, as on the page.
  */
 object Media {
-    /** One picked item as a shot, or null when nothing could be read of it. */
-    suspend fun shot(context: Context, uri: Uri, index: Int, taken: List<String>): Shot? = withContext(Dispatchers.IO) {
+    /** Why nothing could be read of a picked item. */
+    enum class Unread {
+        /**
+         * The library does not hold it whole on this device, and what is
+         * missing could not be fetched: there is no network to fetch it over.
+         */
+        NeedsNetwork,
+        Unreadable,
+    }
+
+    /** Nothing could be read of a picked item, and the likely reason. */
+    class NotRead(val why: Unread) : Exception(why.name)
+
+    /**
+     * What a failed read was: the library saying it needs the network,
+     * in so many words or by failing while the device has none.
+     */
+    fun unread(error: Throwable?, online: Boolean): Unread {
+        var next = error
+        var steps = 0
+        while (next != null && steps < 8) {
+            if (next is java.net.UnknownHostException || next is java.net.SocketException || next is java.net.SocketTimeoutException) return Unread.NeedsNetwork
+            next = next.cause
+            steps += 1
+        }
+        return if (online) Unread.Unreadable else Unread.NeedsNetwork
+    }
+
+    /** One picked item as a shot; thrown, why nothing could be read of it. */
+    suspend fun shot(context: Context, uri: Uri, index: Int, taken: List<String>): Shot = withContext(Dispatchers.IO) {
         val type = context.contentResolver.getType(uri) ?: ""
         val original = displayName(context, uri)
-        if (type.startsWith("video/")) return@withContext video(context, uri, original, index, taken)
-        val bytes = runCatching { context.contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull() ?: return@withContext null
-        val shrunk = shrink(bytes) ?: return@withContext null
+        if (type.startsWith("video/")) {
+            return@withContext video(context, uri, original, index, taken) ?: throw NotRead(unread(null, NetworkWatch.hasNetwork))
+        }
+        val bytes = try {
+            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+        } catch (e: Exception) {
+            // Kept where a device's log can be read: the picker's own reason.
+            android.util.Log.w("blogsh", "picture not read", e)
+            throw NotRead(unread(e, NetworkWatch.hasNetwork))
+        }
+        val shrunk = bytes?.let { shrink(it) } ?: throw NotRead(unread(null, NetworkWatch.hasNetwork))
         val name = Pictures.freeName(Pictures.safeName(original, index), taken)
         Shot(name, shrunk.first, shrunk.second, shrunk.third, thumb = thumbnail(shrunk.first))
     }

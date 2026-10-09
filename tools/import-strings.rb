@@ -83,7 +83,21 @@ def escape(text)
   out
 end
 
-taken = []
+# A name once given is kept. The names are made from the English words, and
+# two keys that begin alike are told apart by a number -- in the order the
+# catalog lists them, which a new key can change. A screen that asks for a
+# name must go on getting the words it asked for: so what the last import
+# called a key (tools/strings-map.tsv) is what it is called, and only a new
+# key is given a new name.
+map_file = File.join(root, 'tools/strings-map.tsv')
+known = {}
+if File.exist?(map_file)
+  File.readlines(map_file, chomp: true).each do |line|
+    name, key = line.split("\t", 2)
+    known[key.gsub('\n', "\n")] = name if key
+  end
+end
+taken = catalog['strings'].keys.filter_map { |key| known[key] }
 rows = []
 languages = Hash.new { |h, k| h[k] = {} }
 catalog['strings'].keys.sort.each do |key|
@@ -91,7 +105,7 @@ catalog['strings'].keys.sort.each do |key|
 
   entry = catalog['strings'][key]
   english = entry.dig('localizations', 'en', 'stringUnit', 'value') || defaults[key] || key
-  name = name_for(key, taken)
+  name = known[key] || name_for(key, taken)
   rows << [name, key, english]
   (entry['localizations'] || {}).each do |lang, value|
     next if lang == 'en'

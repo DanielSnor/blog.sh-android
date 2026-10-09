@@ -58,6 +58,13 @@ class Herald(
 
     /** The blog the build is owed to: a build is that blog's and no other's. */
     private var blog: String? = null
+
+    /**
+     * What is owed to blogs that are not open: kept, in the words it was
+     * owed in, until the blog is open again. A debt is not paid by
+     * looking at another blog.
+     */
+    private val parked = HashMap<String, String>()
     private var again = false
     private var tries = 0
 
@@ -78,10 +85,21 @@ class Herald(
     /**
      * A change the site does not show yet. `why`: what a reader of the
      * site would notice, where the screen has more to say than that.
+     *
+     * `owed`: the blog the change was made on, where the screen knows it.
+     * A change whose answer came after another blog was opened is owed
+     * to the blog it was made on, and waits for it -- it is not built
+     * on the blog that happens to be open, and not forgotten.
      */
-    fun owe(why: String? = null) {
-        owedFor = why ?: plainly()
+    fun owe(why: String? = null, owed: String? = null) {
+        val words = why ?: plainly()
+        if (owed != null && owed != open()) {
+            parked[owed] = words
+            return
+        }
+        owedFor = words
         blog = open()
+        blog?.let { parked.remove(it) }
         tries = 0
         if (build == Build.Building) {
             // Changed while a build runs: that build may have missed it.
@@ -94,12 +112,45 @@ class Herald(
 
     /**
      * The site was just built by something else -- a publish builds it
-     * whole -- so what was owed is paid.
+     * whole -- so what was owed is paid, and a build that failed before
+     * it has nothing left to say.
+     *
+     * `built`: the blog whose site it was. Another blog's being built
+     * pays nothing of what the open one is owed.
      */
-    fun settled() {
-        if (build != Build.Owed) return
-        waiting?.cancel()
-        build = Build.None
+    fun settled(built: String? = null) {
+        if (built != null && built != open()) {
+            parked.remove(built)
+            return
+        }
+        when (build) {
+            Build.Owed -> {
+                waiting?.cancel()
+                build = Build.None
+            }
+            is Build.Failed -> build = Build.None
+            Build.None, Build.Building -> {}
+        }
+    }
+
+    /**
+     * Another blog is open now. What was owed to the one that was is put
+     * by for it, and what was put by for this one is owed again.
+     */
+    fun opened(now: String?) {
+        val was = blog
+        if (build == Build.Owed && was != null && was != now) {
+            waiting?.cancel()
+            parked[was] = owedFor
+            build = Build.None
+        }
+        if (build != Build.None || now == null) return
+        val owed = parked.remove(now) ?: return
+        owedFor = owed
+        blog = now
+        tries = 0
+        build = Build.Owed
+        arm()
     }
 
     /** A failure was read; the line goes. */
@@ -118,7 +169,9 @@ class Herald(
     private suspend fun run() {
         if (build != Build.Owed) return
         // Another blog is open by now: its engine is not the one to ask.
+        // The debt is kept for the blog it is owed to.
         if (blog != open()) {
+            blog?.let { parked[it] = owedFor }
             build = Build.None
             return
         }

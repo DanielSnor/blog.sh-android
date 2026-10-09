@@ -1,5 +1,6 @@
 from_the_content	%@ (from the content)
 once_encoded_for_the_wire_over_the	%@ once encoded for the wire, over the server's limit of %lld MB: it will refuse this
+pictures_and_video_2	%@ · pictures and video: %lld
 part	%@, part %@
 goes_out_of_in_the_queue	%@: '%@' goes out %@, %lld of %lld in the queue.
 a_picture_has_to_stand_on_a	%@: a picture has to stand on a line of its own, with a blank line before it and after it -- the blog refuses the post otherwise
@@ -7,6 +8,7 @@ the_text	%@: the %@ text
 the_text_is_taken_off	%@: the %@ text is taken off
 address_es_still_redirect_here	%lld address(es) still redirect here
 of	%lld of %lld
+its_time_has_come_publish_it_by	(its time has come -- publish it by hand)
 the_post_has_no_text	(the post has no text)
 the_site_s_own	(the site's own)
 waiting_for_the_cron	(waiting for the cron)
@@ -16,6 +18,7 @@ a_draft_is_scheduled_from_its_properties	A draft is scheduled from its propertie
 a_new_blog	A new blog
 a_picture_is_shrunk_to_px_on	A picture is shrunk to %@ px on its long edge before it goes; a video is converted to H.264 at 720p. The whole post -- text, pictures, video -- has to stay under %lld MB, the server's limit, and the limit is measured on the encoded transfer, a third larger than the files: the files themselves get about %lld MB.
 a_post	A post
+a_post_without_words	A post without words
 a_row_opens_its_post_swiped_to	A row opens its post. Swiped to a side it shows its keys; held, all of them -- and a row held can be carried to another place in the queue.
 accent	Accent
 actions	Actions
@@ -33,6 +36,7 @@ as_the_system_has_it	As the system has it
 back	Back
 back_in_the_editor_the_changes_written	Back in the editor: the changes written here %@ and not saved.
 back_in_the_form_what_was_written	Back in the form: what was written here %@ and not sent.
+back_to_the_form_to_write_on	Back to the form, to write on
 back_to_the_post	Back to the post
 background	Background
 blogs	Blogs
@@ -53,6 +57,7 @@ check_again	Check again
 check_the_archive	Check the archive
 check_the_installation	Check the installation
 checking	Checking…
+clear	Clear
 clearing_out	Clearing out
 clearing_out_2	Clearing out…
 code	Code
@@ -82,6 +87,7 @@ draft_written	Draft written: %@
 drafts_in_progress	Drafts in progress
 drop	Drop
 drop_it_no_longer_redirects_anywhere	Drop %@? It no longer redirects anywhere.
+each_goes_to_the_blog_as_a	Each goes to the blog as a draft; publishing is a decision of its own, made there.
 earlier_versions	Earlier versions
 edit_what	Edit what?
 empty_the_trash	Empty the trash
@@ -100,6 +106,8 @@ italic	Italic
 its_announcement_is_deleted_too_the_post	Its announcement is deleted too; the post keeps its text as a draft.
 its_pictures_were_not_kept_add_them	Its pictures were not kept; add them again.
 its_properties_and_the_actions_on_it	Its properties and the actions on it
+keep_on_the_device	Keep on the device
+kept_on_the_device_it_goes_to	Kept on the device. It goes to the blog as a draft once the server answers.
 key	Key
 language	Language
 light	Light
@@ -123,8 +131,10 @@ no_posts_to_choose_from	No posts to choose from.
 no_problems	No problems.
 not_in_the_text_it_will_not	Not in the text — it will not be sent with the post.
 nothing_matches	Nothing matches
+nothing_on_this_blog_sends_the_queue	Nothing on this blog sends the queue out by itself: no scheduled run has ever gone through it. A post whose time has come waits until it is published by hand -- hold its row, or swipe it to a side.
 nothing_scheduled	Nothing scheduled
 nothing_to_connect_to_yet_the_name	Nothing to connect to yet — the name above leads to the blogs and their settings.
+nothing_waits_on_this_device	Nothing waits on this device.
 numbered_list	Numbered list
 ok	OK
 old_links	Old links
@@ -203,6 +213,7 @@ search_the_archive	Search the archive
 search_the_archive_2	Search the archive.
 send_to_the_blog_as_a_draft	Send to the blog as a draft
 sending	Sending…
+sent_to_the_blog_as_drafts	Sent to the blog as drafts: %lld
 server	Server
 server_key	Server key
 set_up_by_hand	Set up by hand
@@ -231,6 +242,9 @@ the_app_speaks_the_chosen_language_after	The app speaks the chosen language afte
 the_app_wears_the_colours_of_the	The app wears the colours of the blog that is open, its default ones, or the ones chosen here.
 the_archive	The archive
 the_blog_said_no	The blog said no: %@
+the_blog_s_server_cannot_be_reached	The blog's server cannot be reached. Kept on the device, the post goes to the blog as a draft, with its pictures, once the server answers.
+the_blog_s_server_cannot_be_reached_2	The blog's server cannot be reached. The posts go to the blog as drafts, in the order they were written, once it answers.
+the_blog_s_server_did_not_answer	The blog's server did not answer; the post still waits.
 the_blog_s_settings	The blog's settings
 the_chosen_colours_cannot_be_read_here	The chosen colours cannot be read here, so this part keeps to the default scheme until they can.
 the_code_is_no_longer_good_it	The code is no longer good: it lasts ten minutes and works once. Ask for a new one: ./blog.sh pair
@@ -238,12 +252,15 @@ the_code_is_not_whole_copy_the	The code is not whole. Copy the whole line under 
 the_default_scheme	The default scheme
 the_engine_did_not_answer_as_data	The engine did not answer as data: %@
 the_first_is_the_size_the_system	The first is the size the system has; the others are steps above it. It holds on this device, for every blog.
+the_form_holds_a_post_that_is	The form holds a post that is being written: send it or clear it before another is taken back into it.
 the_header_and_the_text_as_the	The header and the text, as the editor opens them. A picture is named by its file name.
 the_key_is_made_on_this_device	The key is made on this device and never leaves it. Put the line above into the server's ~/.ssh/authorized_keys; the forced command in front of it is what the key may run, and nothing else.
 the_last_posts_of_as_blog_sh	The last %@ posts of %@, as ./blog.sh offers them. Looking for an older one?
 the_line_for_the_server_s_ssh	The line for the server's ~/.ssh/authorized_keys is made from where the blog is. A blog inside a container is reached through the command that enters it, for example sudo docker exec -i blog; one that is not in a container leaves that field empty.
 the_old_address_keeps_answering_it_redirects	The old address keeps answering: it redirects to the new one.
 the_original	The original
+the_picture_could_not_be_read_it	The picture could not be read: it is most likely kept in iCloud, and without a network it cannot be fetched. One that is on this device whole -- taken just now, say -- can be added.
+the_post_could_not_be_kept_on	The post could not be kept on the device: %@
 the_post_goes_to_the_trash_and	The post goes to the trash and can be restored.
 the_post_goes_to_the_trash_and_2	The post goes to the trash and can be restored; its announcement goes with it and cannot.
 the_post_has_changed_on_the_blog	The post has changed on the blog since; saving puts this text in its place.
@@ -257,7 +274,7 @@ the_queue_is_empty	The queue is empty
 the_same_as_publishing_a_draft_by	The same as publishing a draft by hand, announcement included.
 the_schedule_is_cancelled_the_post_is	The schedule is cancelled; the post is a draft again.
 the_scheduled_post_queue	The scheduled-post queue
-the_sentences_are_the_blog_s_own	The sentences are the blog's own, in the blog's language. Nothing is repaired from here.
+the_sentences_are_the_blog_s_own	The sentences are the blog's own -- in this app's language where the blog's engine has it, in the blog's otherwise. Nothing is repaired from here.
 the_server_did_not_answer_is_this	The server %@ did not answer. Is this device on a network the server can be reached from?
 the_server_closed_the_connection_without_an	The server closed the connection without an answer.
 the_server_does_not_know_this_blog	The server does not know this blog's key. The line under the key in the blog's settings belongs in ~/.ssh/authorized_keys on the server.
@@ -269,7 +286,6 @@ the_site_does_not_show_this_change	The site does not show this change yet.
 the_site_has_no_address_set_so	The site has no address set, so there is nothing to open.
 the_site_will_be_built_in_a	The site will be built in a moment.
 the_text_did_not_come_with_the	The text did not come with the answer.
-the_text_names_fewer_pictures_than_the	The text names fewer pictures than the post has. From the app a picture can be swapped for another, not taken out: the blog refuses a save that would leave the post with fewer. Taking pictures out is done at the desk, with ./blog.sh edit.
 the_time_offered_is_the_next_free	The time offered is the next free publishing slot.
 this_blog_s_engine_does_not_offer	This blog's engine does not offer this check to the app yet. It comes with a newer ./blog.sh.
 this_code_is_of_a_newer_kind	This code is of a newer kind than the app knows. Update the app.
@@ -279,10 +295,14 @@ this_post_cannot_be_edited_here_at	This post cannot be edited here: %@. At the d
 this_post_has_no_old_addresses	This post has no old addresses.
 this_site_publishes_in_more_than_one	This site publishes in more than one language and this post is not written in all of them yet: it would go out in one language only.
 three_steps_larger	Three steps larger
+throw_away_it_was_never_sent_nothing	Throw '%@' away? It was never sent; nothing of it is kept.
+throw_away	Throw away
+throw_these_changes_away_they_were_never	Throw these changes away? They were never saved; nothing of them is kept.
 title	Title
 trash	Trash
 trash_emptied_item_s_freed	Trash emptied: %lld item(s), %@ freed.
 trash_is_empty	Trash is empty
+try_again	Try again
 two_posts_in_different_years_share_this	Two posts in different years share this slug, and the app cannot say which of them is meant. At the desk, ./blog.sh props asks which.
 two_steps_larger	Two steps larger
 unpublish	Unpublish
@@ -297,11 +317,13 @@ upload_the_whole_site_unchecked	Upload the whole site unchecked
 used_in_the_text	Used in the text
 user	User
 usually_only_the_pages_that_changed_are	Usually only the pages that changed are built. With this on the whole site is built again, which takes longer.
+waiting_to_be_sent	Waiting to be sent
 what_do_you_want_to_do	What do you want to do?
 what_is_cleared_out_is_gone_for	What is cleared out is gone for good. Older versions are what a post said before its recent saves; each post keeps its newest.
 with_a_code	With a code
 with_a_network_configured_it_announces_too	With a network configured it announces too, which nothing takes back.
 worth_a_look	Worth a look
+written_here_and_never_saved_the_post	Written here %@ and never saved; the post itself could not be opened. The words are below, to copy.
 your_own	Your own
 a_former_slug_redirects_here	a former slug, redirects here
 all	all
@@ -348,9 +370,9 @@ never_an_unlisted_post_is_not_announced	never -- an unlisted post is not announc
 never_this_site_announces_nowhere	never -- this site announces nowhere
 never_as_things_stand_the_network_s	never, as things stand -- the network's token is empty
 not_announced	not announced
-not_in_the_text	not in the text
 not_named_deleted_on_save	not named — deleted on save
 not_yet_goes_out_when_the_post	not yet -- goes out when the post publishes
+offline	offline
 old_links_2	old links
 part_of_series	part of series
 path	path

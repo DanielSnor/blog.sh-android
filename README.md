@@ -74,7 +74,8 @@ most often lives beside the first -- and asks for its directory and a key
 of its own; removing a blog removes its key from the phone, and the line
 on the server is then yours to delete.
 Switching changes everything the screen wears: the name, the favicon, the
-colours, what waits in the queue.
+colours, what waits in the queue. The list is in the order you put it in:
+a row held offers the way up and down it, beside the way out of the app.
 
 ## Settings
 
@@ -144,7 +145,32 @@ chosen for it are not kept, and the line says that too where the text
 names one; a post that has changed on the blog meanwhile is said as well.
 The first screen lists what was begun and not finished -- an unsent new
 post, unsaved changes, an unsaved translation -- each a way straight back
-to where it waits.
+to where it waits. A form is left alone while its post is on its way, and
+a post that arrived is forgotten on the phone whether or not anybody was
+still looking at its form; what was kept for a post follows it when the
+post is renamed, and changes whose post no longer opens are shown, to be
+copied, with the one key that lets go of them.
+
+A blog whose server does not answer is offline, and the first screen says
+so: where the engine's version stood it reads `offline`, with the one key
+there is for it -- try again. What needs the server is drawn out of
+reach, in one quiet tone, and answers to nothing; writing a new post does
+not need it, and stays. With the server silent the form's own key keeps
+the post on the phone instead -- whole, with its pictures -- and the
+first screen counts what waits to be sent. The server is asked again
+without anybody thinking of it: when the phone finds a network, when the
+app is back in front, when a call from any screen gets through. What
+waited goes then, as drafts, in the order it was written and dated by
+when it was written, each delivery under a name of its own -- so a post
+the server took just before the connection broke is not written twice.
+A post the blog would not take stays, with the blog's reason beside it.
+From the list a post can be sent by hand, taken back into the form to be
+written on, or thrown away.
+
+The queue of a blog on which nothing sends the queue out says so at its
+head, and a post there whose time has come says it waits for a hand, not
+for a clock. `check` and `doctor` are asked in the app's language; an
+engine that has it answers in it, another in the blog's own.
 
 One connection to the server is opened with the first call and kept for
 the ones after it: a server counts the connections an address opens, and
@@ -182,7 +208,15 @@ card and the mark the text has for it: written in either, the other
 follows at every letter, so it can be begun in the text, added to on the
 card and finished in the text again. A card whose picture the text does
 not name yet keeps its words for when the mark is put in. The text is
-sent as it stands.
+sent as it stands. A caption after a picture's name, in straight quotes
+or a keyboard's own -- `![description](photo.jpg "caption")` -- is a
+part of its mark: the picture is named, drawn in the preview with the
+caption under it, and its description is still written in either place.
+A save that would delete a picture the post has -- the blog deletes one
+its text stopped naming, for good -- is asked about first, every time.
+A picture that could not be read is said at the key that chose it, with
+the likely reason: without a network, most often one the library keeps
+elsewhere.
 
 The text of a post is as tall as it asks, up to what stays in sight:
 with a keyboard up it has everything down to the keyboard -- the tags
@@ -287,6 +321,8 @@ at once.
   keeps to the default scheme whatever is worn.
 - **Sharing** opens Android's sheet with the address as text and the
   title as its subject; there is no preview of the link in it.
+- **The blogs are put in another order from a row's menu** -- up, down --
+  where iOS also lets a held row be dragged there.
 - **One icon.** An Android app cannot choose among icons the way an iOS
   one can, so the icon is one, whatever the open blog's accent is.
 - **The typewriter face** is Courier Prime, where iOS has the system's
@@ -351,10 +387,13 @@ cannot be read; a pairing code as it is read -- from its link, and out
 of a camera's picture -- and what the engine answers to it; the size of the type and the language as they are kept;
 the site built by the app itself; the connection kept to the server;
 writing kept until it is sent or saved, and what the first screen lists
-of it; the stamp of a build.
+of it; the stamp of a build; a server that is silent and heard from
+again; the posts that wait on the device -- put by, listed, delivered
+under their receipts -- and their sending: once, in turn, to the blog
+they were written for; a build owed to a blog that is not the open one.
 The screens are drawn on the desk and compared with how they were last
-looked at: sixteen of them -- the first screen, the lists, a post, the
-forms, the sheets -- in seven looks: a phone in each of the three
+looked at: nineteen of them -- the first screen, the lists, a post, the
+forms, the sheets, a blog out of reach -- in seven looks: a phone in each of the three
 languages, by night, with the largest type, and a tablet on its side and
 upright. What the engine would answer comes from a test blog's own
 answers (`app/src/test/resources/fixtures/shots/`), and the clock stands

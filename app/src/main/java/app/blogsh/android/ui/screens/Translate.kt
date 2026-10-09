@@ -45,6 +45,7 @@ import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.SectionLabel
+import app.blogsh.android.ui.Stranded
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.broughtBackWords
@@ -116,7 +117,7 @@ fun TranslateScreen(slug: String, lang: String) {
         val post = entry ?: return
         if (blog == null) return
         if (written == post.text) Unsaved.forget(blog, slug, what, BlogShelf.notes)
-        else Unsaved(written, post.base, System.currentTimeMillis(), post.title).keep(blog, slug, what, BlogShelf.notes)
+        else Unsaved.now(written, post.title, post.base, broughtBack, System.currentTimeMillis()).keep(blog, slug, what, BlogShelf.notes)
         Desk.changed()
     }
 
@@ -137,13 +138,17 @@ fun TranslateScreen(slug: String, lang: String) {
 
     suspend fun save(body: String, takingOff: Boolean = false) {
         saving = true
+        // Whose post it is and what the editor held, said before anything is waited for.
+        val going = state.text
         try {
             problem = null
             val file = DeliveryFile("$slug-$lang.md", fileText(body).toByteArray(Charsets.UTF_8))
-            saved = delivered(Engine.deliver(listOf(file)))
-            tookOff = takingOff
-            // Saved, or taken off: nothing is left to bring back.
-            blog?.let { Unsaved.forget(it, slug, what, BlogShelf.notes) }
+            saved = Engine.made(Engine.deliver(listOf(file), to = blog))
+            // What was done, by what was sent: emptied words take the
+            // language off whichever key sent them.
+            tookOff = takingOff || Preview.takesOff(body)
+            // Saved, or taken off: what the editor held is not left to bring back.
+            blog?.let { Unsaved.forget(it, slug, what, going, BlogShelf.notes) }
             broughtBack = null
             Desk.changed()
             load()
@@ -185,7 +190,8 @@ fun TranslateScreen(slug: String, lang: String) {
 
                 SectionLabel(stringResource(R.string.s_in, languageName))
                 Plate {
-                    row { PaperEditor(state, minHeight = 280.dp) }
+                    // Left alone while a save is on its way.
+                    row { PaperEditor(state, minHeight = 280.dp, enabled = !saving) }
                 }
                 Plate(Modifier.gap(10)) {
                     row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }
@@ -196,7 +202,7 @@ fun TranslateScreen(slug: String, lang: String) {
                     modifier = Modifier.gap(22),
                     enabled = !(saving || text == post.text),
                     busy = saving,
-                ) { scope.launch { save(state.text) } }
+                ) { Desk.outliving.launch { save(state.text) } }
                 problem?.let { ProblemLine(it) }
                 if (post.written) {
                     Plate(Modifier.gap(14)) {
@@ -226,6 +232,14 @@ fun TranslateScreen(slug: String, lang: String) {
                 }
             } else {
                 problem?.let { ProblemLine(it) }
+                // What is kept for this language while the post itself did not open.
+                val stranded = remember(Desk.changes) { blog?.let { Unsaved.kept(it, slug, what, BlogShelf.notes) } }
+                if (problem != null && stranded != null) {
+                    Stranded(stranded) {
+                        blog?.let { Unsaved.forget(it, slug, what, BlogShelf.notes) }
+                        Desk.changed()
+                    }
+                }
             }
         }
         if (entry == null && problem == null) Busy(modifier = Modifier.align(Alignment.Center))
@@ -241,7 +255,7 @@ fun TranslateScreen(slug: String, lang: String) {
     if (confirmingRemoval) {
         Asks(
             stringResource(R.string.take_the_text_off_the_post_then, languageName, slug),
-            choices = listOf(Choice(stringResource(R.string.take_it_off), danger = true) { scope.launch { save("---\ntitle:\n---\n\n", takingOff = true) } }),
+            choices = listOf(Choice(stringResource(R.string.take_it_off), danger = true) { Desk.outliving.launch { save("---\ntitle:\n---\n\n", takingOff = true) } }),
             onDismiss = { confirmingRemoval = false },
         )
     }

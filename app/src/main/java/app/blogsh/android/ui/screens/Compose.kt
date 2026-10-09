@@ -58,9 +58,13 @@ import app.blogsh.android.model.Kept
 import app.blogsh.android.model.Markdown
 import app.blogsh.android.model.Media
 import app.blogsh.android.model.Preview
+import app.blogsh.android.model.Reach
+import app.blogsh.android.model.Receipt
 import app.blogsh.android.model.Shot
 import app.blogsh.android.model.TagStore
 import app.blogsh.android.model.Unsent
+import app.blogsh.android.model.Waiting
+import app.blogsh.android.model.WaitingRoom
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.plain
 import app.blogsh.android.model.said
@@ -73,6 +77,7 @@ import app.blogsh.android.ui.FieldRow
 import app.blogsh.android.ui.Hint
 import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.Mark
+import app.blogsh.android.ui.MenuEntry
 import app.blogsh.android.ui.PaperEditor
 import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.PlainField
@@ -89,25 +94,10 @@ import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.ui
 import java.time.Instant
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
-
-/**
- * What a delivery answered. A refusal anywhere among the answers is the
- * answer -- a picture the receiver would not take ends the delivery; with
- * none, the last one counts, the engine's own for the markdown.
- */
-internal fun delivered(answers: List<ByteArray>): ActionAnswer {
-    for (answer in answers) {
-        try {
-            Engine.element(answer)
-        } catch (e: EngineError.Unreadable) {
-            // Not an object, so not a refusal either.
-        }
-    }
-    val last = answers.lastOrNull() ?: throw EngineError.Unreadable("")
-    return Engine.decode<ActionAnswer>(last)
-}
+import kotlinx.coroutines.withContext
 
 /**
  * "New post": what /write/ offers, as a form -- a title, the text, the
@@ -131,15 +121,26 @@ fun ComposeScreen() {
     val blog = remember { Blogs.currentId }
     // Once, when the form opens: what was written for this blog and not
     // sent is put back.
+    // A post that waited to be sent and was taken back to be written
+    // on: it is the form's now, pictures and all, and waits no longer.
+    val handed = remember { if (blog == null) null else Desk.takeHanded()?.let { it to WaitingRoom.shots(it, blog) } }
     val kept = remember {
-        blog?.let { Unsent.kept(it, BlogShelf.notes) ?: Unsent.carriedOver(it, BlogShelf.notes, System.currentTimeMillis()) }
+        if (handed != null) null
+        else blog?.let { Unsent.kept(it, BlogShelf.notes) ?: Unsent.carriedOver(it, BlogShelf.notes, System.currentTimeMillis()) }
     }
-    var title by remember { mutableStateOf(kept?.title ?: "") }
-    var tags by remember { mutableStateOf(kept?.tags ?: "") }
-    val state = remember { EditorState(kept?.text ?: "") }
+    var title by remember { mutableStateOf(handed?.first?.title ?: kept?.title ?: "") }
+    var tags by remember { mutableStateOf(handed?.first?.tags ?: kept?.tags ?: "") }
+    val state = remember { EditorState(handed?.first?.text ?: kept?.text ?: "") }
     // What was brought back when the form opened, for the line that says so.
     var broughtBack by remember { mutableStateOf(kept) }
-    var shots by remember { mutableStateOf(emptyList<Shot>()) }
+    var shots by remember { mutableStateOf(handed?.second ?: emptyList()) }
+    // The name this post's delivery goes under, however often it is
+    // tried: kept with the writing, and another for the next post.
+    var receipt by remember { mutableStateOf((handed?.first?.receipt ?: kept?.receipt)?.takeIf { Receipt.isOne(it) } ?: Receipt.mint()) }
+    // The post was put by on the device: said where an answer would be.
+    var putBy by remember { mutableStateOf(false) }
+    // Why the last picture chosen is not among the shots.
+    var unread by remember { mutableStateOf<String?>(null) }
     var importing by remember { mutableStateOf(false) }
     var sending by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
@@ -149,6 +150,13 @@ fun ComposeScreen() {
     var previewing by remember { mutableStateOf(false) }
     var looking by remember { mutableStateOf<String?>(null) }
     val unreadable = stringResource(R.string.one_picture_could_not_be_read)
+    val needsNetwork = stringResource(R.string.android_picture_needs_network)
+    val couldNotKeep = stringResource(R.string.the_post_could_not_be_kept_on)
+
+    // The open blog's server did not answer the last time it was asked.
+    val offline = Reach.shared.isOffline(Blogs.current)
+    // A new post for this blog is on its way: from here, or from a form left before it arrived.
+    val busy = sending || (blog != null && blog in Desk.sending)
 
     val text = state.text
     val textBytes = remember(text) { text.toByteArray(Charsets.UTF_8).size }
@@ -161,14 +169,15 @@ fun ComposeScreen() {
     suspend fun load(items: List<Uri>) {
         if (items.isEmpty()) return
         importing = true
+        unread = null
         try {
             for (item in items) {
-                val shot = Media.shot(context, item, shots.size + 1, shots.map { it.name })
-                if (shot == null) {
-                    problem = unreadable
-                    continue
+                try {
+                    shots = shots + Media.shot(context, item, shots.size + 1, shots.map { it.name })
+                } catch (e: Media.NotRead) {
+                    // Said at the key that was pressed, not at the form's end.
+                    unread = if (e.why == Media.Unread.NeedsNetwork) needsNetwork else unreadable
                 }
-                shots = shots + shot
             }
         } finally {
             importing = false
@@ -201,23 +210,40 @@ fun ComposeScreen() {
 
     // ---- Sending
 
+    /** The form is the next post's: empty, and under a name of its own. */
+    fun startEmpty() {
+        title = ""
+        tags = ""
+        state.set("")
+        shots = emptyList()
+        broughtBack = null
+        receipt = Receipt.mint()
+    }
+
     suspend fun send() {
+        val to = blog ?: return
+        if (to in Desk.sending) return
         sending = true
+        putBy = false
+        Desk.began(to)
+        var came = false
+        val going = Unsent(title, tags, state.text)
         try {
             problem = null
             val body = state.text
             // The text is what goes: a description typed on a card is in it
             // already, one typed into the text itself was never the card's.
-            val markdown = Markdown.file(title, tags, body)
+            val markdown = Markdown.file(title, tags, body, receipt = receipt)
             val files = Kept.sent(shots, body).map { DeliveryFile(it.name, it.data) } +
                 DeliveryFile(Markdown.fileName(title, body), markdown.toByteArray(Charsets.UTF_8))
-            made = delivered(Engine.deliver(files))
+            made = Engine.made(Engine.deliver(files, to = to))
+            // Forgotten here, not by the form's own noticing that it was
+            // emptied: a form left while its post was going notices nothing.
+            Unsent.forget(to, going, BlogShelf.notes)
+            Desk.changed()
+            came = true
             // The form is the next post's now, and nothing is left to bring back.
-            title = ""
-            tags = ""
-            state.set("")
-            shots = emptyList()
-            broughtBack = null
+            startEmpty()
             answered += 1
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
@@ -225,7 +251,51 @@ fun ComposeScreen() {
             answered += 1
         } finally {
             sending = false
+            Desk.ended(to, came)
         }
+    }
+
+    /**
+     * Put by on the device, whole: the text and the shots it names. The
+     * form is the next post's, as after a sending.
+     */
+    suspend fun keepOnDevice() {
+        val to = blog ?: return
+        sending = true
+        problem = null
+        made = null
+        try {
+            val post = Waiting(title = title, tags = tags, text = state.text, at = System.currentTimeMillis(), receipt = receipt)
+            val going = Kept.sent(shots, state.text)
+            withContext(Dispatchers.IO) { WaitingRoom.put(post, going, to) }
+            startEmpty()
+            putBy = true
+            Desk.changed()
+        } catch (e: Exception) {
+            if (e.isCalledOff) throw e
+            problem = couldNotKeep.format(e.said)
+        } finally {
+            sending = false
+        }
+        answered += 1
+    }
+
+    // What the form took back from the posts that waited is the post
+    // being written from here on, and waits no longer.
+    LaunchedEffect(Unit) {
+        val post = handed?.first ?: return@LaunchedEffect
+        if (blog == null) return@LaunchedEffect
+        Unsent(title, tags, state.text, System.currentTimeMillis(), receipt).keep(blog, BlogShelf.notes)
+        WaitingRoom.remove(post.id, blog)
+        Desk.changed()
+    }
+
+    // The post this form opened with has arrived, sent from a form
+    // that was left meanwhile: it is not this form's to send again.
+    val arrivedBefore = remember { Desk.arrived }
+    val arrived = Desk.arrived
+    LaunchedEffect(arrived) {
+        if (arrived != arrivedBefore && !sending && Desk.arrivedAt == blog) startEmpty()
     }
 
     // Kept at every letter: there is no moment at which an app is told
@@ -233,17 +303,9 @@ fun ComposeScreen() {
     // was only opened was not written in.
     LaunchedEffect(Unit) {
         snapshotFlow { Triple(title, tags, state.text) }.drop(1).collect { (title, tags, text) ->
-            blog?.let { Unsent(title, tags, text, System.currentTimeMillis()).keep(it, BlogShelf.notes) }
+            blog?.let { Unsent(title, tags, text, System.currentTimeMillis(), receipt).keep(it, BlogShelf.notes) }
             Desk.changed()
         }
-    }
-
-    fun startEmpty() {
-        title = ""
-        tags = ""
-        state.set("")
-        shots = emptyList()
-        broughtBack = null
     }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { items ->
@@ -254,7 +316,7 @@ fun ComposeScreen() {
         made = null
     }
 
-    PaperScreen(name = stringResource(R.string.new_post), answered = answered) {
+    PaperScreen(name = stringResource(R.string.new_post), answered = answered, symbol = MenuEntry.Add.symbol) {
         broughtBack?.let { back ->
             // Said, because it was not asked for: the form opens with
             // something in it that was not typed just now.
@@ -267,15 +329,19 @@ fun ComposeScreen() {
                 PlainField(
                     title, { title = it }, prompt = stringResource(R.string.title),
                     keyboard = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    // Left alone while the post is on its way -- from this form
+                    // or from one that was left with its post still going.
+                    enabled = !busy,
                     modifier = Modifier.fillMaxWidth(), size = 18f, weight = FontWeight.SemiBold,
                 )
             }
-            row { PaperEditor(state, minHeight = 200.dp) }
+            row { PaperEditor(state, minHeight = 200.dp, enabled = !busy) }
             row {
                 LaunchedEffect(Unit) { TagStore.loadIfNeeded() }
                 FieldRow(
                     stringResource(R.string.tags), tags, { tags = it }, prompt = stringResource(R.string.comma_separated),
                     keyboard = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
+                    enabled = !busy,
                 )
             }
             // A row only while there is a tag to offer: an empty one would leave its rule behind.
@@ -307,19 +373,34 @@ fun ComposeScreen() {
             row {
                 Command(
                     stringResource(if (importing) R.string.reading else R.string.add_a_picture_or_video), Symbols.photoOnRectangle,
-                    busy = importing,
+                    busy = importing, enabled = !busy,
                 ) { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
             }
         }
+        unread?.let { ProblemLine(it) }
         DeliveryNote(sent, textBytes, maxMb)
 
+        // With the server silent the same key keeps the post on the
+        // device instead, whole, to go when the server answers.
         PrimaryButton(
-            stringResource(if (sending) R.string.sending else R.string.send_to_the_blog_as_a_draft),
+            stringResource(if (busy) R.string.sending else if (offline) R.string.keep_on_the_device else R.string.send_to_the_blog_as_a_draft),
             modifier = Modifier.gap(22),
-            enabled = !(sending || importing || (title.isEmpty() && text.trim().isEmpty()) || overweight),
-            busy = sending,
-        ) { scope.launch { send() } }
+            enabled = !(busy || importing || (title.isEmpty() && text.trim().isEmpty()) || overweight),
+            busy = busy,
+        ) {
+            // Neither ends with the form: a post on its way arrives, and is
+            // forgotten here, whether or not anybody is still looking.
+            Desk.outliving.launch { if (offline) keepOnDevice() else send() }
+        }
+        if (offline) Hint(stringResource(R.string.the_blog_s_server_cannot_be_reached))
         problem?.let { ProblemLine(it) }
+
+        if (putBy) {
+            SectionLabel(stringResource(R.string.done))
+            Plate {
+                row { Text(stringResource(R.string.kept_on_the_device_it_goes_to), color = Theme.ink, style = ui(15f)) }
+            }
+        }
 
         made?.let { made ->
             SectionLabel(stringResource(R.string.done))

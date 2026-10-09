@@ -2,6 +2,7 @@ package app.blogsh.android.model
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.serialization.Serializable
 
@@ -26,6 +27,11 @@ data class Unsent(
     val text: String = "",
     /** When it was last written in. */
     val at: Long = 0,
+    /**
+     * The name its delivery goes under, the same for every attempt at
+     * sending it: see `Receipt`.
+     */
+    val receipt: String? = null,
 ) {
     /** Nothing worth keeping: spaces and line breaks are not writing. */
     val isEmpty: Boolean get() = listOf(title, tags, text).all { it.isBlank() }
@@ -43,7 +49,7 @@ data class Unsent(
         }
 
     /** The text names a picture or a video, which was not kept with it. */
-    val namesPictures: Boolean get() = Regex("""!{1,2}\[[^\n]*\]\([^)\s]+\)""").containsMatchIn(text)
+    val namesPictures: Boolean get() = Regex("""!{1,2}\[[^\n]*\]\(""" + Kept.NAME + Kept.CAPTION + """\)""").containsMatchIn(text)
 
     /**
      * Keeps it for this blog -- or, emptied, keeps nothing: a form that
@@ -57,7 +63,7 @@ data class Unsent(
             return
         }
         val kept = kept(blog, notes)
-        if (kept != null && kept.title == title && kept.tags == tags && kept.text == text) return
+        if (kept != null && kept.title == title && kept.tags == tags && kept.text == text && kept.receipt == receipt) return
         notes.write(key(blog), EngineJson.encodeToString(serializer(), this))
     }
 
@@ -71,6 +77,16 @@ data class Unsent(
         }
 
         fun forget(blog: String, notes: Notes) = notes.write(key(blog), null)
+
+        /**
+         * The post was sent: what is kept is forgotten -- if it is still
+         * what was sent. Whatever was written since is another post's
+         * beginning, and stays.
+         */
+        fun forget(blog: String, sent: Unsent, notes: Notes) {
+            val kept = kept(blog, notes) ?: return
+            if (kept.title == sent.title && kept.tags == sent.tags && kept.text == sent.text) forget(blog, notes)
+        }
 
         /**
          * What the form kept under its old name, before it was kept here:
@@ -139,7 +155,7 @@ data class Unsaved(
      * chosen on the device and, like every picture, not kept.
      */
     fun namesPictures(beyond: List<String>): Boolean =
-        Regex("""!{1,2}\[[^\n]*\]\(([^)\s]+)\)""").findAll(text).any { it.groupValues[1] !in beyond }
+        Regex("""!{1,2}\[[^\n]*\]\((""" + Kept.NAME + ")" + Kept.CAPTION + """\)""").findAll(text).any { it.groupValues[1] !in beyond }
 
     companion object {
         private fun prefix(blog: String): String = "unsaved.$blog."
@@ -169,6 +185,39 @@ data class Unsaved(
         }
 
         fun forget(blog: String, slug: String, what: What, notes: Notes) = notes.write(key(blog, slug, what), null)
+
+        /**
+         * What an editor holds now, as it is kept. Changes that were
+         * brought back stay the changes begun over the version they were
+         * begun over, however much is added to them: it is that version the
+         * screen compares with the blog's to say the post has moved on.
+         */
+        fun now(text: String, title: String?, over: String, begun: Unsaved?, at: Long): Unsaved = Unsaved(text, begun?.base ?: over, at, title)
+
+        /**
+         * The text was saved: what is kept is forgotten -- if it is still
+         * what was saved. Whatever was written since stays.
+         */
+        fun forget(blog: String, slug: String, what: What, saved: String, notes: Notes) {
+            if (kept(blog, slug, what, notes)?.text == saved) forget(blog, slug, what, notes)
+        }
+
+        /**
+         * The post has another slug now: what was kept for it -- its text
+         * and every language -- goes with it, or it would wait under a name
+         * no post answers to. Where the new name has something kept
+         * already, the later writing stays.
+         */
+        fun move(blog: String, from: String, to: String, notes: Notes) {
+            if (from == to || to.isEmpty()) return
+            for (entry in all(blog, notes)) {
+                if (entry.slug != from) continue
+                val there = kept(blog, to, entry.what, notes)
+                // The newer stays where it is.
+                if (there == null || there.at < entry.kept.at) notes.write(key(blog, to, entry.what), EngineJson.encodeToString(serializer(), entry.kept))
+                forget(blog, from, entry.what, notes)
+            }
+        }
 
         /** Everything kept for a blog that leaves the app. */
         fun forgetAll(blog: String, notes: Notes) {
@@ -228,4 +277,66 @@ object Desk {
     fun changed() {
         changes += 1
     }
+
+    /**
+     * Counted when a command that changes the blog has answered -- a
+     * publish, a move in the queue, a delivery: what the first screen
+     * says of the blog is read again, also where that screen is beside
+     * the one that made the change and nobody "comes back" to it.
+     */
+    var writes by mutableIntStateOf(0)
+        private set
+
+    fun wrote() {
+        writes += 1
+    }
+
+    /**
+     * The blogs whose new post is on its way just now. The form is left
+     * alone while its post goes: what is typed into it then would belong
+     * to neither the post that went nor the next one.
+     */
+    var sending by mutableStateOf(emptySet<String>())
+        private set
+
+    /**
+     * Counted when a new post has arrived, and for which blog: a form
+     * opened meanwhile holds the post that went, and lets go of it.
+     */
+    var arrived by mutableIntStateOf(0)
+        private set
+    var arrivedAt: String? = null
+        private set
+
+    fun began(blog: String) {
+        sending = sending + blog
+    }
+
+    fun ended(blog: String, arrived: Boolean) {
+        sending = sending - blog
+        if (!arrived) return
+        arrivedAt = blog
+        this.arrived += 1
+    }
+
+    /**
+     * A post that waited to be sent, taken back to be written on: held
+     * here on its way to the form, which takes it when it opens.
+     */
+    private var handed: Waiting? = null
+
+    /**
+     * Where a sending or a save runs: not in the screen it was begun on.
+     * A post on its way arrives whether or not anybody is still looking,
+     * and what was kept of it has to be forgotten then all the same.
+     */
+    val outliving: kotlinx.coroutines.CoroutineScope by lazy { kotlinx.coroutines.MainScope() }
+
+    val holdsHanded: Boolean get() = handed != null
+
+    fun hand(post: Waiting) {
+        handed = post
+    }
+
+    fun takeHanded(): Waiting? = handed.also { handed = null }
 }

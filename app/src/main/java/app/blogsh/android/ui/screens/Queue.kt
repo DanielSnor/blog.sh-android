@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
+import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.QueueAnswer
@@ -68,6 +69,7 @@ import app.blogsh.android.ui.KeyChip
 import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.Mark
 import app.blogsh.android.ui.Menu
+import app.blogsh.android.ui.MenuEntry
 import app.blogsh.android.ui.MenuKey
 import app.blogsh.android.ui.PaperRow
 import app.blogsh.android.ui.PaperScaffold
@@ -122,7 +124,12 @@ fun QueueScreen(languages: List<String> = emptyList()) {
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
 
+    // The blog this screen was opened for: what follows from an answer --
+    // a build owed, a build paid -- is this blog's, whichever is open by then.
+    val home = remember { Blogs.currentId }
     var rows by remember { mutableStateOf(emptyList<QueueRow>()) }
+    // The blog says nothing sends its queue out by itself.
+    var unattended by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
     var refreshing by remember { mutableStateOf(false) }
@@ -150,6 +157,7 @@ fun QueueScreen(languages: List<String> = emptyList()) {
         try {
             val answer = Engine.call<QueueAnswer>("queue")
             rows = answer.queue
+            unattended = answer.unattended
             problem = null
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
@@ -172,7 +180,7 @@ fun QueueScreen(languages: List<String> = emptyList()) {
     // A key moved a post: where it is now and when it goes out, read off
     // the queue the engine answered with -- and the previews are owed a build.
     fun changed(row: QueueRow, what: String) {
-        Herald.shared.owe(previewsBehind)
+        Herald.shared.owe(previewsBehind, home)
         val now = rows.firstOrNull { it.id == row.id } ?: return
         val at = engineInstant(now.date)?.let { RowDate.spoken(it) } ?: now.date
         Herald.shared.say(context.getString(R.string.goes_out_of_in_the_queue, what, now.title.ifEmpty { now.slug }, at, now.position, rows.size))
@@ -183,6 +191,7 @@ fun QueueScreen(languages: List<String> = emptyList()) {
         try {
             val answer = Engine.call<QueueAnswer>("queue", direction, "${row.year}/${row.slug}")
             rows = answer.queue
+            unattended = answer.unattended
             changed(row, movedWord)
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
@@ -198,6 +207,7 @@ fun QueueScreen(languages: List<String> = emptyList()) {
             try {
                 val answer = Engine.call<QueueAnswer>("queue", "--move", "${row.year}/${row.slug}", "--to", "$position")
                 rows = answer.queue
+                unattended = answer.unattended
                 changed(row, carriedWord)
             } catch (e: Throwable) {
                 if (e.isCalledOff) throw e
@@ -226,7 +236,7 @@ fun QueueScreen(languages: List<String> = emptyList()) {
                 val warnings = answer.warnings?.plain
                 if (!warnings.isNullOrEmpty()) notice = (listOf(done) + warnings).joinToString("\n") else Herald.shared.say(done)
                 // Publishing builds the whole site; a plan cancelled leaves the previews behind.
-                if (going.publish) Herald.shared.settled() else Herald.shared.owe(previewsBehind)
+                if (going.publish) Herald.shared.settled(home) else Herald.shared.owe(previewsBehind, home)
                 load()
             } catch (e: Throwable) {
                 if (e.isCalledOff) throw e
@@ -274,7 +284,7 @@ fun QueueScreen(languages: List<String> = emptyList()) {
     // A build holds the lock a change of the queue needs: while one runs, the rows wait.
     val still = busy || Herald.shared.isBuilding
     PaperScaffold(
-        onBack = { nav.pop() }, name = stringResource(R.string.tile_queue),
+        onBack = { nav.pop() }, name = stringResource(R.string.tile_queue), symbol = MenuEntry.Queue.symbol,
         count = if (rows.isEmpty()) null else NumberFormat.getIntegerInstance().format(rows.size), doing = doing,
     ) {
         PullToRefreshBox(
@@ -295,6 +305,18 @@ fun QueueScreen(languages: List<String> = emptyList()) {
                 problem?.let { words ->
                     item(key = "problem") {
                         PaperRow { Text(words, color = Theme.muted, style = ui(14f), modifier = Modifier.padding(vertical = 12.dp)) }
+                    }
+                }
+                if (unattended && rows.isNotEmpty()) {
+                    // Said first, and as what it is: on this blog the queue is a
+                    // list, not a clock.
+                    item(key = "unattended") {
+                        PaperRow {
+                            Text(
+                                stringResource(R.string.android_queue_unattended), color = Theme.danger, style = ui(13f, FontWeight.Medium),
+                                modifier = Modifier.padding(vertical = 12.dp),
+                            )
+                        }
                     }
                 }
                 items(rows, key = { it.id }) { row ->
@@ -359,7 +381,7 @@ fun QueueScreen(languages: List<String> = emptyList()) {
                                     .semantics {
                                         customActions = keys.filter { it.enabled }.map { key -> CustomAccessibilityAction(key.label) { key.run(); true } }
                                     }
-                            ) { QueueRowView(row) }
+                            ) { QueueRowView(row, unattended) }
                             Menu(menuFor == row.id, { menuFor = null }) {
                                 keys.forEachIndexed { index, key ->
                                     if (index == 3) HorizontalDivider(color = Theme.line)
@@ -441,14 +463,16 @@ fun QueueScreen(languages: List<String> = emptyList()) {
  * otherwise show an hour nobody scheduled.
  */
 @Composable
-fun QueueRowView(row: QueueRow) {
+fun QueueRowView(row: QueueRow, unattended: Boolean = false) {
     val due = engineInstant(row.date)
     Row(Modifier.fillMaxWidth().padding(vertical = 11.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
         KeyChip("${row.position}")
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(row.title.ifEmpty { row.slug }, color = Theme.ink, style = ui(15f, FontWeight.Bold), maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(if (due != null) whole(due) else row.date, color = Theme.muted, style = ui(13f))
-            if (row.overdue) Text(stringResource(R.string.waiting_for_the_cron), color = Theme.muted, style = ui(13f))
+            // Waiting helps only where something comes for the post.
+            if (row.overdue && unattended) Text(stringResource(R.string.its_time_has_come_publish_it_by), color = Theme.danger, style = ui(13f, FontWeight.Medium))
+            else if (row.overdue) Text(stringResource(R.string.waiting_for_the_cron), color = Theme.muted, style = ui(13f))
         }
         Spacer(Modifier.width(8.dp))
         if (due != null) Text(RowDate.soon(due), color = Theme.accent, style = mono(11f), modifier = Modifier.padding(top = 3.dp))

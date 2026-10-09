@@ -59,6 +59,7 @@ import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.LocalShown
 import app.blogsh.android.ui.Mark
 import app.blogsh.android.ui.Menu
+import app.blogsh.android.ui.MenuEntry
 import app.blogsh.android.ui.MenuKey
 import app.blogsh.android.ui.OnShown
 import app.blogsh.android.ui.PaperRow
@@ -238,7 +239,7 @@ fun ArchiveScreen(languages: List<String> = emptyList(), baseUrl: String = "", i
     val inFront = LocalShown.current
     LaunchedEffect(words, inFront) { if (inFront) search(words) }
 
-    PaperScaffold(onBack = { nav.pop() }, name = stringResource(R.string.tile_browse), count = countLine) {
+    PaperScaffold(onBack = { nav.pop() }, name = stringResource(R.string.tile_browse), count = countLine, symbol = MenuEntry.Browse.symbol) {
         // The search and the filters stay put: under the bar, over the rows,
         // however far down a long archive has been read -- a filter is wanted
         // in the middle of a list more often than at its head.
@@ -333,7 +334,7 @@ private fun SearchField(query: String, onQuery: (String) -> Unit, open: Boolean,
         Mark(Symbols.magnifyingglass, 17.dp)
         PlainField(query, onQuery, prompt = stringResource(R.string.search_the_archive), modifier = Modifier.weight(1f).focusRequester(focus))
         if (query.isNotEmpty()) {
-            val clear = stringResource(R.string.android_b_clear)
+            val clear = stringResource(R.string.clear)
             Pressable({ onQuery("") }, modifier = Modifier.semantics { contentDescription = clear }) { Mark(Symbols.xmarkCircle, 18.dp, Theme.muted) }
         }
     }

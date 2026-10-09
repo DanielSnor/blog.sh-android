@@ -3,6 +3,7 @@
 <resources>
     <string name="from_the_content">%1$s (odvozeno z obsahu)</string>
     <string name="once_encoded_for_the_wire_over_the">po zakódování %1$s, přes limit serveru %2$d MB: odmítne to</string>
+    <string name="pictures_and_video_2">%1$s · obrázky a video: %2$d</string>
     <string name="part">%1$s, díl %2$s</string>
     <string name="goes_out_of_in_the_queue">%1$s: „%2$s“ vyjde %3$s, ve frontě %4$d. z %5$d.</string>
     <string name="a_picture_has_to_stand_on_a">%1$s: obrázek musí stát na vlastním řádku s prázdným řádkem před sebou i za sebou -- jinak blog příspěvek odmítne</string>
@@ -10,6 +11,7 @@
     <string name="the_text_is_taken_off">%1$s: text v jazyce %2$s je odebraný</string>
     <string name="address_es_still_redirect_here">adres, které sem pořád přesměrovávají: %1$d</string>
     <string name="of">%1$d z %2$d</string>
+    <string name="its_time_has_come_publish_it_by">(čas už nastal – zveřejni ho ručně)</string>
     <string name="the_post_has_no_text">(příspěvek nemá text)</string>
     <string name="the_site_s_own">(jak má web)</string>
     <string name="waiting_for_the_cron">(čeká na cron)</string>
@@ -19,6 +21,7 @@
     <string name="a_new_blog">Nový blog</string>
     <string name="a_picture_is_shrunk_to_px_on">Obrázek se před odesláním zmenší na %1$s px po delší straně; video se převede na H.264 v 720p. Celý příspěvek — text, obrázky, video — se musí vejít do %2$d MB, to je limit serveru; měří se zakódovaný přenos, který je o třetinu větší než soubory, takže na soubory zbývá zhruba %3$d MB.</string>
     <string name="a_post">Příspěvek</string>
+    <string name="a_post_without_words">Příspěvek beze slov</string>
     <string name="a_row_opens_its_post_swiped_to">Řádek otevře příspěvek. Tahem do strany ukáže své klávesy, podržením všechny — a podržený řádek jde přenést na jiné místo ve frontě.</string>
     <string name="accent">Zvýraznění</string>
     <string name="actions">Akce</string>
@@ -36,6 +39,7 @@
     <string name="back">Zpět</string>
     <string name="back_in_the_editor_the_changes_written">V editoru jsou zpátky změny, které tu byly rozepsány %1$s a neuloženy.</string>
     <string name="back_in_the_form_what_was_written">Ve formuláři je zpátky, co tu bylo rozepsáno %1$s a neodesláno.</string>
+    <string name="back_to_the_form_to_write_on">Zpět do formuláře k dopsání</string>
     <string name="back_to_the_post">Zpět k příspěvku</string>
     <string name="background">Podklad</string>
     <string name="blogs">Blogy</string>
@@ -56,6 +60,7 @@
     <string name="check_the_archive">Zkontrolovat archiv</string>
     <string name="check_the_installation">Zkontrolovat instalaci</string>
     <string name="checking">Kontroluji…</string>
+    <string name="clear">Vymazat</string>
     <string name="clearing_out">úklid</string>
     <string name="clearing_out_2">Uklízím…</string>
     <string name="code">Kód</string>
@@ -85,6 +90,7 @@
     <string name="drafts_in_progress">Rozepsané koncepty</string>
     <string name="drop">Odebrat</string>
     <string name="drop_it_no_longer_redirects_anywhere">Odebrat %1$s? Ten odkaz tím přestane fungovat natrvalo.</string>
+    <string name="each_goes_to_the_blog_as_a">Každý odejde na blog jako koncept; zveřejnění je samostatné rozhodnutí až tam.</string>
     <string name="earlier_versions">Starší verze</string>
     <string name="edit_what">Co upravit?</string>
     <string name="empty_the_trash">Vysypat koš</string>
@@ -103,6 +109,8 @@
     <string name="its_announcement_is_deleted_too_the_post">Smaže se i jeho oznámení; příspěvek si text nechá jako koncept.</string>
     <string name="its_pictures_were_not_kept_add_them">Obrázky se neuchovaly, přidej je znovu.</string>
     <string name="its_properties_and_the_actions_on_it">Jeho vlastnosti a akce s ním</string>
+    <string name="keep_on_the_device">Uložit do zařízení</string>
+    <string name="kept_on_the_device_it_goes_to">Uloženo do zařízení. Na blog odejde jako koncept, jakmile se server ozve.</string>
     <string name="key">Klíč</string>
     <string name="language">Jazyk</string>
     <string name="light">Světlý</string>
@@ -126,8 +134,10 @@
     <string name="no_problems">Bez problémů.</string>
     <string name="not_in_the_text_it_will_not">Není v textu — s příspěvkem se neodešle.</string>
     <string name="nothing_matches">Nic neodpovídá</string>
+    <string name="nothing_on_this_blog_sends_the_queue">Na tomhle blogu frontu nic samo nerozesílá: plánované spuštění jí ještě nikdy neprošlo. Příspěvek, jehož čas nastal, čeká, dokud ho nezveřejníš ručně – podrž jeho řádek, nebo ho odsuň do strany.</string>
     <string name="nothing_scheduled">Nic naplánovaného</string>
     <string name="nothing_to_connect_to_yet_the_name">Zatím se není kam připojit — přes název nahoře se jde k blogům a jejich nastavení.</string>
+    <string name="nothing_waits_on_this_device">V tomto zařízení nic nečeká.</string>
     <string name="numbered_list">Číslovaný seznam</string>
     <string name="ok">OK</string>
     <string name="old_links">Staré odkazy</string>
@@ -206,6 +216,7 @@
     <string name="search_the_archive_2">Hledej v archivu.</string>
     <string name="send_to_the_blog_as_a_draft">Odeslat na blog jako koncept</string>
     <string name="sending">Odesílám…</string>
+    <string name="sent_to_the_blog_as_drafts">Odesláno na blog jako koncepty: %1$d</string>
     <string name="server">Server</string>
     <string name="server_key">Klíč serveru</string>
     <string name="set_up_by_hand">Nastavit ručně</string>
@@ -234,6 +245,9 @@
     <string name="the_app_wears_the_colours_of_the">Appka nosí barvy otevřeného blogu, své výchozí, nebo ty, které si tu zvolíš.</string>
     <string name="the_archive">Archiv</string>
     <string name="the_blog_said_no">Blog odmítl: %1$s</string>
+    <string name="the_blog_s_server_cannot_be_reached">Server blogu není dostupný. Příspěvek uložený do zařízení odejde na blog jako koncept i s obrázky, jakmile se server ozve.</string>
+    <string name="the_blog_s_server_cannot_be_reached_2">Server blogu není dostupný. Příspěvky odejdou na blog jako koncepty v pořadí, v jakém byly napsány, jakmile se ozve.</string>
+    <string name="the_blog_s_server_did_not_answer">Server blogu se neozval; příspěvek dál čeká.</string>
     <string name="the_blog_s_settings">Nastavení blogu</string>
     <string name="the_chosen_colours_cannot_be_read_here">Zvolené barvy se tu nedají číst, proto tenhle oddíl zůstává ve výchozím schématu, dokud to nepůjde.</string>
     <string name="the_code_is_no_longer_good_it">Kód už neplatí: vydrží deset minut a funguje jednou. Požádej o nový: ./blog.sh pair</string>
@@ -241,12 +255,15 @@
     <string name="the_default_scheme">Výchozí schéma</string>
     <string name="the_engine_did_not_answer_as_data">Engine neodpověděl daty: %1$s</string>
     <string name="the_first_is_the_size_the_system">První je velikost, jakou má systém; další jsou stupně nad ní. Platí na tomto zařízení a pro všechny blogy.</string>
+    <string name="the_form_holds_a_post_that_is">Ve formuláři je rozepsaný příspěvek: odešli ho nebo formulář vyprázdni, než do něj vrátíš jiný.</string>
     <string name="the_header_and_the_text_as_the">Hlavička a text, jak je otevírá editor. Obrázek je pojmenovaný svým souborem.</string>
     <string name="the_key_is_made_on_this_device">Klíč vzniká na tomhle zařízení a nikdy ho neopustí. Řádek výše dej na serveru do ~/.ssh/authorized_keys; forced command před ním je vše, co klíč smí spustit.</string>
     <string name="the_last_posts_of_as_blog_sh">Posledních %1$s příspěvků z %2$s, stejně jako v ./blog.sh. Hledáš starší?</string>
     <string name="the_line_for_the_server_s_ssh">Řádek pro ~/.ssh/authorized_keys na serveru se složí z toho, kde blog leží. K blogu v kontejneru se jde přes příkaz, který do něj vstoupí, například sudo docker exec -i blog; u blogu mimo kontejner zůstává to pole prázdné.</string>
     <string name="the_old_address_keeps_answering_it_redirects">Stará adresa dál odpovídá: přesměruje na novou.</string>
     <string name="the_original">Originál</string>
+    <string name="the_picture_could_not_be_read_it">Fotku se nepodařilo načíst: nejspíš je uložená jen v iCloudu a bez sítě ji nejde stáhnout. Přidat jde fotka, která je v zařízení celá – třeba právě vyfocená.</string>
+    <string name="the_post_could_not_be_kept_on">Příspěvek se nepodařilo uložit do zařízení: %1$s</string>
     <string name="the_post_goes_to_the_trash_and">Příspěvek jde do koše a dá se obnovit.</string>
     <string name="the_post_goes_to_the_trash_and_2">Příspěvek jde do koše a dá se obnovit; jeho oznámení zmizí s ním a obnovit nejde.</string>
     <string name="the_post_has_changed_on_the_blog">Příspěvek se mezitím na blogu změnil; uložením ho tenhle text nahradí.</string>
@@ -260,7 +277,7 @@
     <string name="the_same_as_publishing_a_draft_by">Totéž jako ruční publikace konceptu, včetně oznámení.</string>
     <string name="the_schedule_is_cancelled_the_post_is">Plán je zrušený, příspěvek je zase koncept.</string>
     <string name="the_scheduled_post_queue">Fronta naplánovaných příspěvků</string>
-    <string name="the_sentences_are_the_blog_s_own">Věty jsou vlastní slova blogu, v jeho jazyce. Odsud se nic neopravuje.</string>
+    <string name="the_sentences_are_the_blog_s_own">Věty jsou vlastní slova blogu – v jazyce appky, pokud ho engine blogu umí, jinak v jazyce blogu. Odsud se nic neopravuje.</string>
     <string name="the_server_did_not_answer_is_this">Server %1$s se neozval. Je tohle zařízení v síti, ze které je na server vidět?</string>
     <string name="the_server_closed_the_connection_without_an">Server zavřel spojení bez odpovědi.</string>
     <string name="the_server_does_not_know_this_blog">Server klíč tohoto blogu nezná. Řádek pod klíčem v nastavení blogu patří na serveru do ~/.ssh/authorized_keys.</string>
@@ -272,7 +289,6 @@
     <string name="the_site_has_no_address_set_so">Web nemá nastavenou adresu, takže není co otevřít.</string>
     <string name="the_site_will_be_built_in_a">Za okamžik web sestavím.</string>
     <string name="the_text_did_not_come_with_the">Text v odpovědi nepřišel.</string>
-    <string name="the_text_names_fewer_pictures_than_the">Text jmenuje méně obrázků, než příspěvek má. Z appky jde obrázek vyměnit za jiný, ne ubrat: uložení, po kterém by jich zbylo méně, blog odmítne. Ubrat obrázky jde u stolu přes ./blog.sh edit.</string>
     <string name="the_time_offered_is_the_next_free">Nabídnutý čas je nejbližší volný slot.</string>
     <string name="this_blog_s_engine_does_not_offer">Engine tohohle blogu tuhle kontrolu appce zatím nenabízí. Přijde s novějším ./blog.sh.</string>
     <string name="this_code_is_of_a_newer_kind">Tenhle kód je novějšího druhu, než appka zná. Aktualizuj appku.</string>
@@ -282,10 +298,14 @@
     <string name="this_post_has_no_old_addresses">Tenhle příspěvek nemá staré adresy.</string>
     <string name="this_site_publishes_in_more_than_one">Web vychází ve více jazycích a tenhle příspěvek ještě není napsaný ve všech: vyšel by jen v jednom.</string>
     <string name="three_steps_larger">O tři stupně větší</string>
+    <string name="throw_away_it_was_never_sent_nothing">Zahodit „%1$s“? Nebyl nikdy odeslán a nic z něj nezůstane.</string>
+    <string name="throw_away">Zahodit</string>
+    <string name="throw_these_changes_away_they_were_never">Zahodit tyto úpravy? Nebyly nikdy uloženy a nic z nich nezůstane.</string>
     <string name="title">Titulek</string>
     <string name="trash">Koš</string>
     <string name="trash_emptied_item_s_freed">Koš vysypán: položek %1$d, uvolněno %2$s.</string>
     <string name="trash_is_empty">Koš je prázdný</string>
+    <string name="try_again">Zkusit znovu</string>
     <string name="two_posts_in_different_years_share_this">Tenhle slug mají dva příspěvky v různých letech a appka neumí říct, který z nich myslíš. U stolu se na to zeptá ./blog.sh props.</string>
     <string name="two_steps_larger">O dva stupně větší</string>
     <string name="unpublish">Stáhnout z webu</string>
@@ -300,11 +320,13 @@
     <string name="used_in_the_text">V textu použit</string>
     <string name="user">Uživatel</string>
     <string name="usually_only_the_pages_that_changed_are">Běžně se sestaví jen stránky, které se změnily. Se zapnutým přepínačem se sestaví znovu celý web, což trvá déle.</string>
+    <string name="waiting_to_be_sent">Čeká na odeslání</string>
     <string name="what_do_you_want_to_do">Co chceš dělat?</string>
     <string name="what_is_cleared_out_is_gone_for">Co se uklidí, je pryč nadobro. Starší verze jsou to, co příspěvek říkal před posledními uloženími; každému zůstane ta nejnovější.</string>
     <string name="with_a_code">Kódem</string>
     <string name="with_a_network_configured_it_announces_too">Zároveň se oznámí na síti — a oznámení nejde vzít zpět.</string>
     <string name="worth_a_look">Ke zvážení</string>
+    <string name="written_here_and_never_saved_the_post">Napsáno tady %1$s a nikdy neuloženo; samotný příspěvek se nepodařilo otevřít. Text je níže, dá se zkopírovat.</string>
     <string name="your_own">Vlastní</string>
     <string name="a_former_slug_redirects_here">bývalý slug, přesměrovává sem</string>
     <string name="all">vše</string>
@@ -351,9 +373,9 @@
     <string name="never_this_site_announces_nowhere">nikdy — tenhle web neoznamuje nikam</string>
     <string name="never_as_things_stand_the_network_s">zatím nikdy — token sítě je prázdný, takže publikace nic neoznámí</string>
     <string name="not_announced">bez oznámení</string>
-    <string name="not_in_the_text">není v textu</string>
     <string name="not_named_deleted_on_save">nejmenován — při uložení se smaže</string>
     <string name="not_yet_goes_out_when_the_post">zatím ne — odejde s publikací</string>
+    <string name="offline">offline</string>
     <string name="old_links_2">staré odkazy</string>
     <string name="part_of_series">díl série</string>
     <string name="path">cesta</string>

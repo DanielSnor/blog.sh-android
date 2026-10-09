@@ -117,12 +117,16 @@ fun BarKey(symbol: Int, label: String, enabled: Boolean = true, tint: Color = Th
  * fit at its end. The whole of it stands on the page under the bar.
  */
 @Composable
-fun RowScope.BarName(name: String? = null, count: String? = null, title: String? = null) {
+fun RowScope.BarName(name: String? = null, count: String? = null, title: String? = null, symbol: Int? = null) {
     Box(Modifier.weight(1f).padding(horizontal = 6.dp).semantics(mergeDescendants = true) { heading() }, contentAlignment = Alignment.CenterStart) {
         if (!title.isNullOrEmpty()) {
             Text(title, color = Theme.ink, style = ui(18f, FontWeight.Bold), maxLines = 1, overflow = TextOverflow.Ellipsis)
         } else if (!name.isNullOrEmpty()) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // The mark of the tile the screen was opened from. In ink,
+                // as the name is: here it is a part of what the screen is
+                // called, not a key -- the accent in a bar is for the keys.
+                if (symbol != null) Mark(symbol, 20.dp, Theme.ink, Modifier.align(Alignment.CenterVertically))
                 Text(
                     voiced(name), color = Theme.ink, style = display(21f), maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
@@ -153,6 +157,8 @@ fun PaperScaffold(
     doing: String? = null,
     /** Puts the menu out of the way, where the screen is the menu and something is open beside it. */
     hideMenu: (() -> Unit)? = null,
+    /** The mark before the name, where the screen is one of the menu's. */
+    symbol: Int? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     // On a screen whose menu was put out of the way, the key that brings it back.
@@ -169,7 +175,7 @@ fun PaperScaffold(
                     Spacer(Modifier.width(Theme.gutter - 14.dp))
                 }
                 if (menu != null) BarKey(Symbols.sidebarLeft, stringResource(R.string.show_or_hide_the_menu), onClick = menu)
-                BarName(name, count, title)
+                BarName(name, count, title, symbol)
                 actions()
             }
             content()
@@ -202,6 +208,7 @@ fun PaperScreen(
     title: String? = null,
     answered: Int = 0,
     doing: String? = null,
+    symbol: Int? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val scroll = rememberScrollState()
@@ -215,7 +222,7 @@ fun PaperScreen(
         delay(350)
         scroll.animateScrollTo(scroll.maxValue)
     }
-    PaperScaffold(onBack, close, actions, name, count, title, doing) {
+    PaperScaffold(onBack, close, actions, name, count, title, doing, symbol = symbol) {
         var bottom by remember { mutableStateOf(Float.MAX_VALUE) }
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().onGloballyPositioned { bottom = it.positionInWindow().y + it.size.height }) {
             CompositionLocalProvider(LocalPage provides Page(maxHeight, bottom)) {
@@ -621,15 +628,19 @@ fun PlainField(
  */
 @Composable
 fun CommandRow(label: String, symbol: Int, danger: Boolean = false, leads: Boolean = false, busy: Boolean = false, enabled: Boolean = true) {
-    Row(
-        Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.45f),
-        horizontalArrangement = Arrangement.spacedBy(11.dp), verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.width(22.dp), contentAlignment = Alignment.Center) {
-            if (busy) Busy(16.dp) else Mark(symbol, 20.dp, if (danger) Theme.danger else Theme.accent)
+    // A row that cannot be pressed just now is out of reach like any
+    // other key: one tone, and no making it transparent.
+    OutOfReach(!enabled) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(11.dp), verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.width(22.dp), contentAlignment = Alignment.Center) {
+                if (busy) Busy(16.dp) else Mark(symbol, 20.dp, if (danger) Theme.danger else Theme.accent)
+            }
+            Text(label, color = wordUnderPointer(if (danger) Theme.danger else Theme.ink, moves = !danger), style = ui(15f, FontWeight.Medium), modifier = Modifier.weight(1f))
+            if (leads) Mark(Symbols.chevronRight, 16.dp, Theme.muted)
         }
-        Text(label, color = wordUnderPointer(if (danger) Theme.danger else Theme.ink, moves = !danger), style = ui(15f, FontWeight.Medium), modifier = Modifier.weight(1f))
-        if (leads) Mark(Symbols.chevronRight, 16.dp, Theme.muted)
     }
 }
 
@@ -930,5 +941,33 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, prop
             ),
         )
         }
+    }
+}
+
+/**
+ * Changes kept on the device whose post could not be opened -- it was
+ * renamed or deleted elsewhere, or the blog cannot be reached. They are
+ * shown, to be read and copied, with the one key that lets go of them;
+ * without it they would wait on the first screen for good.
+ */
+@Composable
+fun ColumnScope.Stranded(kept: Unsaved, discard: () -> Unit) {
+    var confirming by remember { mutableStateOf(false) }
+    Hint(
+        stringResource(R.string.written_here_and_never_saved_the_post, RowDate.spoken(java.time.Instant.ofEpochMilli(kept.at))),
+        Modifier.gap(14),
+    )
+    Plate {
+        row { SelectionContainer { Text(kept.text, color = Theme.ink, style = mono(14f, bold = false)) } }
+    }
+    Plate(Modifier.gap(14)) {
+        row { Command(stringResource(R.string.throw_away), Symbols.trash, danger = true) { confirming = true } }
+    }
+    if (confirming) {
+        Asks(
+            stringResource(R.string.throw_these_changes_away_they_were_never),
+            choices = listOf(Choice(stringResource(R.string.throw_away), danger = true, run = discard)),
+            onDismiss = { confirming = false },
+        )
     }
 }

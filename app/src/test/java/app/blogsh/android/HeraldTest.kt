@@ -160,4 +160,124 @@ class HeraldTest {
         herald.say("Published")
         assertEquals("Published", herald.note)
     }
+
+    /**
+     * A build owed to a blog is not forgotten because another blog was
+     * opened before it ran: it waits, and runs once its blog is open again.
+     */
+    @Test
+    fun aBuildOwedToABlogWaitsForItWhileAnotherIsOpen() {
+        val site = Site()
+        val herald = herald(site)
+        herald.owe("a post deleted")
+        // Blog B is opened before the pause is over, as the first screen says it.
+        site.open = "two"
+        herald.opened("two")
+        assertEquals(Herald.Build.None, herald.build)
+        pause(300)
+        assertEquals(0, site.builds)
+        // Back at A: owed again, in the words it was owed in, and built.
+        site.open = "one"
+        herald.opened("one")
+        assertEquals(Herald.Build.Owed, herald.build)
+        assertEquals("a post deleted", herald.owedFor)
+        assertTrue(until { site.builds == 1 && herald.build == Herald.Build.None })
+    }
+
+    /**
+     * The same, where nobody said the blog was changed before the pause
+     * ran out: the build that finds another blog open keeps the debt.
+     */
+    @Test
+    fun aBuildThatFindsAnotherBlogOpenKeepsItsDebt() {
+        val site = Site()
+        val herald = herald(site)
+        herald.owe()
+        site.open = "two"
+        pause(200)
+        assertTrue(until { herald.build == Herald.Build.None })
+        assertEquals(0, site.builds)
+        site.open = "one"
+        herald.opened("one")
+        assertTrue(until { site.builds == 1 && herald.build == Herald.Build.None })
+    }
+
+    /** The other blog's own debt is its own: each is built once, for itself. */
+    @Test
+    fun twoBlogsDebtsAreKeptApart() {
+        val site = Site()
+        val herald = herald(site)
+        herald.owe("of a")
+        site.open = "two"
+        herald.opened("two")
+        herald.owe("of b")
+        assertTrue(until { site.builds == 1 && herald.build == Herald.Build.None })
+        site.open = "one"
+        herald.opened("one")
+        assertEquals("of a", herald.owedFor)
+        assertTrue(until { site.builds == 2 && herald.build == Herald.Build.None })
+        // Nothing is left over for either.
+        site.open = "two"
+        herald.opened("two")
+        assertEquals(Herald.Build.None, herald.build)
+    }
+
+    /**
+     * The herald's own build failed; then something else built the whole
+     * site. "The site could not be built" has nothing left to say.
+     */
+    @Test
+    fun aFailedBuildIsPutAwayOnceSomethingElseBuiltTheSite() {
+        val site = Site()
+        val herald = herald(site)
+        site.fails.add(EngineError.Refused(Refusal(ok = false, error = "rebuild_failed", message = "no disk")))
+        herald.owe()
+        assertTrue(until { herald.build is Herald.Build.Failed })
+        herald.settled()
+        assertEquals(Herald.Build.None, herald.build)
+    }
+
+    /**
+     * An action's answer came after another blog was opened: the build
+     * it owes is the blog's it was made on. The open blog is not built
+     * for it, and the debt waits for its own.
+     */
+    @Test
+    fun aDebtWhoseAnswerCameLateIsItsOwnBlogs() {
+        val site = Site()
+        val herald = herald(site)
+        // The delete was sent on A; B was opened before it answered.
+        site.open = "two"
+        herald.opened("two")
+        herald.owe("a post deleted", owed = "one")
+        assertEquals(Herald.Build.None, herald.build)
+        pause(300)
+        assertEquals(0, site.builds)
+        site.open = "one"
+        herald.opened("one")
+        assertEquals("a post deleted", herald.owedFor)
+        assertTrue(until { site.builds == 1 && herald.build == Herald.Build.None })
+    }
+
+    /**
+     * A publish on another blog built that blog's site: what the open
+     * blog is owed is still owed, and what waited for the other is paid.
+     */
+    @Test
+    fun anotherBlogsBuildPaysNothingOfTheOpenOnes() {
+        val site = Site()
+        val herald = herald(site)
+        herald.owe("of a", owed = "one")
+        herald.settled("two")
+        assertEquals(Herald.Build.Owed, herald.build)
+        assertTrue(until { site.builds == 1 && herald.build == Herald.Build.None })
+        // A debt parked for B is paid by B's own build, said while A is open.
+        herald.owe("of b", owed = "two")
+        herald.settled("two")
+        site.open = "two"
+        herald.opened("two")
+        assertEquals(Herald.Build.None, herald.build)
+        pause(200)
+        assertEquals(1, site.builds)
+    }
 }

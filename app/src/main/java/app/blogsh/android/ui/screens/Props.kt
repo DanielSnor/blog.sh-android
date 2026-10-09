@@ -24,6 +24,9 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
+import app.blogsh.android.model.BlogShelf
+import app.blogsh.android.model.Blogs
+import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.PostAction
@@ -31,6 +34,7 @@ import app.blogsh.android.model.PostState
 import app.blogsh.android.model.PropsAnswer
 import app.blogsh.android.model.RebuildAnswer
 import app.blogsh.android.model.Spoken
+import app.blogsh.android.model.Unsaved
 import app.blogsh.android.model.engineInstant
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.plain
@@ -285,6 +289,13 @@ private fun Rows(props: PropsAnswer, modifier: Modifier = Modifier) {
 private class PropsState(
     slug: String, private val scope: CoroutineScope, private val renamed: (PropsAnswer) -> Unit = {}, private val leave: () -> Unit,
 ) {
+    /**
+     * The blog this screen was opened for. An answer can come after
+     * another blog has been opened; what follows from it -- a build owed,
+     * a build paid -- is this blog's all the same.
+     */
+    private val home = Blogs.currentId
+
     /** A rename changes it, and every key after that speaks of the new one. */
     var slug by mutableStateOf(slug)
     var props by mutableStateOf<PropsAnswer?>(null)
@@ -340,7 +351,7 @@ private class PropsState(
             }
             PostAction.Unpublish -> run(listOf("unpublish", slug, "--yes"))?.let { answer ->
                 // Taking a post off the site builds the site.
-                Herald.shared.settled()
+                Herald.shared.settled(home)
                 load()
                 tell(answer.warnings, or = say(R.string.unpublished_the_post_is_a_draft_again))
             }
@@ -349,7 +360,7 @@ private class PropsState(
                 // The post is out of this screen's reach now. Said once, and
                 // the screen is left: its keys would act on a post that is
                 // not there. The site is brought up to date by itself.
-                Herald.shared.owe()
+                Herald.shared.owe(owed = home)
                 said = Said(title = say(R.string.deleted), text = say(R.string.the_post_is_in_the_trash_and), after = { leave() })
             }
             else -> {}
@@ -367,7 +378,7 @@ private class PropsState(
         val ask = ask(say(R.string.publish_anyway)) { publish(anyway = true) }
         run(args, anyway = if (anyway) null else ask)?.let { answer ->
             // Publishing builds the whole site: nothing is owed after it.
-            Herald.shared.settled()
+            Herald.shared.settled(home)
             load()
             tell(answer.warnings, or = say(R.string.published, answer.url ?: slug))
         }
@@ -427,11 +438,16 @@ private class PropsState(
         if (wanted.isEmpty() || wanted == slug) return
         val answer = writeProps(listOf("props", slug, "--rename", wanted, "--yes")) ?: return
         val wasDraft = props?.state == PostState.Draft
+        // What was written for the post and not saved follows it to its new name.
+        home?.let {
+            Unsaved.move(it, slug, answer.slug, BlogShelf.notes)
+            Desk.changed()
+        }
         slug = answer.slug
         props = answer
         renamed(answer)
         // A draft's own preview follows it by itself; a published post's pages are owed a build.
-        if (!wasDraft) Herald.shared.owe()
+        if (!wasDraft) Herald.shared.owe(owed = home)
         tell(answer.warnings)
     }
 
@@ -480,14 +496,14 @@ private class PropsState(
     private suspend fun write(args: List<String>, owed: Boolean) {
         val answer = writeProps(args) ?: return
         props = answer
-        if (owed) Herald.shared.owe()
+        if (owed) Herald.shared.owe(owed = home)
         tell(answer.warnings)
     }
 
     /** A sheet wrote something the site does not show yet. */
     suspend fun afterWrite(saying: String? = null) {
         load()
-        Herald.shared.owe()
+        Herald.shared.owe(owed = home)
         if (saying != null) Herald.shared.say(saying)
     }
 

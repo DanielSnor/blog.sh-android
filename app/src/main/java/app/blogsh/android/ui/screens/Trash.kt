@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
+import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.HeldAnswer
 import app.blogsh.android.model.PostState
@@ -53,6 +54,7 @@ import app.blogsh.android.ui.EmptyNote
 import app.blogsh.android.ui.Hint
 import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.Menu
+import app.blogsh.android.ui.MenuEntry
 import app.blogsh.android.ui.MenuKey
 import app.blogsh.android.ui.PaperRow
 import app.blogsh.android.ui.PaperScaffold
@@ -98,6 +100,8 @@ fun TrashScreen() {
     // What the screen is doing while it cannot be touched.
     var doing by remember { mutableStateOf<String?>(null) }
     var restoring by remember { mutableStateOf<TrashRow?>(null) }
+    // The blog this screen was opened for: a build owed by an answer is this blog's.
+    val home = remember { Blogs.currentId }
     // How much the trash and the older versions hold, as `empty` counts them.
     var held by remember { mutableStateOf<HeldAnswer?>(null) }
     var older by remember { mutableStateOf<HeldAnswer?>(null) }
@@ -167,7 +171,7 @@ fun TrashScreen() {
             load()
             // A published post is back in the archive and not yet on the site:
             // that it is back is said, and the site is brought up to date by itself.
-            if (answer.state == PostState.Published) Herald.shared.owe()
+            if (answer.state == PostState.Published) Herald.shared.owe(owed = home)
             Herald.shared.say(words)
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
@@ -182,7 +186,7 @@ fun TrashScreen() {
 
     val still = busy || Herald.shared.isBuilding
     PaperScaffold(
-        onBack = { nav.pop() }, name = stringResource(R.string.tile_restore),
+        onBack = { nav.pop() }, name = stringResource(R.string.tile_restore), symbol = MenuEntry.Restore.symbol,
         count = if (rows.isEmpty()) null else NumberFormat.getIntegerInstance().format(rows.size), doing = doing,
     ) {
         PullToRefreshBox(

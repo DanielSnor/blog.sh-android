@@ -38,9 +38,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -58,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import app.blogsh.android.BlogshApp
 import app.blogsh.android.R
 import app.blogsh.android.model.Begun
@@ -68,12 +71,19 @@ import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.Facts
 import app.blogsh.android.model.HeldAnswer
+import app.blogsh.android.model.Herald
 import app.blogsh.android.model.ListAnswer
+import app.blogsh.android.model.NetworkWatch
+import app.blogsh.android.model.Outbox
 import app.blogsh.android.model.QueueAnswer
 import app.blogsh.android.model.QueueRow
+import app.blogsh.android.model.Reach
+import app.blogsh.android.model.Spoken
 import app.blogsh.android.model.StatsAnswer
 import app.blogsh.android.model.TagStore
 import app.blogsh.android.model.VersionAnswer
+import app.blogsh.android.model.Waiting
+import app.blogsh.android.model.WaitingRoom
 import app.blogsh.android.model.engineInstant
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.said
@@ -89,9 +99,11 @@ import app.blogsh.android.ui.screens.StateFilter
 import app.blogsh.android.ui.screens.TextEditScreen
 import app.blogsh.android.ui.screens.TranslateScreen
 import app.blogsh.android.ui.screens.TrashScreen
+import app.blogsh.android.ui.screens.WaitingSheet
 import java.net.URI
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -129,8 +141,14 @@ class HomeState {
     var glance by mutableStateOf<Glance?>(null)
     var refreshing by mutableStateOf(false)
 
-    // One counting at a time: it is the slowest thing the first screen asks.
-    private var counting = false
+    /** The first screen is being asked for: one asking at a time. */
+    var loading by mutableStateOf(false)
+        private set
+
+    // One counting at a time for a blog: it is the slowest thing the
+    // first screen asks. Another blog opened meanwhile is counted for
+    // itself -- it is not turned away at the door for the one before it.
+    private val counting = mutableSetOf<String?>()
 
     /** The languages the site publishes beyond its own. */
     val otherLanguages: List<String>
@@ -151,6 +169,7 @@ class HomeState {
      */
     suspend fun load() {
         val asked = Blogs.currentId
+        loading = true
         try {
             val answers = Engine.batch(listOf(listOf("version"), listOf("queue"), listOf("list", "--drafts")))
             // Another blog was opened while this one was answering.
@@ -166,6 +185,9 @@ class HomeState {
                 )
             }
             glance = glance(answers[1], answers[2])
+            loading = false
+            // The server has just answered: what waited for it goes now.
+            sendWaiting()
             // The numbers under the search come after the screen itself:
             // counting the archive takes the engine seconds.
             loadFacts(whole = true)
@@ -180,7 +202,23 @@ class HomeState {
             identity = null
             glance = null
             problem = e.said
+        } finally {
+            loading = false
         }
+    }
+
+    /**
+     * The server has just answered: what waited for it goes now, as
+     * drafts, and the first screen counts its drafts again.
+     */
+    suspend fun sendWaiting() {
+        val blog = Blogs.currentId ?: return
+        if (WaitingRoom.all(blog).isEmpty()) return
+        val sent = Outbox.shared.sendAll(blog)
+        // Said, and counted, only on the blog they went to.
+        if (sent <= 0 || blog != Blogs.currentId) return
+        Herald.shared.say(Spoken.say(R.string.sent_to_the_blog_as_drafts, sent))
+        loadGlance()
     }
 
     /**
@@ -189,7 +227,8 @@ class HomeState {
      */
     suspend fun loadGlance() {
         val asked = Blogs.currentId
-        if (identity == null) return
+        // A silent server is not asked for its cards: it is asked whether it is there.
+        if (identity == null || Reach.shared.isOffline(Blogs.current)) return
         val answers = try {
             Engine.batch(listOf(listOf("queue"), listOf("list", "--drafts")))
         } catch (e: Throwable) {
@@ -211,8 +250,7 @@ class HomeState {
      */
     private suspend fun loadFacts(whole: Boolean) {
         val asked = Blogs.currentId
-        if (identity == null || counting) return
-        counting = true
+        if (identity == null || !counting.add(asked)) return
         try {
             var facts = Blogs.current?.facts ?: Facts()
             val all = whole || Blogs.current?.facts == null
@@ -235,7 +273,7 @@ class HomeState {
             runCatching { Engine.decode<HeldAnswer>(answers[answers.size - 1]) }.getOrNull()?.let { facts = facts.copy(versions = it.count, versionsBytes = it.bytes) }
             Blogs.update { it.copy(facts = facts) }
         } finally {
-            counting = false
+            counting.remove(asked)
         }
     }
 
@@ -282,6 +320,10 @@ fun HomeScreen(state: HomeState) {
     }
 
     fun open(entry: MenuEntry, filter: StateFilter? = null, searching: Boolean = false) {
+        // The form that is asked for is the one already open beside the
+        // menu: it stays as it is. Built again it would come back with its
+        // words, which are kept, and without its pictures, which are not.
+        if (layout == Layout.Columns && entry == MenuEntry.Add && nav.root == MenuEntry.Add && nav.depth == 1 && !Desk.holdsHanded) return
         show(entry) {
             // Read where the screen is drawn, not where it was asked for: the blog may say
             // its languages and its address a moment after the tile was tapped.
@@ -317,10 +359,42 @@ fun HomeScreen(state: HomeState) {
         }
     }
 
+    // The open blog's server did not answer the last time it was asked --
+    // this screen, or any other: the blog is offline until it does.
+    val offline = Reach.shared.isOffline(blog)
+    var showingWaiting by remember { mutableStateOf(false) }
+    var trying by remember { mutableStateOf(false) }
+    // The posts kept on this device for the open blog until its server answers.
+    val waiting = remember(Blogs.currentId, Desk.changes) { Blogs.currentId?.let { WaitingRoom.all(it) } ?: emptyList() }
+
     // Another blog: its own name and colour are there before its server answers.
     LaunchedEffect(Blogs.currentId) {
+        showingWaiting = false
+        // A build owed to the blog that was open waits for it; one that
+        // waited for this blog is owed again.
+        Herald.shared.opened(Blogs.currentId)
         state.forget()
         state.load()
+    }
+    // The moment the device finds a network, a server that was silent is asked again.
+    LaunchedEffect(Unit) {
+        NetworkWatch.comes.collect { if (Reach.shared.isOffline(Blogs.current) && !state.loading) state.load() }
+    }
+    // Back in front with a server that was silent: asked again,
+    // unprompted -- the device has most likely been somewhere else.
+    LifecycleResumeEffect(Unit) {
+        if (Reach.shared.isOffline(Blogs.current) && !state.loading) scope.launch { state.load() }
+        onPauseOrDispose {}
+    }
+    // A server heard from again by some other screen's call: what waits
+    // for it goes now, and a first screen that never loaded loads.
+    // Nothing else would notice -- every other asking-again above is for
+    // a server still silent.
+    LaunchedEffect(Unit) {
+        snapshotFlow { Reach.shared.isOffline(Blogs.current) }.drop(1).collect { silent ->
+            if (silent || state.loading) return@collect
+            if (state.identity == null) state.load() else state.sendWaiting()
+        }
     }
     // What changed on the way back is on the first screen again.
     var seen by remember { mutableStateOf(false) }
@@ -331,6 +405,9 @@ fun HomeScreen(state: HomeState) {
     // Beside an open screen the menu is never covered, so never comes
     // back to the front: there it is the screen beside it closing that
     // says something may have changed.
+    // ...and whenever a screen has changed the blog.
+    val writes = Desk.writes
+    LaunchedEffect(writes) { if (writes > 0) state.loadGlance() }
     val depth = nav.depth
     var deepest by remember { mutableStateOf(0) }
     LaunchedEffect(depth) {
@@ -387,10 +464,37 @@ fun HomeScreen(state: HomeState) {
                 }
                 Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(14.dp, 1.dp).background(Theme.accent))
-                    EngineLabel("./blog.sh ${identity?.engine ?: ""}")
+                    EngineLabel("./blog.sh " + if (offline) stringResource(R.string.offline) else identity?.engine ?: "")
                 }
 
-                if (identity == null) {
+                if (offline) {
+                    // Said plainly, with the one thing there is to do about it.
+                    Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Mark(Symbols.wifiSlash, 16.dp, Theme.muted, Modifier.padding(top = 2.dp))
+                        Text(
+                            EngineError.Unreachable(blog?.host?.trim(' ', '\t') ?: "", "").said, color = Theme.muted, style = ui(14f),
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    Pressable(
+                        {
+                            if (!trying) scope.launch {
+                                trying = true
+                                try {
+                                    state.load()
+                                } finally {
+                                    trying = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.padding(top = 10.dp),
+                    ) {
+                        Card(capsule = true) {
+                            if (trying) Busy(15.dp) else Mark(Symbols.arrowClockwise, 17.dp)
+                            EngineLabel(stringResource(R.string.try_again), color = wordUnderPointer(Theme.muted))
+                        }
+                    }
+                } else if (identity == null) {
                     val problem = state.problem
                     if (problem != null) Text(problem, color = Theme.muted, style = ui(14f), modifier = Modifier.padding(top = 14.dp))
                     else Busy(modifier = Modifier.padding(top = 14.dp))
@@ -402,34 +506,54 @@ fun HomeScreen(state: HomeState) {
                 // opening the form it waits in -- and last the queue, which
                 // goes out by itself.
                 val glance = state.glance
-                if (glance != null || begun.isNotEmpty()) {
+                // What needs the server is shown out of reach while the
+                // server is silent; writing a new post -- which does not --
+                // stays as it is.
+                if (glance != null || begun.isNotEmpty() || waiting.isNotEmpty()) {
                     Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (glance != null) Pressable({ open(MenuEntry.Browse, StateFilter.Draft) }) { DraftsCard(glance) }
-                        for (one in begun) Pressable({ resume(one) }) { BegunCard(one) }
-                        if (glance != null) Pressable({ open(MenuEntry.Queue) }) { QueueCard(glance) }
+                        if (glance != null) OutOfReach(offline) { Pressable({ open(MenuEntry.Browse, StateFilter.Draft) }) { DraftsCard(glance) } }
+                        for (one in begun) {
+                            // A new post is written on the device; changes to
+                            // one the blog has need its text from the server.
+                            OutOfReach(offline && one.what != Begun.What.New) { Pressable({ resume(one) }) { BegunCard(one) } }
+                        }
+                        // What is finished and only waits for the server.
+                        if (waiting.isNotEmpty()) {
+                            Pressable({ showingWaiting = true }) { WaitingCard(waiting, sending = waiting.any { it.id == Outbox.shared.sending }) }
+                        }
+                        if (glance != null) OutOfReach(offline) { Pressable({ open(MenuEntry.Queue) }) { QueueCard(glance) } }
                     }
                 }
 
-                Column(Modifier.padding(top = if (glance == null && begun.isEmpty()) 22.dp else 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    Modifier.padding(top = if (glance == null && begun.isEmpty() && waiting.isEmpty()) 22.dp else 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     for (row in MenuEntry.entries.chunked(3)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             for (entry in row) {
                                 val label = stringResource(entry.nameId)
-                                Pressable({ open(entry) }, modifier = Modifier.weight(1f).semantics { contentDescription = label }) {
-                                    // Beside its screen, the entry that is open says so.
-                                    Tile(entry, highlighted = layout == Layout.Columns && nav.root == entry)
+                                Box(Modifier.weight(1f)) {
+                                    OutOfReach(offline && entry != MenuEntry.Add) {
+                                        Pressable({ open(entry) }, modifier = Modifier.semantics { contentDescription = label }) {
+                                            // Beside its screen, the entry that is open says so.
+                                            Tile(entry, highlighted = layout == Layout.Columns && nav.root == entry)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                Pressable({ open(MenuEntry.Browse, searching = true) }, modifier = Modifier.padding(top = 14.dp)) {
-                    Card(capsule = true) {
-                        // A glass, not the terminal's own key for it: a slash says
-                        // "search" only to somebody who knows the terminal.
-                        Mark(Symbols.magnifyingglass, 17.dp)
-                        EngineLabel(stringResource(R.string.search_the_archive), color = wordUnderPointer(Theme.muted))
+                OutOfReach(offline) {
+                    Pressable({ open(MenuEntry.Browse, searching = true) }, modifier = Modifier.padding(top = 14.dp)) {
+                        Card(capsule = true) {
+                            // A glass, not the terminal's own key for it: a slash says
+                            // "search" only to somebody who knows the terminal.
+                            Mark(Symbols.magnifyingglass, 17.dp)
+                            EngineLabel(stringResource(R.string.search_the_archive), color = wordUnderPointer(Theme.muted))
+                        }
                     }
                 }
 
@@ -448,7 +572,8 @@ fun HomeScreen(state: HomeState) {
 
                 blog?.facts?.let { facts ->
                     Box(Modifier.fillMaxWidth().padding(top = 26.dp), contentAlignment = Alignment.Center) {
-                        FactLines(facts) { open(MenuEntry.Restore) }
+                        // The two that are keys are keys while the server answers.
+                        FactLines(facts, if (offline) null else ({ open(MenuEntry.Restore) }))
                     }
                 }
             }
@@ -479,6 +604,17 @@ fun HomeScreen(state: HomeState) {
         }
     }
 
+    // The posts kept on the device for a silent server: a list of their
+    // own, from which one can go back into the form.
+    if (showingWaiting) {
+        WaitingSheet(
+            onDismiss = {
+                showingWaiting = false
+                scope.launch { state.loadGlance() }
+            },
+            write = { open(MenuEntry.Add) },
+        )
+    }
     if (showingSettings) SettingsSheet(onDismiss = { showingSettings = false })
     if (showingBlogs) {
         // A blog's settings are behind its row there: what was changed in
@@ -549,13 +685,33 @@ private fun BegunCard(one: Begun) {
     }
 }
 
+/** The posts kept on the device: how many, and the first by name. */
+@Composable
+private fun WaitingCard(waiting: List<Waiting>, sending: Boolean) {
+    Card(warning = true) {
+        if (sending) Busy(18.dp) else Mark(Symbols.trayAndArrowUp, 21.dp, Theme.danger)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                stringResource(if (sending) R.string.sending else R.string.waiting_to_be_sent), color = Theme.danger,
+                style = ui(12f, FontWeight.Medium), maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+            val first = waiting.firstOrNull()?.headline ?: ""
+            if (first.isNotEmpty()) Text(first, color = Theme.ink, style = ui(15f, FontWeight.Medium), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        CountBadge(waiting.size)
+    }
+}
+
 /** One entry of the menu: its mark and its word. */
 @Composable
 private fun Tile(entry: MenuEntry, highlighted: Boolean = false) {
     val shape = RoundedCornerShape(Theme.corner)
+    // Out of reach a tile is not the open one either: no fill, the plain outline.
+    val out = LocalOutOfReach.current
+    @Suppress("NAME_SHADOWING") val highlighted = highlighted && !out
     Column(
         Modifier.fillMaxWidth().clip(shape)
-            .background(if (highlighted) Theme.accent.copy(alpha = 0.12f) else Theme.card)
+            .background(if (out) Color.Transparent else if (highlighted) Theme.accent.copy(alpha = 0.12f) else Theme.card)
             .border(1.dp, if (highlighted) Theme.accent else Theme.keyLine, shape)
             .padding(top = 16.dp, bottom = 12.dp)
             .clearAndSetSemantics {},
@@ -574,7 +730,7 @@ private fun Tile(entry: MenuEntry, highlighted: Boolean = false) {
  * keys, to the screen that empties them.
  */
 @Composable
-private fun FactLines(facts: Facts, toTrash: () -> Unit) {
+private fun FactLines(facts: Facts, toTrash: (() -> Unit)?) {
     val context = LocalContext.current
     fun number(n: Int) = NumberFormat.getIntegerInstance().format(n)
     fun size(bytes: Long) = Formatter.formatShortFileSize(context, bytes)

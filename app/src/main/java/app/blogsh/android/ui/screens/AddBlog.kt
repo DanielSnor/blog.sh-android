@@ -181,7 +181,7 @@ fun AddBlogSheet(initialCode: String = "", onBack: () -> Unit, onDone: () -> Uni
                         )
                         // What was pasted and is not a code is put away by one key.
                         if (text.isNotEmpty() && !connecting) {
-                            val clear = stringResource(R.string.android_b_clear)
+                            val clear = stringResource(R.string.clear)
                             Pressable(
                                 {
                                     text = ""

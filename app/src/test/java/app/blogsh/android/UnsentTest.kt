@@ -2,6 +2,8 @@ package app.blogsh.android
 
 import app.blogsh.android.model.Begun
 import app.blogsh.android.model.BlogList
+import app.blogsh.android.model.Desk
+import app.blogsh.android.model.Preview
 import app.blogsh.android.model.Unsaved
 import app.blogsh.android.model.Unsent
 import org.junit.Assert.assertEquals
@@ -337,5 +339,132 @@ class BegunTest {
         assertNull(Unsaved.kept(blog, "venku", Unsaved.What.Text, notes)?.title)
         assertNotNull(Unsaved.kept(blog, "venku", Unsaved.What.Text, notes))
         assertEquals("venku", Begun.all(blog, notes).firstOrNull()?.title)
+    }
+}
+
+/**
+ * What an audit of the keeping found: writing that could be lost, or
+ * said to be unsent when it was sent.
+ */
+class KeepingTest {
+    private fun moment(seconds: Long): Long = (1_791_400_000 + seconds) * 1000
+
+    /**
+     * Changes brought back stay changes over the version they were begun
+     * over, whatever is typed after: that is what the screen compares
+     * with the blog's version to say the post has moved on.
+     */
+    @Test
+    fun changesBroughtBackKeepTheBaseTheyWereBegunOver() {
+        val begun = Unsaved("old A", "K0", moment(0), "Venku")
+        val typed = Unsaved.now("old AB", "Venku", "K1", begun, moment(60))
+        assertEquals("K0", typed.base)
+        assertEquals("old AB", typed.text)
+        // Nothing brought back: the changes begin over what the blog has now.
+        assertEquals("K1", Unsaved.now("new B", "Venku", "K1", null, moment(60)).base)
+    }
+
+    /** A save forgets what it saved, and nothing written after it. */
+    @Test
+    fun aSaveForgetsOnlyWhatItSaved() {
+        val notes = MemoryNotes()
+        val blog = blog()
+        Unsaved("saved", "K0", moment(0), null).keep(blog, "venku", Unsaved.What.Text, notes)
+        Unsaved.forget(blog, "venku", Unsaved.What.Text, "something else", notes)
+        assertEquals("saved", Unsaved.kept(blog, "venku", Unsaved.What.Text, notes)?.text)
+        Unsaved.forget(blog, "venku", Unsaved.What.Text, "saved", notes)
+        assertNull(Unsaved.kept(blog, "venku", Unsaved.What.Text, notes))
+    }
+
+    /**
+     * A post that arrived is forgotten whether or not a form saw it go;
+     * what was written since is another post's, and stays.
+     */
+    @Test
+    fun aSentPostIsForgottenUnlessMoreWasWritten() {
+        val notes = MemoryNotes()
+        val blog = blog()
+        val sent = Unsent("Hello", "a", "Text", moment(0))
+        sent.keep(blog, notes)
+        Unsent.forget(blog, Unsent("Hello", "a", "Text"), notes)
+        assertNull(Unsent.kept(blog, notes))
+        Unsent("Hello", "a", "Text and more", moment(5)).keep(blog, notes)
+        Unsent.forget(blog, sent, notes)
+        assertEquals("Text and more", Unsent.kept(blog, notes)?.text)
+    }
+
+    /**
+     * A renamed post takes what was kept for it along: its text and
+     * every language, and nothing of another post or another blog.
+     */
+    @Test
+    fun whatIsKeptFollowsARenamedPost() {
+        val notes = MemoryNotes()
+        val blog = blog()
+        val other = blog()
+        val en = Unsaved.What.Language("en")
+        Unsaved("text", "K0", moment(0), "Venku").keep(blog, "venku", Unsaved.What.Text, notes)
+        Unsaved("words", "K0", moment(1), "Venku").keep(blog, "venku", en, notes)
+        Unsaved("beside", "B0", moment(2), null).keep(blog, "venku-2", Unsaved.What.Text, notes)
+        Unsaved("elsewhere", "E0", moment(3), null).keep(other, "venku", Unsaved.What.Text, notes)
+        Unsaved.move(blog, "venku", "outside", notes)
+        assertEquals("text", Unsaved.kept(blog, "outside", Unsaved.What.Text, notes)?.text)
+        assertEquals("words", Unsaved.kept(blog, "outside", en, notes)?.text)
+        assertNull(Unsaved.kept(blog, "venku", Unsaved.What.Text, notes))
+        assertNull(Unsaved.kept(blog, "venku", en, notes))
+        assertEquals("beside", Unsaved.kept(blog, "venku-2", Unsaved.What.Text, notes)?.text)
+        assertEquals("elsewhere", Unsaved.kept(other, "venku", Unsaved.What.Text, notes)?.text)
+        // The first screen lists them under the name that opens.
+        assertEquals(
+            setOf(Begun.What.Text("outside"), Begun.What.Language("outside", "en"), Begun.What.Text("venku-2")),
+            Begun.all(blog, notes).map { it.what }.toSet(),
+        )
+    }
+
+    /** Where the new name has later writing of its own, that stays. */
+    @Test
+    fun aRenameDoesNotPutOlderWritingOverNewer() {
+        val notes = MemoryNotes()
+        val blog = blog()
+        Unsaved("older", "K0", moment(0), null).keep(blog, "venku", Unsaved.What.Text, notes)
+        Unsaved("newer", "K1", moment(60), null).keep(blog, "outside", Unsaved.What.Text, notes)
+        Unsaved.move(blog, "venku", "outside", notes)
+        assertEquals("newer", Unsaved.kept(blog, "outside", Unsaved.What.Text, notes)?.text)
+        assertNull(Unsaved.kept(blog, "venku", Unsaved.What.Text, notes))
+    }
+
+    /**
+     * Words with no title and no body take the language off the post,
+     * whichever key sent them: the screen says so, not "Saved".
+     */
+    @Test
+    fun emptiedWordsTakeTheLanguageOff() {
+        assertTrue(Preview.takesOff(""))
+        assertTrue(Preview.takesOff("---\ntitle:\n---\n\n"))
+        assertTrue(Preview.takesOff("---\ntitle: \nslug: outside\n---\n\n  \n"))
+        assertFalse(Preview.takesOff("---\ntitle: Outside\n---\n\n"))
+        assertFalse(Preview.takesOff("---\ntitle:\n---\n\nWords.\n"))
+        assertFalse(Preview.takesOff("Words."))
+    }
+
+    /**
+     * A form is left alone while its blog's new post is on its way, and
+     * told when the post has arrived.
+     */
+    @Test
+    fun theDeskKnowsWhichBlogsPostIsOnItsWay() {
+        val blog = blog()
+        val other = blog()
+        val before = Desk.arrived
+        Desk.began(blog)
+        assertTrue(blog in Desk.sending)
+        assertFalse(other in Desk.sending)
+        Desk.ended(blog, arrived = false)
+        assertFalse(blog in Desk.sending)
+        assertEquals(before, Desk.arrived)
+        Desk.began(blog)
+        Desk.ended(blog, arrived = true)
+        assertEquals(before + 1, Desk.arrived)
+        assertEquals(blog, Desk.arrivedAt)
     }
 }

@@ -65,6 +65,17 @@ data class Shades(
     }
 
     /**
+     * What is out of reach is written in: the ink mixed with the ground,
+     * 45 to 55. One tone for everything such a thing is made of -- its
+     * mark, its word, its number -- between the muted tone and a hairline.
+     */
+    val faded: Long
+        get() {
+            fun mixed(shift: Int): Long = Math.round(((text shr shift) and 0xff) * 0.45 + ((bg shr shift) and 0xff) * 0.55)
+            return (mixed(16) shl 16) or (mixed(8) shl 8) or mixed(0)
+        }
+
+    /**
      * How far what is written stands from what it is written on: the
      * ratio of their luminances, from one (the same colour) to twenty-one
      * (black on white).

@@ -2,6 +2,7 @@ package app.blogsh.android.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,11 +56,12 @@ import java.text.NumberFormat
  * its blog, the key at its end opens that blog's settings, the last key
  * begins a new one. A blog is its own server, its own key and its own
  * colour; nothing of one is used for another. A long press on a row
- * offers to remove its blog.
+ * offers to carry it a place up or down the list, or to remove its blog.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BlogsSheet(onDismiss: () -> Unit) {
+    var held by remember { mutableStateOf<Blog?>(null) }
     var removing by remember { mutableStateOf<Blog?>(null) }
     var settingUp by remember { mutableStateOf(false) }
     var adding by remember { mutableStateOf(false) }
@@ -79,7 +81,7 @@ fun BlogsSheet(onDismiss: () -> Unit) {
                                     Blogs.select(blog.id)
                                     onDismiss()
                                 },
-                                onLongClick = { removing = blog },
+                                onLongClick = { held = blog },
                             )
                         ) { BlogRow(blog, open = blog.id == Blogs.currentId) }
                         // The settings are the open blog's: the key opens the blog with them.
@@ -90,7 +92,13 @@ fun BlogsSheet(onDismiss: () -> Unit) {
                             },
                             modifier = Modifier.semantics { contentDescription = settings },
                         ) {
-                            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) { Mark(Symbols.sliderHorizontal3, 20.dp) }
+                            // A key that looks like one: the mark alone was
+                            // small to see and smaller to believe in.
+                            val shape = RoundedCornerShape(Theme.corner)
+                            Box(
+                                Modifier.size(46.dp).clip(shape).background(Theme.card).border(1.dp, Theme.keyLine, shape),
+                                contentAlignment = Alignment.Center,
+                            ) { Mark(Symbols.sliderHorizontal3, 20.dp) }
                         }
                     }
                 }
@@ -107,6 +115,19 @@ fun BlogsSheet(onDismiss: () -> Unit) {
     }
     if (settingUp) BlogSettingsSheet(onBack = { settingUp = false }, onDone = { settingUp = false; onDismiss() })
     if (adding) AddBlogSheet(onBack = { adding = false }, onDone = { adding = false; onDismiss() })
+    // The order is the reader's own: a row held offers the way up and
+    // down, as a row of the queue does.
+    held?.let { blog ->
+        Asks(
+            blog.label.ifEmpty { stringResource(R.string.a_new_blog) },
+            choices = listOfNotNull(
+                if (blog.id != Blogs.all.firstOrNull()?.id) Choice(stringResource(R.string.up)) { Blogs.shift(blog.id, -1) } else null,
+                if (blog.id != Blogs.all.lastOrNull()?.id) Choice(stringResource(R.string.down)) { Blogs.shift(blog.id, 1) } else null,
+                Choice(stringResource(R.string.remove), danger = true) { removing = blog },
+            ),
+            onDismiss = { held = null },
+        )
+    }
     removing?.let { blog ->
         Asks(
             stringResource(R.string.remove_from_the_app_its_key_is, blog.label),

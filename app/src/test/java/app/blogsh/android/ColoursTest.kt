@@ -154,4 +154,20 @@ class BuildStampTest {
         assertNull(bare.commit)
         assertNotNull(bare.built)
     }
+
+    /**
+     * What is out of reach is drawn in one tone: the ink mixed with the
+     * ground, 45 to 55 -- between the muted tone and a hairline, on a
+     * light ground and on a dark one.
+     */
+    @Test
+    fun whatIsOutOfReachIsTheInkMixedIntoTheGround() {
+        val day = Colours.own.light.copy(text = 0x1E1D1C, bg = 0xFFF7EB)
+        assertEquals(0x9A958EL, day.faded)
+        val night = Colours.own.dark.copy(text = 0xE6DCCB, bg = 0x000000)
+        // 230 x 0.45 is 103.5: a half goes up, as a browser rounds it.
+        assertEquals(0x68635BL, night.faded)
+        // The same ink and ground: nothing to mix.
+        assertEquals(0x000000L, night.copy(text = 0x000000).faded)
+    }
 }

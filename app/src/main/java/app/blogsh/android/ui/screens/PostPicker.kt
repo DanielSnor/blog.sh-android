@@ -46,6 +46,7 @@ import app.blogsh.android.ui.Busy
 import app.blogsh.android.ui.Command
 import app.blogsh.android.ui.EmptyNote
 import app.blogsh.android.ui.LocalNav
+import app.blogsh.android.ui.MenuEntry
 import app.blogsh.android.ui.OnShown
 import app.blogsh.android.ui.PaperRow
 import app.blogsh.android.ui.PaperScaffold
@@ -109,7 +110,7 @@ fun PostPickerScreen(languages: List<String> = emptyList()) {
     // How many are listed here, not how many the blog has: the number
     // beside the name counts the rows under it, as the archive's does.
     PaperScaffold(
-        onBack = { nav.pop() }, name = stringResource(R.string.tile_post),
+        onBack = { nav.pop() }, name = stringResource(R.string.tile_post), symbol = MenuEntry.Post.symbol,
         count = if (posts.isEmpty()) null else NumberFormat.getIntegerInstance().format(posts.size),
     ) {
         PullToRefreshBox(
@@ -186,6 +187,11 @@ fun PostCrossroadsScreen(picked: PostRow, languages: List<String> = emptyList(),
     // The post's text as the editor would open it: where the lede is read
     // from, and handed on to the editor so it need not ask again.
     var entry by remember { mutableStateOf<EditEntry?>(null) }
+    // `entry` was read in this visit to the screen. What was read before
+    // -- shown still, so the screen does not blink -- is not handed to
+    // the editor: the post may have another text and another version by
+    // now, and the editor would open the old ones as the blog's.
+    var fresh by remember { mutableStateOf(false) }
     var reading by remember { mutableStateOf(false) }
     // The post was deleted from its properties: this screen is about a
     // post that is not there, and leaves once it is in front again.
@@ -207,6 +213,8 @@ fun PostCrossroadsScreen(picked: PostRow, languages: List<String> = emptyList(),
             return
         }
         reading = true
+        // Until this read has answered, the editor asks for itself.
+        fresh = false
         try {
             // One connection for the two: the text the lede is read from,
             // and what the post is now, for the lines over it.
@@ -219,7 +227,10 @@ fun PostCrossroadsScreen(picked: PostRow, languages: List<String> = emptyList(),
             }
             // Asked of one name, answered after the post took another: not this one's to keep.
             if (answers != null && answers.size == 2 && slug == post.slug) {
-                runCatching { Engine.decode<EditAnswer>(answers[0]) }.getOrNull()?.let { entry = it.post }
+                runCatching { Engine.decode<EditAnswer>(answers[0]) }.getOrNull()?.let {
+                    entry = it.post
+                    fresh = true
+                }
                 runCatching { Engine.decode<PropsAnswer>(answers[1]) }.getOrNull()?.let { props ->
                     post = post.seenAs(props)
                     link = PostLink.of(props)
@@ -295,7 +306,7 @@ fun PostCrossroadsScreen(picked: PostRow, languages: List<String> = emptyList(),
                     // The text read for the lede is handed on only while it is
                     // this post's under this name: after a rename it is not.
                     val slug = post.slug
-                    val loaded = entry?.takeIf { it.slug == slug }
+                    val loaded = handedOn(entry, fresh, slug)
                     nav.push { TextEditScreen(slug, loaded) }
                 }
             }
@@ -332,3 +343,10 @@ fun PostCrossroadsScreen(picked: PostRow, languages: List<String> = emptyList(),
         problem?.let { ProblemLine(it) }
     }
 }
+
+/**
+ * What the editor is given to open with: the text the post's screen
+ * read, while it is this post's under this name and was read in this
+ * visit -- or nothing, and the editor asks the engine itself.
+ */
+internal fun handedOn(entry: EditEntry?, fresh: Boolean, slug: String): EditEntry? = entry?.takeIf { fresh && it.slug == slug }

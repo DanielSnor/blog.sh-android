@@ -48,6 +48,7 @@ import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
+import app.blogsh.android.model.Markdown
 import app.blogsh.android.model.PropsAnswer
 import app.blogsh.android.model.TagStore
 import app.blogsh.android.model.VersionsAnswer
@@ -55,6 +56,7 @@ import app.blogsh.android.model.engineInstant
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.said
 import app.blogsh.android.ui.Asks
+import app.blogsh.android.ui.Busy
 import app.blogsh.android.ui.Choice
 import app.blogsh.android.ui.ChoiceRow
 import app.blogsh.android.ui.DialogKey
@@ -198,10 +200,11 @@ fun ScheduleSheet(slug: String, offered: String?, current: String? = null, sched
 }
 
 /**
- * A moment as `--at` takes it from the iOS app: its ISO8601DateFormatter
- * writes whole seconds in UTC, with a Z -- `2026-05-01T08:00:00Z`.
+ * A moment as `--at` takes it: with the device's own offset, as the
+ * picker showed it. The engine files a post under the year of the time
+ * as written, and in UTC the first hour of a year is still the old one.
  */
-private fun engineStamp(date: Instant): String = DateTimeFormatter.ISO_INSTANT.format(date.truncatedTo(ChronoUnit.SECONDS))
+private fun engineStamp(date: Instant): String = Markdown.stamp(date.toEpochMilli())
 
 /** One half of the picker as a row shows it: what is chosen, in a frame, opening the choice. */
 @Composable
@@ -447,7 +450,8 @@ fun AddressesSheet(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
                         Column(Modifier.padding(vertical = 11.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text(address.value, color = Theme.ink, style = mono(14f, bold = false))
                             Text(
-                                stringResource(if (address.kind == "former_slugs") R.string.a_former_slug_redirects_here else R.string.redirects_here),
+                                // A former slug of the post, or of one of its languages (`translations.<lang>.former_slugs`).
+                                stringResource(if (address.kind.endsWith("former_slugs")) R.string.a_former_slug_redirects_here else R.string.redirects_here),
                                 color = Theme.muted, style = ui(13f),
                             )
                         }
@@ -486,6 +490,9 @@ fun VersionsSheet(slug: String, onDismiss: () -> Unit, done: suspend () -> Unit)
     var restoring by remember { mutableStateOf<VersionsAnswer.Version?>(null) }
     var problem by remember { mutableStateOf<String?>(null) }
     var loaded by remember { mutableStateOf(false) }
+    // One restoring at a time, and seen to be going: a second tap
+    // meanwhile would restore over the first.
+    var working by remember { mutableStateOf(false) }
 
     suspend fun load() {
         try {
@@ -499,6 +506,8 @@ fun VersionsSheet(slug: String, onDismiss: () -> Unit, done: suspend () -> Unit)
     }
 
     suspend fun restore(version: VersionsAnswer.Version) {
+        if (working) return
+        working = true
         try {
             Engine.call<PropsAnswer>("props", slug, "--restore-version", version.name, "--yes")
             done()
@@ -506,6 +515,8 @@ fun VersionsSheet(slug: String, onDismiss: () -> Unit, done: suspend () -> Unit)
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             problem = e.said
+        } finally {
+            working = false
         }
     }
 
@@ -523,7 +534,7 @@ fun VersionsSheet(slug: String, onDismiss: () -> Unit, done: suspend () -> Unit)
                 }
                 items(versions, key = { it.id }) { version ->
                     PaperRow {
-                        Pressable({ restoring = version }) {
+                        Pressable({ restoring = version }, enabled = !working) {
                             Row(
                                 Modifier.fillMaxWidth().padding(vertical = 12.dp),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
@@ -540,6 +551,7 @@ fun VersionsSheet(slug: String, onDismiss: () -> Unit, done: suspend () -> Unit)
                     }
                 }
             }
+            if (working) Busy(modifier = Modifier.align(Alignment.Center))
             if (loaded && versions.isEmpty()) {
                 EmptyNote(Symbols.clockArrowCirclepath, stringResource(R.string.no_earlier_versions_yet), room = Room.Part, modifier = Modifier.align(Alignment.Center))
             }

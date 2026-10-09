@@ -22,12 +22,18 @@ import javax.crypto.spec.GCMParameterSpec
  */
 data class ServerSettings(val host: String, val port: Int, val user: String, val keyAccount: String) {
     companion object {
-        fun load(from: Notes = BlogShelf.notes): ServerSettings? {
+        /**
+         * `only`: the blog the call is meant for. Another one open by now
+         * is nothing to connect to -- what was written for one blog is
+         * never sent to the next.
+         */
+        fun load(from: Notes = BlogShelf.notes, only: String? = null): ServerSettings? {
             val blog = BlogShelf.current(from) ?: return null
-            val host = blog.host.trim()
+            if (only != null && blog.id != only) return null
+            val (host, port) = blog.reached
             val user = blog.user.trim()
             if (host.isEmpty() || user.isEmpty()) return null
-            return ServerSettings(host, if (blog.port == 0) 22 else blog.port, user, blog.keyAccount)
+            return ServerSettings(host, port, user, blog.keyAccount)
         }
     }
 }

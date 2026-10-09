@@ -585,4 +585,49 @@ class PostTest {
         assertTrue(said.contains(", 1 "))
         assertTrue(said.endsWith(", 3 kB"))
     }
+
+    /**
+     * A shot's own mark is found whatever its description holds: with a
+     * bracket in it, "Remove" left the mark in the text and the next
+     * picture took the removed one's words.
+     */
+    @Test
+    fun aShotsMarkIsFoundWithBracketsInItsDescription() {
+        val shot = Shot("photo-1.jpg", ByteArray(0), 1, 1, "Pes [nas] v trave")
+        val text = "Before.\n\n${shot.mark}\n\n![other](photo-2.jpg)\n"
+        val found = shot.markPattern.findAll(text).toList()
+        assertEquals(1, found.size)
+        assertEquals(shot.mark, found.first().value)
+        // Two marks on one line stay two: the first does not run into the second.
+        assertEquals("![b](photo-1.jpg)", shot.markPattern.find("![a](photo-2.jpg) ![b](photo-1.jpg)")?.value)
+    }
+
+    /**
+     * A title that only begins and ends with a bracket or a quote of its
+     * own goes as it was typed; one wrapped whole is unwrapped, as before.
+     */
+    @Test
+    fun aTitleWithBracketsOrQuotesOfItsOwnGoesAsTyped() {
+        assertEquals("---\ntitle: [foto] Sobota [Brno]\n---\n\n", Markdown.frontMatter("[foto] Sobota [Brno]", ""))
+        assertEquals("---\ntitle: \"Ano\" a \"ne\"\n---\n\n", Markdown.frontMatter("\"Ano\" a \"ne\"", ""))
+        assertEquals("---\ntitle: Sobota\n---\n\n", Markdown.frontMatter("[Sobota]", ""))
+        assertEquals("---\ntitle: Sobota\n---\n\n", Markdown.frontMatter("'Sobota'", ""))
+    }
+
+    /**
+     * The editor is handed the text the post's screen read only where it
+     * was read in this visit and is this post's under this name: a text
+     * read before the screen was left and come back to may be an old one.
+     */
+    @Test
+    fun theEditorIsHandedOnlyWhatWasJustRead() {
+        val entry = app.blogsh.android.model.EditEntry(
+            slug = "venku", title = "Venku", date = "2026-10-01T10:00:00+02:00", scheduled = false, editable = true,
+            text = "text", media = emptyList(), preview = "/draft/x/", base = "K1",
+        )
+        assertEquals("K1", app.blogsh.android.ui.screens.handedOn(entry, fresh = true, slug = "venku")?.base)
+        assertNull(app.blogsh.android.ui.screens.handedOn(entry, fresh = false, slug = "venku"))
+        assertNull(app.blogsh.android.ui.screens.handedOn(entry, fresh = true, slug = "outside"))
+        assertNull(app.blogsh.android.ui.screens.handedOn(null, fresh = true, slug = "venku"))
+    }
 }

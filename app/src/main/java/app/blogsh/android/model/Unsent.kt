@@ -32,6 +32,12 @@ data class Unsent(
      * sending it: see `Receipt`.
      */
     val receipt: String? = null,
+    /**
+     * The post that waited on the device and was taken back into the
+     * form: its pictures are still in its files (`Waiting.held`), and the
+     * form finds them there again.
+     */
+    val from: String? = null,
 ) {
     /** Nothing worth keeping: spaces and line breaks are not writing. */
     val isEmpty: Boolean get() = listOf(title, tags, text).all { it.isBlank() }
@@ -52,6 +58,13 @@ data class Unsent(
     val namesPictures: Boolean get() = Regex("""!{1,2}\[[^\n]*\]\(""" + Kept.NAME + Kept.CAPTION + """\)""").containsMatchIn(text)
 
     /**
+     * The text names a picture or a video that is not among these: one
+     * the form does not have back.
+     */
+    fun namesPictures(beyond: List<String>): Boolean =
+        Regex("""!{1,2}\[[^\n]*\]\((""" + Kept.NAME + ")" + Kept.CAPTION + """\)""").findAll(text).any { it.groupValues[1] !in beyond }
+
+    /**
      * Keeps it for this blog -- or, emptied, keeps nothing: a form that
      * was sent, or cleared by hand, leaves no post behind to bring back.
      * What is kept already, word for word, is left as it is and keeps
@@ -63,7 +76,7 @@ data class Unsent(
             return
         }
         val kept = kept(blog, notes)
-        if (kept != null && kept.title == title && kept.tags == tags && kept.text == text && kept.receipt == receipt) return
+        if (kept != null && kept.title == title && kept.tags == tags && kept.text == text && kept.receipt == receipt && kept.from == from) return
         notes.write(key(blog), EngineJson.encodeToString(serializer(), this))
     }
 

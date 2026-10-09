@@ -228,6 +228,117 @@ class WaitingTest {
 }
 
 /**
+ * A post taken back into the form: its pictures stay in its files for as
+ * long as the form has it. Before, they were deleted on the way in and
+ * lived in the form's memory alone.
+ */
+class HeldTest {
+    /**
+     * Held, a post is not listed and so not sent -- and is all there:
+     * its words and its pictures, to be found again by its name.
+     */
+    @Test
+    fun aHeldPostIsNotListedAndKeepsItsPictures() = room { home ->
+        val blog = id()
+        val post = Waiting(title = "Hello", text = "![x](photo.jpg)", at = moment(0))
+        WaitingRoom.put(post, listOf(Shot("photo.jpg", byteArrayOf(1, 2, 3), 4, 3)), blog, home)
+        WaitingRoom.put(Waiting(title = "Other", at = moment(1)), emptyList(), blog, home)
+
+        WaitingRoom.hold(post.id, blog, home)
+
+        assertEquals(listOf("Other"), WaitingRoom.all(blog, home).map { it.title })
+        val held = checkNotNull(WaitingRoom.one(post.id, blog, home))
+        assertEquals(true, held.held)
+        assertEquals("Hello", held.title)
+        val shots = WaitingRoom.shots(held, blog, home)
+        assertEquals(listOf("photo.jpg"), shots.map { it.name })
+        assertArrayEquals(byteArrayOf(1, 2, 3), shots.first().data)
+    }
+
+    /** A held post the form no longer has waits again; the one it has stays held. */
+    @Test
+    fun aHeldPostNobodyHoldsWaitsAgain() = room { home ->
+        val blog = id()
+        val other = id()
+        val one = Waiting(title = "one", at = moment(0))
+        val two = Waiting(title = "two", at = moment(1))
+        WaitingRoom.put(one, emptyList(), blog, home)
+        WaitingRoom.put(two, emptyList(), blog, home)
+        WaitingRoom.put(Waiting(title = "elsewhere", at = moment(2)), emptyList(), other, home)
+        WaitingRoom.hold(one.id, blog, home)
+        WaitingRoom.hold(two.id, blog, home)
+
+        assertTrue(WaitingRoom.release(blog, except = two.id, home = home))
+        assertEquals(listOf("one"), WaitingRoom.all(blog, home).map { it.title })
+        assertEquals(true, WaitingRoom.one(two.id, blog, home)?.held)
+
+        assertTrue(WaitingRoom.release(blog, home = home))
+        assertEquals(listOf("one", "two"), WaitingRoom.all(blog, home).map { it.title })
+        assertEquals(listOf("elsewhere"), WaitingRoom.all(other, home).map { it.title })
+        // Nothing held: nothing to let go of.
+        assertFalse(WaitingRoom.release(blog, home = home))
+    }
+
+    /** Sent, put by anew or thrown away by the form, the held post goes with its files. */
+    @Test
+    fun aHeldPostGoesWhenTheFormIsDoneWithIt() = room { home ->
+        val blog = id()
+        val post = Waiting(title = "one", at = moment(0))
+        WaitingRoom.put(post, listOf(Shot("a.jpg", byteArrayOf(1), 1, 1)), blog, home)
+        WaitingRoom.hold(post.id, blog, home)
+        WaitingRoom.remove(post.id, blog, home)
+        assertNull(WaitingRoom.one(post.id, blog, home))
+        assertFalse(File(File(home, blog), post.id).exists())
+    }
+
+    /**
+     * The writing in the form remembers which post it was taken back
+     * from, from one opening of the form to the next.
+     */
+    @Test
+    fun theWritingRemembersThePostItCameFrom() {
+        val notes = MemoryNotes()
+        val blog = id()
+        val post = id()
+        Unsent("T", "", "x", moment(0), from = post).keep(blog, notes)
+        assertEquals(post, Unsent.kept(blog, notes)?.from)
+        // The same words under another origin are written down again.
+        Unsent("T", "", "x", moment(5), from = null).keep(blog, notes)
+        assertNull(Unsent.kept(blog, notes)?.from)
+    }
+
+    /** "Its pictures were not kept" is said only of pictures the form does not have back. */
+    @Test
+    fun picturesTheFormHasBackAreNotSaidToBeMissing() {
+        val kept = Unsent(text = "![a](photo-1.jpg \"One.\")\n\n![b](photo-2.jpg)")
+        assertFalse(kept.namesPictures(beyond = listOf("photo-1.jpg", "photo-2.jpg")))
+        assertTrue(kept.namesPictures(beyond = listOf("photo-1.jpg")))
+        assertTrue(kept.namesPictures(beyond = emptyList()))
+        assertFalse(Unsent(text = "no pictures").namesPictures(beyond = emptyList()))
+    }
+
+    /** A held post is not on its way out: the run that sends what waits passes it by. */
+    @Test
+    fun aHeldPostIsNotSent() = room { home ->
+        runBlocking {
+            val blog = id()
+            val got = mutableListOf<List<String>>()
+            val held = Waiting(title = "held", at = moment(0))
+            WaitingRoom.put(held, emptyList(), blog, home)
+            WaitingRoom.put(Waiting(title = "waits", at = moment(1)), emptyList(), blog, home)
+            WaitingRoom.hold(held.id, blog, home)
+            val outbox = Outbox({ home }, { blog }) { files, _ ->
+                got.add(files.map { it.name })
+                answer("a-draft")
+            }
+            assertEquals(1, outbox.sendAll(blog))
+            assertEquals(listOf(listOf("waits.md")), got)
+            assertEquals("held", WaitingRoom.one(held.id, blog, home)?.title)
+        }
+    }
+}
+
+/**
  * Posts on their way from the device to the blog. A mistake here is a
  * post sent twice, sent to the wrong blog, or lost on the way.
  */

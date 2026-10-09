@@ -14,6 +14,7 @@ import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.BuildStamp
 import app.blogsh.android.model.Colouring
+import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.Now
@@ -51,6 +52,7 @@ import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -253,6 +255,47 @@ class ShotsTest(private val look: Look) {
     fun newPostWithASilentServer() {
         silence()
         shot("new-post-offline", MenuEntry.Add) { ComposeScreen() }
+    }
+
+    /**
+     * A post that waited, taken back into the form: the form has its
+     * picture, the post is held with its files -- not listed, not gone --
+     * and the writing remembers where it came from.
+     */
+    @Test
+    fun newPostTakenBackFromThoseThatWait() {
+        silence()
+        Desk.hand(WaitingRoom.all(BLOG).first { it.id == "one" })
+        shot("new-post-taken-back", MenuEntry.Add) { ComposeScreen() }
+        assertEquals(true, WaitingRoom.one("one", BLOG)?.held)
+        assertEquals(listOf("two"), WaitingRoom.all(BLOG).map { it.id })
+        assertEquals("one", Unsent.kept(BLOG, BlogShelf.notes)?.from)
+        assertEquals("0123456789abcdef", Unsent.kept(BLOG, BlogShelf.notes)?.receipt)
+    }
+
+    /**
+     * The same form opened again after the app was stopped: the picture
+     * is back from the post's files, and nothing is said to be missing.
+     */
+    @Test
+    fun newPostBroughtBackWithItsPictures() {
+        silence()
+        WaitingRoom.hold("one", BLOG)
+        Unsent("Ráno u rybníka", "", "Mlha.\n\n![Hladina](photo-1.jpg)\n", noon.minusSeconds(3600).toEpochMilli(), "0123456789abcdef", from = "one")
+            .keep(BLOG, BlogShelf.notes)
+        shot("new-post-back-with-pictures", MenuEntry.Add) { ComposeScreen() }
+        assertEquals(true, WaitingRoom.one("one", BLOG)?.held)
+        assertEquals("one", Unsent.kept(BLOG, BlogShelf.notes)?.from)
+    }
+
+    /** A held post no writing holds any more waits again once the first screen is asked for. */
+    @Test
+    fun aHeldPostNobodyHoldsIsBackOnTheFirstScreen() {
+        silence()
+        WaitingRoom.hold("one", BLOG)
+        assertEquals(listOf("two"), WaitingRoom.all(BLOG).map { it.id })
+        kotlinx.coroutines.runBlocking { HomeState().load() }
+        assertEquals(listOf("one", "two"), WaitingRoom.all(BLOG).map { it.id })
     }
 
     @Test

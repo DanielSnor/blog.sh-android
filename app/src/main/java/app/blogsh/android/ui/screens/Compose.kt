@@ -57,6 +57,7 @@ import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.Kept
 import app.blogsh.android.model.Markdown
 import app.blogsh.android.model.Media
+import app.blogsh.android.model.Now
 import app.blogsh.android.model.Preview
 import app.blogsh.android.model.Reach
 import app.blogsh.android.model.Receipt
@@ -122,18 +123,29 @@ fun ComposeScreen() {
     // Once, when the form opens: what was written for this blog and not
     // sent is put back.
     // A post that waited to be sent and was taken back to be written
-    // on: it is the form's now, pictures and all, and waits no longer.
+    // on: it is the form's now and waits no longer -- but its files stay
+    // where they are, held, for as long as the form has it. The form
+    // keeps pictures in memory only; left, or stopped with the app, it
+    // would take the post's pictures along.
     val handed = remember { if (blog == null) null else Desk.takeHanded()?.let { it to WaitingRoom.shots(it, blog) } }
     val kept = remember {
         if (handed != null) null
-        else blog?.let { Unsent.kept(it, BlogShelf.notes) ?: Unsent.carriedOver(it, BlogShelf.notes, System.currentTimeMillis()) }
+        else blog?.let { Unsent.kept(it, BlogShelf.notes) ?: Unsent.carriedOver(it, BlogShelf.notes, Now.instant().toEpochMilli()) }
     }
     var title by remember { mutableStateOf(handed?.first?.title ?: kept?.title ?: "") }
     var tags by remember { mutableStateOf(handed?.first?.tags ?: kept?.tags ?: "") }
     val state = remember { EditorState(handed?.first?.text ?: kept?.text ?: "") }
     // What was brought back when the form opened, for the line that says so.
     var broughtBack by remember { mutableStateOf(kept) }
-    var shots by remember { mutableStateOf(handed?.second ?: emptyList()) }
+    // What was taken back from the device has its pictures there still.
+    val keptHeld = remember { if (blog == null) null else kept?.from?.let { WaitingRoom.one(it, blog) } }
+    // The post that waited on the device and was taken back into this
+    // form: its files are held until the form has sent it, put it by
+    // again or been emptied.
+    var from by remember { mutableStateOf(handed?.first?.id ?: keptHeld?.id) }
+    var shots by remember {
+        mutableStateOf(handed?.second ?: (if (blog != null && keptHeld != null) WaitingRoom.shots(keptHeld, blog) else emptyList()))
+    }
     // The name this post's delivery goes under, however often it is
     // tried: kept with the writing, and another for the next post.
     var receipt by remember { mutableStateOf((handed?.first?.receipt ?: kept?.receipt)?.takeIf { Receipt.isOne(it) } ?: Receipt.mint()) }
@@ -210,8 +222,18 @@ fun ComposeScreen() {
 
     // ---- Sending
 
-    /** The form is the next post's: empty, and under a name of its own. */
+    /**
+     * The form is the next post's: empty, and under a name of its own.
+     * What it held of a post taken back from the device goes with it --
+     * the post was sent, or put by anew, or thrown away here.
+     */
     fun startEmpty() {
+        val held = from
+        if (held != null && blog != null) {
+            WaitingRoom.remove(held, blog)
+            Desk.changed()
+        }
+        from = null
         title = ""
         tags = ""
         state.set("")
@@ -228,6 +250,7 @@ fun ComposeScreen() {
         Desk.began(to)
         var came = false
         val going = Unsent(title, tags, state.text)
+        val held = from
         try {
             problem = null
             val body = state.text
@@ -240,6 +263,8 @@ fun ComposeScreen() {
             // Forgotten here, not by the form's own noticing that it was
             // emptied: a form left while its post was going notices nothing.
             Unsent.forget(to, going, BlogShelf.notes)
+            // ...and so are the files it was taken back from: it has arrived.
+            held?.let { WaitingRoom.remove(it, to) }
             Desk.changed()
             came = true
             // The form is the next post's now, and nothing is left to bring back.
@@ -265,7 +290,7 @@ fun ComposeScreen() {
         problem = null
         made = null
         try {
-            val post = Waiting(title = title, tags = tags, text = state.text, at = System.currentTimeMillis(), receipt = receipt)
+            val post = Waiting(title = title, tags = tags, text = state.text, at = Now.instant().toEpochMilli(), receipt = receipt)
             val going = Kept.sent(shots, state.text)
             withContext(Dispatchers.IO) { WaitingRoom.put(post, going, to) }
             startEmpty()
@@ -281,13 +306,17 @@ fun ComposeScreen() {
     }
 
     // What the form took back from the posts that waited is the post
-    // being written from here on, and waits no longer.
+    // being written from here on: held, and remembered by the writing.
+    // Every other held post waits again -- with nothing being written,
+    // no post is the form's to hold.
     LaunchedEffect(Unit) {
-        val post = handed?.first ?: return@LaunchedEffect
         if (blog == null) return@LaunchedEffect
-        Unsent(title, tags, state.text, System.currentTimeMillis(), receipt).keep(blog, BlogShelf.notes)
-        WaitingRoom.remove(post.id, blog)
-        Desk.changed()
+        val post = handed?.first
+        if (post != null) {
+            WaitingRoom.hold(post.id, blog)
+            Unsent(title, tags, state.text, Now.instant().toEpochMilli(), receipt, from).keep(blog, BlogShelf.notes)
+        }
+        if (WaitingRoom.release(blog, except = from) || post != null) Desk.changed()
     }
 
     // The post this form opened with has arrived, sent from a form
@@ -303,7 +332,7 @@ fun ComposeScreen() {
     // was only opened was not written in.
     LaunchedEffect(Unit) {
         snapshotFlow { Triple(title, tags, state.text) }.drop(1).collect { (title, tags, text) ->
-            blog?.let { Unsent(title, tags, text, System.currentTimeMillis(), receipt).keep(it, BlogShelf.notes) }
+            blog?.let { Unsent(title, tags, text, Now.instant().toEpochMilli(), receipt, from).keep(it, BlogShelf.notes) }
             Desk.changed()
         }
     }
@@ -321,7 +350,7 @@ fun ComposeScreen() {
             // Said, because it was not asked for: the form opens with
             // something in it that was not typed just now.
             val words = stringResource(R.string.back_in_the_form_what_was_written, RowDate.spoken(Instant.ofEpochMilli(back.at))) +
-                if (back.namesPictures) " " + stringResource(R.string.its_pictures_were_not_kept_add_them) else ""
+                if (back.namesPictures(beyond = shots.map { it.name })) " " + stringResource(R.string.its_pictures_were_not_kept_add_them) else ""
             BroughtBack(words, stringResource(R.string.start_with_an_empty_form)) { startEmpty() }
         }
         Plate(Modifier.gap(if (broughtBack != null) 14 else 0)) {
@@ -363,7 +392,7 @@ fun ComposeScreen() {
                     key(shot.id) {
                         ShotCard(
                             shot, onShot = { describe(it) },
-                            inText = text.contains("(${shot.name})"),
+                            inText = Kept.named(shot.name, text),
                             insert = { insert(shot) }, remove = { remove(shot) }, look = { looking = shot.id },
                         )
                     }

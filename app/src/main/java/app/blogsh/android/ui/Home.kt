@@ -81,6 +81,7 @@ import app.blogsh.android.model.Reach
 import app.blogsh.android.model.Spoken
 import app.blogsh.android.model.StatsAnswer
 import app.blogsh.android.model.TagStore
+import app.blogsh.android.model.Unsent
 import app.blogsh.android.model.VersionAnswer
 import app.blogsh.android.model.Waiting
 import app.blogsh.android.model.WaitingRoom
@@ -170,6 +171,9 @@ class HomeState {
     suspend fun load() {
         val asked = Blogs.currentId
         loading = true
+        // A post held by a form that no longer has it waits again: seen,
+        // and sent with the rest.
+        if (asked != null && WaitingRoom.release(asked, except = Unsent.kept(asked, BlogShelf.notes)?.from)) Desk.changed()
         try {
             val answers = Engine.batch(listOf(listOf("version"), listOf("queue"), listOf("list", "--drafts")))
             // Another blog was opened while this one was answering.

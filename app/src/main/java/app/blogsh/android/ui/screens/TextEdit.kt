@@ -312,7 +312,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                             key(shot.id) {
                                 ShotCard(
                                     shot, onShot = { describe(it) },
-                                    inText = text.contains("(${shot.name})"),
+                                    inText = Kept.named(shot.name, text),
                                     insert = { insert(shot) }, remove = { shots = shots.filter { it.id != shot.id } }, look = { looking = shot.id },
                                 )
                             }

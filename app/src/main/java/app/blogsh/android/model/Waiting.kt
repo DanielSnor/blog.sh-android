@@ -33,6 +33,14 @@ data class Waiting(
      * again the next time, and the blog knows it for the one it has.
      */
     val receipt: String? = null,
+    /**
+     * Taken back into the form to be written on. It waits for nothing
+     * then -- it is not listed and not sent -- but its files stay where
+     * they are until the form has sent it, put it by again or been
+     * emptied: the form holds pictures in memory only, and a form left,
+     * or an app stopped, would otherwise take them along.
+     */
+    val held: Boolean? = null,
 ) {
     /** One picture or video, as the post names it. */
     @Serializable
@@ -99,10 +107,45 @@ object WaitingRoom {
 
     /**
      * What waits for a blog, in the order it was written: that is the
-     * order it is sent in.
+     * order it is sent in. A post held by the form is not among them.
      */
-    fun all(blog: String, home: File = this.home): List<Waiting> =
+    fun all(blog: String, home: File = this.home): List<Waiting> = everything(blog, home).filter { it.held != true }
+
+    /** Every post kept for a blog, the held ones too. */
+    private fun everything(blog: String, home: File): List<Waiting> =
         (room(blog, home).listFiles() ?: emptyArray()).mapNotNull { read(it) }.sortedWith(compareBy<Waiting> { it.at }.thenBy { it.id })
+
+    /** One post by its name, held or not. */
+    fun one(id: String, blog: String, home: File = this.home): Waiting? = read(place(id, blog, home))
+
+    /** The post was taken back into the form: held from here on. */
+    fun hold(id: String, blog: String, home: File = this.home) {
+        mark(id, blog, home) { it.copy(held = true) }
+    }
+
+    /**
+     * Every held post of a blog waits again -- except the one the form
+     * still has. A held post nobody holds any more (the form's words
+     * were cleared, the app was stopped at the wrong moment) would
+     * otherwise be on the device and nowhere to be seen. Whether any did.
+     */
+    fun release(blog: String, except: String? = null, home: File = this.home): Boolean {
+        var any = false
+        for (post in everything(blog, home)) {
+            if (post.held != true || post.id == except) continue
+            mark(post.id, blog, home) { it.copy(held = null) }
+            any = true
+        }
+        return any
+    }
+
+    private fun mark(id: String, blog: String, home: File, change: (Waiting) -> Waiting) {
+        val place = place(id, blog, home)
+        val post = read(place) ?: return
+        val changed = change(post)
+        if (changed == post) return
+        runCatching { write(EngineJson.encodeToString(Waiting.serializer(), changed).toByteArray(Charsets.UTF_8), File(place, "post.json")) }
+    }
 
     /**
      * The post as a delivery: its pictures first and the markdown last,
@@ -135,10 +178,7 @@ object WaitingRoom {
 
     /** What the blog said to a post it would not take, kept with the post. */
     fun note(problem: String?, id: String, blog: String, home: File = this.home) {
-        val place = place(id, blog, home)
-        val post = read(place) ?: return
-        if (post.problem == problem) return
-        runCatching { write(EngineJson.encodeToString(Waiting.serializer(), post.copy(problem = problem)).toByteArray(Charsets.UTF_8), File(place, "post.json")) }
+        mark(id, blog, home) { it.copy(problem = problem) }
     }
 
     /** Sent, or thrown away: it waits no longer. */

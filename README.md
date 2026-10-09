@@ -165,7 +165,11 @@ when it was written, each delivery under a name of its own -- so a post
 the server took just before the connection broke is not written twice.
 A post the blog would not take stays, with the blog's reason beside it.
 From the list a post can be sent by hand, taken back into the form to be
-written on, or thrown away.
+written on, or thrown away. One taken back is held, not deleted: it is
+not listed and not sent, but its pictures stay in its files until the
+form has sent the post, put it by anew or been emptied -- a form left,
+or an app stopped, finds them there again. A held post no form has any
+more waits again.
 
 The queue of a blog on which nothing sends the queue out says so at its
 head, and a post there whose time has come says it waits for a hand, not
@@ -392,7 +396,7 @@ again; the posts that wait on the device -- put by, listed, delivered
 under their receipts -- and their sending: once, in turn, to the blog
 they were written for; a build owed to a blog that is not the open one.
 The screens are drawn on the desk and compared with how they were last
-looked at: nineteen of them -- the first screen, the lists, a post, the
+looked at: twenty-one of them -- the first screen, the lists, a post, the
 forms, the sheets, a blog out of reach -- in seven looks: a phone in each of the three
 languages, by night, with the largest type, and a tablet on its side and
 upright. What the engine would answer comes from a test blog's own

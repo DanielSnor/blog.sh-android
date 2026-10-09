@@ -602,6 +602,37 @@ class OutboxTest {
     }
 }
 
+/** What the blog says to a delivery it did not take and has nothing against. */
+class OutboxNotNowTest {
+    /**
+     * A delivery the blog gave up on -- it stalled on the way, time ran
+     * out -- is not a no to the post either: it waits and goes again.
+     * A real refusal is still kept with its reason.
+     */
+    @Test
+    fun aDeliveryThatTimedOutLeavesThePostWaiting() = room { home ->
+        runBlocking {
+            val id = id()
+            val got = mutableListOf<List<String>>()
+            WaitingRoom.put(Waiting(title = "one", at = moment(0)), emptyList(), id, home)
+            var says = "timeout"
+            val outbox = Outbox({ home }, { id }) { files, _ ->
+                got.add(files.map { it.name })
+                if (says.isNotEmpty()) throw EngineError.Refused(Refusal(false, says, "Said by the blog."))
+                answer("one")
+            }
+
+            assertEquals(0, outbox.sendAll(id))
+            assertEquals(listOf<String?>(null), WaitingRoom.all(id, home).map { it.problem })
+            // What is a no stays a no, with its words.
+            says = "too_large"
+            assertEquals(0, outbox.sendAll(id))
+            assertEquals(listOf<String?>("Said by the blog."), WaitingRoom.all(id, home).map { it.problem })
+            assertEquals(2, got.size)
+        }
+    }
+}
+
 /** Whether a blog is within reach: what the engine's calls said of its server. */
 class ReachTest {
     private fun blog(host: String, port: Int = 22) = Blog(host = host, port = port, user = "dan")

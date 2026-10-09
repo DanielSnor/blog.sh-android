@@ -54,10 +54,11 @@ class Outbox(
         } catch (e: Throwable) {
             if (e.isCalledOff) return Outcome.Waits
             if (e is EngineError.Unreachable) return Outcome.Waits
-            // The blog is taking another delivery, or building: nothing of
-            // this one was kept, and it is not a no to the post -- it waits,
-            // and goes with the next asking.
-            if (e is EngineError.Refused && e.refusal.error == "busy") return Outcome.Waits
+            // The blog is taking another delivery, or building, or gave up
+            // on a delivery that stalled on the way: nothing of this one
+            // was kept, and it is not a no to the post -- it waits, and
+            // goes with the next asking.
+            if (e is EngineError.Refused && e.refusal.error in notNow) return Outcome.Waits
             val words = e.said
             WaitingRoom.note(words, post.id, blog, home())
             return Outcome.Refused(words)
@@ -100,5 +101,11 @@ class Outbox(
     companion object {
         /** The one the app has. */
         val shared: Outbox by lazy { Outbox() }
+
+        /**
+         * What the blog says when it has not taken a delivery and has
+         * nothing against the post: try again later.
+         */
+        val notNow = setOf("busy", "timeout")
     }
 }

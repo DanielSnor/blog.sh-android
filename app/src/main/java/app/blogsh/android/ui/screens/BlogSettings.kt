@@ -86,11 +86,13 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
     var probe by remember { mutableStateOf<Probe>(Probe.Idle) }
     var confirmingNewKey by remember { mutableStateOf(false) }
     var confirmingRemoval by remember { mutableStateOf(false) }
+    // A new code is being read for this blog.
+    var pairing by remember { mutableStateOf(false) }
     // The server's remembered key is read again after it is forgotten or first seen.
     var keyTick by remember { mutableStateOf(0) }
     val blog = Blogs.current
 
-    LaunchedEffect(Blogs.currentId) {
+    LaunchedEffect(Blogs.currentId, blog?.keyAccount) {
         publicKey = Blogs.current?.let { runCatching { KeyStore.publicKeyLine(it.keyAccount) }.getOrNull() }
         probe = Probe.Idle
     }
@@ -114,6 +116,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
     val host = blog?.host ?: ""
     val user = blog?.user ?: ""
     val port = blog?.port ?: 22
+    val paired = blog?.pairedAs
 
     Dialog(onDismissRequest = onBack, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         SheetBars()
@@ -138,14 +141,35 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
                     mono = true, keyboard = plain.copy(keyboardType = KeyboardType.Number),
                 )
             }
-            // Where on it the blog is, and what it is entered through.
-            row { FieldRow(stringResource(R.string.path), blog?.path ?: "", { v -> set { it.copy(path = v) } }, prompt = "/home/you/blog", mono = true, keyboard = plain) }
-            row { FieldRow(stringResource(R.string.through), blog?.through ?: "", { v -> set { it.copy(through = v) } }, prompt = "sudo docker exec -i blog", mono = true, keyboard = plain) }
+            // Where on it the blog is, and what it is entered through --
+            // for a blog set up by hand. One a code let in has both in the
+            // line the server wrote for it: empty fields with an example in
+            // them read as that blog's own, and are not shown.
+            if (paired == null) {
+                row { FieldRow(stringResource(R.string.path), blog?.path ?: "", { v -> set { it.copy(path = v) } }, prompt = "/home/you/blog", mono = true, keyboard = plain) }
+                row { FieldRow(stringResource(R.string.through), blog?.through ?: "", { v -> set { it.copy(through = v) } }, prompt = "sudo docker exec -i blog", mono = true, keyboard = plain) }
+            }
         }
+        val key = publicKey
+        if (paired != null) {
+            // How it was let in, under which name -- what the server is told
+            // to take this device off -- and the way to be let in again:
+            // the blog moved, or its machine has another address.
+            SectionLabel(stringResource(R.string.android_paired_section))
+            Plate {
+                row {
+                    Text(
+                        if (paired.isEmpty()) stringResource(R.string.android_paired_plain) else stringResource(R.string.android_paired_as, paired),
+                        color = Theme.ink, style = ui(15f),
+                    )
+                }
+                row { Command(stringResource(R.string.android_pair_again), Symbols.qrcodeViewfinder) { pairing = true } }
+            }
+            Hint(stringResource(R.string.android_paired_hint))
+        } else {
         Hint(stringResource(R.string.the_line_for_the_server_s_ssh))
 
         SectionLabel(stringResource(R.string.key))
-        val key = publicKey
         if (key != null) {
             // No line until it can be a true one: a made-up path in it is a
             // line somebody copies.
@@ -173,6 +197,11 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
             Plate { row { Command(stringResource(R.string.make_the_app_s_key), Symbols.key) { makeKey() } } }
         }
         Hint(stringResource(R.string.the_key_is_made_on_this_device))
+        // A blog set up by hand can be let in by a code as well.
+        Plate(Modifier.gap(10)) {
+            row { Command(stringResource(R.string.android_pair_this), Symbols.qrcodeViewfinder) { pairing = true } }
+        }
+        }
 
         SectionLabel(stringResource(R.string.connection))
         PrimaryButton(
@@ -245,6 +274,13 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
         }
     }
 
+    if (pairing && blog != null) {
+        AddBlogSheet(into = blog, onBack = { pairing = false }, onDone = {
+            pairing = false
+            probe = Probe.Idle
+            keyTick += 1
+        })
+    }
     if (confirmingNewKey) {
         Asks(
             stringResource(R.string.make_a_new_key_the_server_will),

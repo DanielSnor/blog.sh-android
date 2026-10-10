@@ -35,6 +35,7 @@ import app.blogsh.android.ui.Nav
 import app.blogsh.android.ui.NavHost
 import app.blogsh.android.ui.screens.AddBlogSheet
 import app.blogsh.android.ui.screens.ArchiveScreen
+import app.blogsh.android.ui.screens.BlogSettingsSheet
 import app.blogsh.android.ui.screens.BlogsSheet
 import app.blogsh.android.ui.screens.ComposeScreen
 import app.blogsh.android.ui.screens.Diagnosis
@@ -348,6 +349,23 @@ class ShotsTest(private val look: Look) {
 
     @Test
     fun blogs() = shot("blogs", over = { BlogsSheet(onDismiss = {}) })
+
+    /** The open blog, as one a code let in: where it is, how it was let in, and nothing of a line to compose. */
+    private fun paired() {
+        Blogs.update { it.copy(pairedAs = "motorola edge 70 fusion") }
+    }
+
+    @Test
+    fun settingsOfABlogACodeLetIn() {
+        paired()
+        shot("blog-settings-paired", over = { BlogSettingsSheet(onBack = {}, onDone = {}) })
+    }
+
+    @Test
+    fun aBlogLetInAgain() {
+        paired()
+        shot("pair-again", over = { AddBlogSheet(into = Blogs.current, onBack = {}, onDone = {}) })
+    }
 
     @Test
     fun addBlogWithACode() = shot(

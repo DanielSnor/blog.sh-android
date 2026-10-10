@@ -167,8 +167,8 @@ sealed class PairingError : Exception() {
      */
     data class Unreachable(val said: String) : PairingError()
 
-    /** The engine said no for a reason of its own; its sentence. */
-    data class Refused(val words: String) : PairingError()
+    /** The engine said no for a reason of its own; its sentence, and the engine's word for the reason. */
+    data class Refused(val words: String, val error: String? = null) : PairingError()
 
     /** The app could not make or read its own key. */
     data object NoKey : PairingError()
@@ -187,7 +187,7 @@ sealed class PairingError : Exception() {
             if (said.ok) return said.device ?: ""
             when (said.error) {
                 "expired", "used", "unknown_code" -> throw Spent
-                else -> throw Refused(said.message ?: said.error ?: "")
+                else -> throw Refused(said.message ?: said.error ?: "", said.error)
             }
         }
     }
@@ -201,6 +201,29 @@ sealed class PairingError : Exception() {
 object Pairing {
     /** What a pairing came to: the device's name as the blog wrote it down, and the fingerprint of the server that answered. */
     class Handed(val device: String, val server: String)
+
+    /**
+     * Which key a blog hands in, and what came of it. A blog the app
+     * already has hands in the key it has: the server knows a device by
+     * its key, and writes the new line in place of the old -- a list of
+     * devices there stays a list of devices, not of attempts. Where that
+     * key stands on a line that is not the blog's own -- one somebody
+     * wrote by hand -- the server says so, and the blog is given a key
+     * of its own; a refusal uses nothing of the code up. A new blog has
+     * no key to hand in again.
+     *
+     * `own`: the name the blog's key is kept under, where it has one.
+     * `fresh`: makes a key and says the name it is kept under.
+     */
+    fun <T> withItsKey(own: String?, fresh: () -> String, hand: (account: String) -> T): Pair<String, T> {
+        if (own == null) return fresh().let { it to hand(it) }
+        return try {
+            own to hand(own)
+        } catch (e: PairingError.Refused) {
+            if (e.error != "key_in_use") throw e
+            fresh().let { it to hand(it) }
+        }
+    }
 
     /** Blocks; called off the main thread. */
     fun handIn(publicKey: String, name: String, code: PairingCode): Handed {

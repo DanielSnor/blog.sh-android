@@ -39,6 +39,20 @@ key the app lives on never leaves the phone, and the one that was on a
 screen opens nothing once it has been used. The camera is asked for
 only to read the code; refused, the line of text does the same.
 
+A blog that was let in by a code says so in its settings: where it is --
+the server, the account, the port, which can be changed there when the
+machine gets another address -- and under which name the server wrote
+this device down, which is what `./blog.sh pair --revoke` is told. The
+directory and the line for `authorized_keys` are not shown for it: they
+are the server's, written there by `pair`, and empty fields with an
+example in them read as the blog's own. **Pair again** reads a new code
+for the same blog: it is then where the code says -- another address,
+another machine -- and stays the blog it was, with what was written for
+it on the phone. The app hands in the key the blog already has, so the
+server writes the new line in place of the old; where that key stands on
+a line somebody wrote by hand, the blog is given a key of its own. A
+blog set up by hand can be connected with a code the same way.
+
 **By hand**, for a blog that lives in a container or a server whose
 `authorized_keys` somebody keeps themselves:
 
@@ -327,6 +341,9 @@ at once.
   title as its subject; there is no preview of the link in it.
 - **The blogs are put in another order from a row's menu** -- up, down --
   where iOS also lets a held row be dragged there.
+- **A blog let in by a code has settings of its own, and can be paired
+  again.** The iOS app shows every blog the fields of one set up by
+  hand, and a new code there adds a second blog beside the first.
 - **One icon.** An Android app cannot choose among icons the way an iOS
   one can, so the icon is one, whatever the open blog's accent is.
 - **The typewriter face** is Courier Prime, where iOS has the system's
@@ -396,7 +413,7 @@ again; the posts that wait on the device -- put by, listed, delivered
 under their receipts -- and their sending: once, in turn, to the blog
 they were written for; a build owed to a blog that is not the open one.
 The screens are drawn on the desk and compared with how they were last
-looked at: twenty-one of them -- the first screen, the lists, a post, the
+looked at: twenty-three of them -- the first screen, the lists, a post, the
 forms, the sheets, a blog out of reach -- in seven looks: a phone in each of the three
 languages, by night, with the largest type, and a tablet on its side and
 upright. What the engine would answer comes from a test blog's own

@@ -29,6 +29,14 @@ data class Blog(
     val through: String = "",
     /** The name its key is kept under. */
     val keyAccount: String = "blog-" + id.lowercase(),
+    /**
+     * Let in by a code (`./blog.sh pair`): the name the server wrote this
+     * device down under -- what `pair --revoke` is told there. Null for a
+     * blog set up by hand, and for one let in before this was kept.
+     * Where the blog is on the server, and what this device may run
+     * there, is then the server's line to say, not a field of this app.
+     */
+    val pairedAs: String? = null,
 
     // What it said last: `version --json`.
     val name: String = "",
@@ -229,6 +237,22 @@ class BlogList(
         val shifted = BlogShelf.shifted(all, id, by)
         if (shifted == all) return
         all = shifted
+        save()
+    }
+
+    /**
+     * A blog the app already has, let in again by a new code: it is where
+     * the code says now -- another address, another machine -- under the
+     * key that was handed in. It stays the same blog: its name, its
+     * numbers, and what was written for it on this device.
+     */
+    fun repaired(id: String, host: String, port: Int, user: String, keyAccount: String, device: String) {
+        val index = all.indexOfFirst { it.id == id }
+        if (index < 0) return
+        val blog = all[index].copy(host = host, port = port, user = user, keyAccount = keyAccount, pairedAs = device, path = "", through = "")
+        all = all.toMutableList().apply { this[index] = blog }
+        // The kept connection was opened to where the blog was.
+        hangUp()
         save()
     }
 

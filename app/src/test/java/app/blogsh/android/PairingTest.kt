@@ -2,6 +2,7 @@ package app.blogsh.android
 
 import app.blogsh.android.model.Blog
 import app.blogsh.android.model.BlogList
+import app.blogsh.android.model.Pairing
 import app.blogsh.android.model.PairingCode
 import app.blogsh.android.model.PairingError
 import org.junit.Assert.assertArrayEquals
@@ -176,7 +177,7 @@ class PairingTest {
     @Test
     fun anotherNoCarriesTheEnginesSentence() {
         assertEquals(
-            PairingError.Refused("That is not one ed25519 public key."),
+            PairingError.Refused("That is not one ed25519 public key.", "bad_key"),
             refusal("""{"ok": false, "error": "bad_key", "message": "That is not one ed25519 public key."}"""),
         )
         assertEquals(PairingError.Refused("bash: no such file"), refusal("bash: no such file\n"))
@@ -251,5 +252,70 @@ class PairingTest {
             assertTrue("a break at $at", same(runCatching { PairingCode(broken) }.getOrNull()))
         }
         assertTrue(same(runCatching { PairingCode("  \n" + text + "\n") }.getOrNull()))
+    }
+
+    // ---- A blog the app already has, let in again
+
+    private fun inUse() = PairingError.Refused("The key stands on another line.", "key_in_use")
+
+    /**
+     * A blog the app has hands in the key it has: the server knows a
+     * device by its key and writes the new line in place of the old.
+     */
+    @Test
+    fun aBlogHandsInTheKeyItHas() {
+        var made = 0
+        val handed = mutableListOf<String>()
+        val (account, answer) = Pairing.withItsKey(own = "blog-old", fresh = { made += 1; "blog-new" }) { name ->
+            handed.add(name)
+            "taken"
+        }
+        assertEquals("blog-old", account)
+        assertEquals("taken", answer)
+        assertEquals(listOf("blog-old"), handed)
+        assertEquals(0, made)
+    }
+
+    /**
+     * Where that key stands on a line that is not the blog's own -- one
+     * written by hand -- the blog is given a key of its own, and the same
+     * code takes it: a refusal uses nothing up.
+     */
+    @Test
+    fun aKeyOnALineOfSomebodyElsesIsReplacedByANewOne() {
+        val handed = mutableListOf<String>()
+        val (account, _) = Pairing.withItsKey(own = "blog-old", fresh = { "blog-new" }) { name ->
+            handed.add(name)
+            if (name == "blog-old") throw inUse()
+            "taken"
+        }
+        assertEquals("blog-new", account)
+        assertEquals(listOf("blog-old", "blog-new"), handed)
+    }
+
+    /** Any other no is the answer: no second key is made to try again with. */
+    @Test
+    fun anotherRefusalIsNotTriedAgain() {
+        var made = 0
+        val said = runCatching {
+            Pairing.withItsKey<String>(own = "blog-old", fresh = { made += 1; "blog-new" }) { throw PairingError.Refused("No.", "bad_key") }
+        }.exceptionOrNull()
+        assertEquals(PairingError.Refused("No.", "bad_key"), said)
+        assertEquals(0, made)
+        assertEquals(PairingError.Spent, runCatching { Pairing.withItsKey<String>("blog-old", { made += 1; "x" }) { throw PairingError.Spent } }.exceptionOrNull())
+        assertEquals(0, made)
+        // A new key the server will not take either is said, not tried a third time.
+        var tries = 0
+        assertEquals(inUse(), runCatching { Pairing.withItsKey<String>("blog-old", { "blog-new" }) { tries += 1; throw inUse() } }.exceptionOrNull())
+        assertEquals(2, tries)
+    }
+
+    /** A new blog has no key to hand in again: one is made for it. */
+    @Test
+    fun aNewBlogIsGivenAKey() {
+        var made = 0
+        val (account, _) = Pairing.withItsKey(own = null, fresh = { made += 1; "blog-new" }) { "taken" }
+        assertEquals("blog-new", account)
+        assertEquals(1, made)
     }
 }

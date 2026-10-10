@@ -181,4 +181,66 @@ class BlogsTest {
         assertEquals(blog.reached.second, settings?.port)
         assertEquals("hostkey.one.example:22", app.blogsh.android.model.TrustOnFirstUse.notesKey(blog.reached.first, blog.reached.second))
     }
+
+    /**
+     * A blog let in by a code remembers under which name the server
+     * wrote this device down; one written down before that was kept --
+     * or set up by hand -- has none.
+     */
+    @Test
+    fun aBlogRemembersThatACodeLetItIn() {
+        val notes = MemoryNotes()
+        val paired = Blog(host = "one.example", pairedAs = "Pixel 9")
+        val byHand = Blog(host = "two.example", path = "/home/me/blog")
+        BlogShelf.write(listOf(paired, byHand), paired.id, notes)
+        val (blogs, _) = BlogShelf.read(notes)
+        assertEquals("Pixel 9", blogs[0].pairedAs)
+        assertNull(blogs[1].pairedAs)
+        // Written down by an earlier build: the field is not there, and is none.
+        val earlier = EngineJson.decodeFromString(Blog.serializer(), "{\"id\":\"x\",\"host\":\"old.example\",\"user\":\"me\"}")
+        assertNull(earlier.pairedAs)
+    }
+
+    /**
+     * Let in again by a new code, a blog is where the code says and is
+     * still that blog: its name, its numbers, what was written for it on
+     * this device, and its place in the list.
+     */
+    @Test
+    fun aBlogLetInAgainIsTheSameBlogSomewhereElse() {
+        val notes = MemoryNotes()
+        var hungUp = 0
+        val list = BlogList(notes, hangUp = { hungUp += 1 }) {}
+        val first = Blog(host = "first.example", user = "me")
+        val moved = Blog(
+            host = "10.0.0.39", port = 22, user = "pavel", path = "/home/pavel/blog", through = "sudo docker exec -i blog", name = "pokusy",
+            facts = Facts(12, "2026", 128, 0.1, 18, 3, 1_200, 0, 0, 0, 0),
+        )
+        list.adopt(first)
+        list.adopt(moved)
+        app.blogsh.android.model.Unsent("Rozepsáno", "", "Text.", 1_791_400_000_000).keep(moved.id, notes)
+        list.select(first.id)
+
+        list.repaired(moved.id, "192.168.1.20", 2222, "pavel", "blog-new-key", "motorola edge")
+
+        val now = list.all[1]
+        assertEquals(moved.id, now.id)
+        assertEquals("192.168.1.20", now.host)
+        assertEquals(2222, now.port)
+        assertEquals("blog-new-key", now.keyAccount)
+        assertEquals("motorola edge", now.pairedAs)
+        // What a hand-made line was composed from is the server's to say now.
+        assertEquals("", now.path)
+        assertEquals("", now.through)
+        assertEquals("pokusy", now.name)
+        assertEquals(12, now.facts?.posts)
+        assertEquals(first.id, list.currentId)
+        assertEquals("Rozepsáno", app.blogsh.android.model.Unsent.kept(moved.id, notes)?.title)
+        assertEquals(1, hungUp)
+        // Written down: the next launch finds it where it is now.
+        assertEquals("192.168.1.20", BlogShelf.read(notes).first[1].host)
+        // A blog that is not there is nobody's to move.
+        list.repaired("nobody", "x", 1, "y", "z", "w")
+        assertEquals(2, list.all.size)
+    }
 }

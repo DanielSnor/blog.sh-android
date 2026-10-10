@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
@@ -59,7 +60,9 @@ import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.Typed
 import app.blogsh.android.ui.gap
+import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.ui
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
@@ -77,7 +80,7 @@ import kotlinx.coroutines.withContext
  * elsewhere. `onBack` leaves this screen; `onDone` closes what it stands in.
  */
 @Composable
-fun AddBlogSheet(initialCode: String = "", onBack: () -> Unit, onDone: () -> Unit) {
+fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Unit, onDone: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var text by remember { mutableStateOf(initialCode) }
@@ -119,26 +122,49 @@ fun AddBlogSheet(initialCode: String = "", onBack: () -> Unit, onDone: () -> Uni
     suspend fun connect(code: PairingCode) {
         connecting = true
         problem = null
-        val blog = Blog(host = code.host, port = code.port, user = code.user, name = code.site ?: "")
+        val blog = into ?: Blog(host = code.host, port = code.port, user = code.user, name = code.site ?: "")
         val device = Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)?.takeIf { it.isNotBlank() } ?: Build.MODEL ?: ""
+        // A key made for this exchange: one that did not take leaves none behind.
+        var made: String? = null
         try {
-            val handed = withContext(Dispatchers.IO) {
-                // The key and its kind, without the comment ssh-keygen would add.
-                val line = try {
-                    KeyStore.makeKey(blog.keyAccount)
-                    KeyStore.publicKeyLine(blog.keyAccount).split(" ").take(2).joinToString(" ")
-                } catch (e: Exception) {
-                    throw PairingError.NoKey
+            val (account, handed) = withContext(Dispatchers.IO) {
+                Pairing.withItsKey(
+                    // A blog the app already has hands in the key it has.
+                    own = into?.keyAccount?.takeIf { KeyStore.hasKey(it) },
+                    fresh = {
+                        val name = if (into == null) blog.keyAccount else "blog-" + UUID.randomUUID().toString()
+                        try {
+                            KeyStore.makeKey(name)
+                        } catch (e: Exception) {
+                            throw PairingError.NoKey
+                        }
+                        made = name
+                        name
+                    },
+                ) { name ->
+                    // The key and its kind, without the comment ssh-keygen would add.
+                    val line = try {
+                        KeyStore.publicKeyLine(name).split(" ").take(2).joinToString(" ")
+                    } catch (e: Exception) {
+                        throw PairingError.NoKey
+                    }
+                    Pairing.handIn(line, device, code)
                 }
-                Pairing.handIn(line, device, code)
             }
             // The server that answered is the one this blog's connections expect from now on.
             BlogShelf.notes.write(TrustOnFirstUse.notesKey(code.host, code.port), handed.server)
-            Blogs.adopt(blog)
+            val known = handed.device.ifEmpty { device }
+            if (into == null) {
+                Blogs.adopt(blog.copy(pairedAs = known))
+            } else {
+                Blogs.repaired(into.id, code.host, code.port, code.user, account, known)
+                // The key it had, where it was given another: nothing answers to it any more.
+                if (account != into.keyAccount) withContext(NonCancellable + Dispatchers.IO) { runCatching { KeyStore.deleteKey(into.keyAccount) } }
+            }
             Herald.shared.say(context.getString(R.string.connected, handed.device.ifEmpty { blog.label }))
             onDone()
         } catch (e: Throwable) {
-            withContext(NonCancellable + Dispatchers.IO) { runCatching { KeyStore.deleteKey(blog.keyAccount) } }
+            made?.let { name -> withContext(NonCancellable + Dispatchers.IO) { runCatching { KeyStore.deleteKey(name) } } }
             if (e.isCalledOff) throw e
             problem = words(e as? PairingError ?: PairingError.NoKey, code)
         } finally {
@@ -150,7 +176,12 @@ fun AddBlogSheet(initialCode: String = "", onBack: () -> Unit, onDone: () -> Uni
         SheetBars()
         Typed {
             SheetFrame {
-            PaperScreen(onBack = onBack, name = stringResource(R.string.add_a_blog)) {
+            PaperScreen(onBack = onBack, name = stringResource(if (into != null) R.string.android_pair_again else R.string.add_a_blog)) {
+                // Which blog's, and what a new code does to it.
+                if (into != null) {
+                    if (into.label.isNotEmpty()) Text(into.label, color = Theme.accent, style = mono(12f), modifier = Modifier.padding(top = 2.dp))
+                    Hint(stringResource(R.string.android_pair_again_hint), Modifier.gap(10))
+                }
                 SectionLabel(stringResource(R.string.with_a_code))
                 Plate {
                     // Where there is a camera, that is the first way; the
@@ -232,16 +263,19 @@ fun AddBlogSheet(initialCode: String = "", onBack: () -> Unit, onDone: () -> Uni
                 }
                 problem?.let { ProblemLine(it) }
 
-                SectionLabel(stringResource(R.string.by_hand))
-                Plate {
-                    row {
-                        Command(stringResource(R.string.set_up_by_hand), Symbols.wrenchAndScrewdriver, leads = true, enabled = !connecting) {
-                            Blogs.add()
-                            byHand = true
+                // A new blog can be set up by hand as well; one that is here already has its settings for that.
+                if (into == null) {
+                    SectionLabel(stringResource(R.string.by_hand))
+                    Plate {
+                        row {
+                            Command(stringResource(R.string.set_up_by_hand), Symbols.wrenchAndScrewdriver, leads = true, enabled = !connecting) {
+                                Blogs.add()
+                                byHand = true
+                            }
                         }
                     }
+                    Hint(stringResource(R.string.for_a_blog_that_lives_in_a))
                 }
-                Hint(stringResource(R.string.for_a_blog_that_lives_in_a))
             }
             }
         }

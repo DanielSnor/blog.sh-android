@@ -11,4 +11,11 @@
     <string name="android_paste">Vložit</string>
     <string name="android_queue_unattended">Na tomhle blogu frontu nic samo nerozesílá: plánované spuštění jí ještě nikdy neprošlo. Příspěvek, jehož čas nastal, čeká, dokud ho nezveřejníš ručně – podrž jeho řádek.</string>
     <string name="android_picture_needs_network">Fotku se nepodařilo načíst: nejspíš je uložená jen v cloudu a bez sítě ji nejde stáhnout. Přidat jde fotka, která je v zařízení celá – třeba právě vyfocená.</string>
+    <string name="android_paired_section">Připojeno kódem</string>
+    <string name="android_paired_as">Tohle zařízení pustil k blogu kód, pod jménem %1$s.</string>
+    <string name="android_paired_plain">Tohle zařízení pustil k blogu kód.</string>
+    <string name="android_paired_hint">Kde blog na serveru leží a co tohle zařízení smí spustit, je v řádku, který na serveru zapsal ./blog.sh pair; tady se z toho nic nenastavuje. Zařízení tam odebereš příkazem ./blog.sh pair --revoke.</string>
+    <string name="android_pair_again">Spárovat znovu</string>
+    <string name="android_pair_again_hint">Nový kód přenese tenhle blog tam, kam kód ukazuje: na jinou adresu nebo na jiný počítač. Co je pro něj v zařízení rozepsáno, zůstane.</string>
+    <string name="android_pair_this">Připojit tenhle blog kódem</string>
 </resources>

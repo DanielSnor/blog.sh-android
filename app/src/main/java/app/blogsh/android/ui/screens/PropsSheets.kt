@@ -426,7 +426,7 @@ fun AddressesSheet(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
 
     suspend fun drop(address: PropsAnswer.OldAddress) {
         try {
-            val answer = Engine.call<PropsAnswer>("props", props.slug, "--drop-address", address.value)
+            val answer = Engine.call<PropsAnswer>(address.dropArgs(props.slug, addresses))
             addresses = answer.addresses
             done()
         } catch (e: Throwable) {
@@ -445,7 +445,8 @@ fun AddressesSheet(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
                 problem?.let { words ->
                     item { PaperRow { Box(Modifier.padding(bottom = 10.dp)) { ProblemLine(words) } } }
                 }
-                items(addresses, key = { it.value }) { address ->
+                // A row is a list and an address: the same address can stand in two lists.
+                items(addresses, key = { it.id }) { address ->
                     PaperRow(Modifier.combinedClickable(onClick = { offering = address }, onLongClick = { offering = address })) {
                         Column(Modifier.padding(vertical = 11.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text(address.value, color = Theme.ink, style = mono(14f, bold = false))
@@ -455,7 +456,7 @@ fun AddressesSheet(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
                                 color = Theme.muted, style = ui(13f),
                             )
                         }
-                        Menu(offering?.value == address.value, { offering = null }) {
+                        Menu(offering == address, { offering = null }) {
                             MenuKey(stringResource(R.string.drop), danger = true) {
                                 offering = null
                                 dropping = address

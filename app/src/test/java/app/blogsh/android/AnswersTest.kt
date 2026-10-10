@@ -327,6 +327,44 @@ class AnswersTest {
 }
 
 /**
+ * A post's old addresses, as a list of rows. A mistake here is a screen
+ * that cannot be drawn, or a row dropped that was not the one pressed.
+ */
+class OldAddressTest {
+    private val en = app.blogsh.android.model.PropsAnswer.OldAddress("translations.en.former_slugs", "2026/old-jog")
+    private val de = app.blogsh.android.model.PropsAnswer.OldAddress("translations.de.former_slugs", "2026/old-jog")
+    private val own = app.blogsh.android.model.PropsAnswer.OldAddress("former_slugs", "2026/klus")
+
+    /**
+     * The same address in the lists of two languages is two rows: a list
+     * told its rows apart by the address alone, and could not be drawn.
+     */
+    @Test
+    fun theSameAddressInTwoListsIsTwoRows() {
+        val rows = listOf(en, de, own)
+        assertEquals(3, rows.map { it.id }.toSet().size)
+        assertTrue(en.id != de.id)
+        assertEquals(en.id, en.copy().id)
+    }
+
+    /**
+     * Dropped, such a row names its list -- the engine refuses an address
+     * that could mean two rows. A row whose address is in one list only
+     * is asked for as it always was, which an older engine understands.
+     */
+    @Test
+    fun aRowWhoseAddressIsInTwoListsIsDroppedByItsList() {
+        val rows = listOf(en, de, own)
+        assertEquals(listOf("props", "klus", "--drop-address", "2026/old-jog", "--kind", "translations.de.former_slugs"), de.dropArgs("klus", rows))
+        assertEquals(listOf("props", "klus", "--drop-address", "2026/old-jog", "--kind", "translations.en.former_slugs"), en.dropArgs("klus", rows))
+        assertEquals(listOf("props", "klus", "--drop-address", "2026/klus"), own.dropArgs("klus", rows))
+        assertEquals(listOf("props", "klus", "--drop-address", "2026/old-jog"), en.dropArgs("klus", listOf(en, own)))
+        // Still a command that changes the blog, with or without the list named.
+        assertTrue(Engine.changesTheBlog(de.dropArgs("klus", rows)))
+    }
+}
+
+/**
  * What the engine says since 1.10 and the app now uses. A mistake here
  * is a queue said to wait for a clock that is not there, or a check
  * answered in a language nobody asked for.
@@ -480,5 +518,34 @@ class DiagnosisTest {
         } catch (e: EngineError.Refused) {
             assertEquals("unknown_command", e.refusal.error)
         }
+    }
+
+    /**
+     * The findings about former addresses, as the engine builds them
+     * since e8b3225 (lib/checker.rb): lists in `data`, and two kinds
+     * this app has no word of its own for. Each is a row with its
+     * sentence, its repair and the way to its post -- nothing in `data`
+     * that the app does not ask for stands in the way.
+     */
+    @Test
+    fun findingsAboutFormerAddressesAreRowsLikeAnyOther() {
+        val json = """
+        {"errors": 0, "warnings": 3, "findings": [
+          {"level": "warn", "kind": "former_slug_taken",
+           "data": {"slug": "venku", "entry": "outside", "holder": "obsazeno", "taken_in": ["/"], "served_in": ["/en/"], "lang": "en"},
+           "text": "venku: the former address is taken in one tree.", "fix": "Give it up there."},
+          {"level": "warn", "kind": "former_slug_two_languages",
+           "data": {"slug": "venku", "entry": "outside", "langs": ["en", "de"], "year": "2026"},
+           "text": "venku: the same former address in two languages.", "fix": "Keep it in one."},
+          {"level": "warn", "kind": "former_slug_unpublished",
+           "data": {"slug": "doma", "entry": "at-home", "lang": "de", "year": "2025"},
+           "text": "doma: a former address in a language the site does not publish.", "fix": "Drop it."}
+        ]}
+        """.toByteArray(Charsets.UTF_8)
+        val answer = Engine.decode<app.blogsh.android.model.DiagnosisAnswer>(json)
+        assertEquals(3, answer.findings.size)
+        assertEquals(listOf("former_slug_taken", "former_slug_two_languages", "former_slug_unpublished"), answer.findings.map { it.kind })
+        assertEquals(listOf<String?>("venku", "venku", "doma"), answer.findings.map { it.slug })
+        assertTrue(answer.findings.all { it.level == warning && it.text.isNotEmpty() && it.fix != null })
     }
 }

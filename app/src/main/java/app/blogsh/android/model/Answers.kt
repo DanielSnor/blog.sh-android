@@ -223,8 +223,27 @@ data class PropsAnswer(
     @Serializable
     data class Languages(val own: String, val others: Map<String, String>)
 
+    /**
+     * One old address of the post: which of its lists holds it (`kind` --
+     * the post's own, or one language's) and the address itself. The
+     * same address can stand in two lists -- its own and a translation's,
+     * or two translations' -- so a row is the two together, never the
+     * address alone.
+     */
     @Serializable
-    data class OldAddress(val kind: String, val value: String)
+    data class OldAddress(val kind: String, val value: String) {
+        /** What tells one row from every other. */
+        val id: String get() = kind + "\n" + value
+
+        /**
+         * `props <slug> --drop-address <address>`, for this row. Where the
+         * address stands in more than one of the post's lists the list is
+         * named too: asked by the address alone, the engine cannot tell
+         * which row was meant, and says so instead of dropping one.
+         */
+        fun dropArgs(slug: String, among: List<OldAddress>): List<String> =
+            listOf("props", slug, "--drop-address", value) + if (among.count { it.value == value } > 1) listOf("--kind", kind) else emptyList()
+    }
 
     /**
      * Which of the six cases the announcement is in -- the ladder the

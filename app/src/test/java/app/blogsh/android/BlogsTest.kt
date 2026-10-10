@@ -242,5 +242,11 @@ class BlogsTest {
         // A blog that is not there is nobody's to move.
         list.repaired("nobody", "x", 1, "y", "z", "w")
         assertEquals(2, list.all.size)
+        // What the blog called itself is kept; the code's word for it is a hint for a blog with none.
+        list.repaired(moved.id, "192.168.1.20", 2222, "pavel", "blog-new-key", "motorola edge", site = "Jiný název")
+        assertEquals("pokusy", list.all[1].name)
+        list.repaired(first.id, "192.168.1.21", 22, "me", first.keyAccount, "", site = "Druhý blog")
+        assertEquals("Druhý blog", list.all[0].name)
+        assertEquals("", list.all[0].pairedAs)
     }
 }

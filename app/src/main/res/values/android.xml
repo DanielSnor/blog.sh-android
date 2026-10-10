@@ -12,11 +12,4 @@
     <string name="android_paste">Paste</string>
     <string name="android_queue_unattended">Nothing on this blog sends the queue out by itself: no scheduled run has ever gone through it. A post whose time has come waits until it is published by hand -- hold its row.</string>
     <string name="android_picture_needs_network">The picture could not be read: it is most likely kept only in the cloud, and without a network it cannot be fetched. One that is on this device whole -- taken just now, say -- can be added.</string>
-    <string name="android_paired_section">Let in by a code</string>
-    <string name="android_paired_as">This device was let in by a code, as %1$s.</string>
-    <string name="android_paired_plain">This device was let in by a code.</string>
-    <string name="android_paired_hint">Where the blog is on the server, and what this device may run there, is in the line ./blog.sh pair wrote on the server; none of it is set here. To take this device off, run ./blog.sh pair --revoke there.</string>
-    <string name="android_pair_again">Pair again</string>
-    <string name="android_pair_again_hint">A new code takes this blog to where the code says -- another address, another machine. What is written for it on this device stays.</string>
-    <string name="android_pair_this">Connect this blog with a code</string>
 </resources>

@@ -174,9 +174,10 @@ the post on the phone instead -- whole, with its pictures -- and the
 first screen counts what waits to be sent. The server is asked again
 without anybody thinking of it: when the phone finds a network, when the
 app is back in front, when a call from any screen gets through. What
-waited goes then, as drafts, in the order it was written and dated by
-when it was written, each delivery under a name of its own -- so a post
-the server took just before the connection broke is not written twice.
+waited goes then, as drafts, in the order it was written, each delivery
+under a name of its own -- so a post the server took just before the
+connection broke is not written twice. It carries no date of its own: a
+draft is dated by the blog when it is published, as every draft is.
 A post the blog would not take stays, with the blog's reason beside it.
 From the list a post can be sent by hand, taken back into the form to be
 written on, or thrown away. One taken back is held, not deleted: it is
@@ -341,9 +342,6 @@ at once.
   title as its subject; there is no preview of the link in it.
 - **The blogs are put in another order from a row's menu** -- up, down --
   where iOS also lets a held row be dragged there.
-- **A blog let in by a code has settings of its own, and can be paired
-  again.** The iOS app shows every blog the fields of one set up by
-  hand, and a new code there adds a second blog beside the first.
 - **One icon.** An Android app cannot choose among icons the way an iOS
   one can, so the icon is one, whatever the open blog's accent is.
 - **The typewriter face** is Courier Prime, where iOS has the system's

@@ -19,6 +19,7 @@
     <string name="a_draft_has_no_public_address_yet">Ein Entwurf hat noch keine öffentliche Adresse; es ändert sich nur die Adresse seiner Vorschau.</string>
     <string name="a_draft_is_scheduled_from_its_properties">Ein Entwurf wird in seinen Eigenschaften geplant, oder mit ./blog.sh schedule.</string>
     <string name="a_new_blog">Ein neues Blog</string>
+    <string name="a_new_code_moves_this_blog_to">Ein neuer Code bringt diesen Blog dorthin, wohin der Code zeigt: an eine andere Adresse oder auf einen anderen Rechner. Was auf dem Gerät für ihn geschrieben ist, bleibt.</string>
     <string name="a_picture_is_shrunk_to_px_on">Ein Bild wird vor dem Senden auf %1$s px an der langen Kante verkleinert; ein Video wird in H.264 mit 720p umgewandelt. Der ganze Beitrag -- Text, Bilder, Video -- muss unter %2$d MB bleiben, dem Limit des Servers; gemessen wird die kodierte Übertragung, ein Drittel größer als die Dateien: für die Dateien selbst bleiben etwa %3$d MB.</string>
     <string name="a_post">Ein Beitrag</string>
     <string name="a_post_without_words">Ein Beitrag ohne Worte</string>
@@ -68,7 +69,9 @@
     <string name="colours">Farben</string>
     <string name="comma_separated">Mit Komma getrennt.</string>
     <string name="connect">Verbinden</string>
+    <string name="connect_this_blog_by_a_code">Diesen Blog per Code verbinden</string>
     <string name="connect_to">Mit dem Blog %1$s verbinden?</string>
+    <string name="connected_by_a_code">Per Code verbunden</string>
     <string name="connected">Verbunden: %1$s</string>
     <string name="connecting">Verbinde…</string>
     <string name="connection">Verbindung</string>
@@ -152,6 +155,7 @@
     <string name="open">Geöffnet</string>
     <string name="open_the_blog_in_the_browser">Blog im Browser öffnen</string>
     <string name="open_the_preview">Vorschau öffnen</string>
+    <string name="pair_again">Erneut koppeln</string>
     <string name="picture_no_preview_on_this_device">Bild %1$s -- auf diesem Gerät ohne Vorschau</string>
     <string name="picture">Bild: %1$s</string>
     <string name="pictures_and_video">Bilder und Video</string>
@@ -292,6 +296,8 @@
     <string name="the_time_offered_is_the_next_free">Die angebotene Zeit ist der nächste freie Slot.</string>
     <string name="this_blog_s_engine_does_not_offer">Die Engine dieses Blogs bietet der App diese Prüfung noch nicht an. Sie kommt mit einem neueren ./blog.sh.</string>
     <string name="this_code_is_of_a_newer_kind">Dieser Code ist neuer, als die App ihn kennt. Aktualisiere die App.</string>
+    <string name="this_device_was_let_in_to_the">Dieses Gerät hat ein Code zum Blog gelassen, unter dem Namen %1$s.</string>
+    <string name="this_device_was_let_in_to_the_2">Dieses Gerät hat ein Code zum Blog gelassen.</string>
     <string name="this_is_not_a_code_from_blog">Das ist kein Code von ./blog.sh pair.</string>
     <string name="this_post_cannot_be_edited_here">Dieser Beitrag lässt sich hier nicht bearbeiten.</string>
     <string name="this_post_cannot_be_edited_here_at">Dieser Beitrag lässt sich hier nicht bearbeiten: %1$s. Am Schreibtisch fragt edit, bevor etwas verloren geht; hier könnte niemand antworten.</string>
@@ -323,11 +329,13 @@
     <string name="waiting_to_be_sent">Wartet auf den Versand</string>
     <string name="what_do_you_want_to_do">Was möchtest du tun?</string>
     <string name="what_is_cleared_out_is_gone_for">Was aufgeräumt wird, ist endgültig weg. Ältere Fassungen sind, was ein Beitrag vor seinen letzten Speicherungen sagte; jeder behält seine neueste.</string>
+    <string name="where_the_blog_lies_on_the_server">Wo der Blog auf dem Server liegt und was dieses Gerät dort ausführen darf, steht in der Zeile, die ./blog.sh pair auf dem Server geschrieben hat; hier wird davon nichts eingestellt. Das Gerät entfernst du dort mit ./blog.sh pair --revoke.</string>
     <string name="with_a_code">Mit einem Code</string>
     <string name="with_a_network_configured_it_announces_too">Mit einem eingerichteten Netzwerk wird auch angekündigt — und eine Ankündigung lässt sich nicht zurücknehmen.</string>
     <string name="worth_a_look">Zum Nachsehen</string>
     <string name="written_here_and_never_saved_the_post">Hier geschrieben %1$s und nie gesichert; der Beitrag selbst ließ sich nicht öffnen. Der Text steht unten, zum Kopieren.</string>
     <string name="your_own">Eigene</string>
+    <string name="a_former_slug_of_the_text_redirects">ein früherer Slug des Textes auf %1$s, leitet hierher</string>
     <string name="a_former_slug_redirects_here">ein früherer Slug, leitet hierher</string>
     <string name="all">alle</string>
     <string name="announce_3">ankündigen (%1$s)</string>

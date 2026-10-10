@@ -19,6 +19,7 @@
     <string name="a_draft_has_no_public_address_yet">Koncept ještě nemá veřejnou adresu, změní se jen adresa náhledu.</string>
     <string name="a_draft_is_scheduled_from_its_properties">Koncept naplánuješ z jeho vlastností, nebo přes ./blog.sh schedule.</string>
     <string name="a_new_blog">Nový blog</string>
+    <string name="a_new_code_moves_this_blog_to">Nový kód přenese tenhle blog tam, kam kód ukazuje: na jinou adresu nebo na jiný počítač. Co je pro něj v zařízení rozepsáno, zůstane.</string>
     <string name="a_picture_is_shrunk_to_px_on">Obrázek se před odesláním zmenší na %1$s px po delší straně; video se převede na H.264 v 720p. Celý příspěvek — text, obrázky, video — se musí vejít do %2$d MB, to je limit serveru; měří se zakódovaný přenos, který je o třetinu větší než soubory, takže na soubory zbývá zhruba %3$d MB.</string>
     <string name="a_post">Příspěvek</string>
     <string name="a_post_without_words">Příspěvek beze slov</string>
@@ -68,7 +69,9 @@
     <string name="colours">Barvy</string>
     <string name="comma_separated">Oddělené čárkou.</string>
     <string name="connect">Připojit</string>
+    <string name="connect_this_blog_by_a_code">Připojit tenhle blog kódem</string>
     <string name="connect_to">Připojit k blogu %1$s?</string>
+    <string name="connected_by_a_code">Připojeno kódem</string>
     <string name="connected">Připojeno: %1$s</string>
     <string name="connecting">Připojuji…</string>
     <string name="connection">Spojení</string>
@@ -152,6 +155,7 @@
     <string name="open">Otevřený</string>
     <string name="open_the_blog_in_the_browser">Otevřít blog v prohlížeči</string>
     <string name="open_the_preview">Otevřít náhled</string>
+    <string name="pair_again">Spárovat znovu</string>
     <string name="picture_no_preview_on_this_device">Obrázek %1$s -- v tomto zařízení bez náhledu</string>
     <string name="picture">Obrázek: %1$s</string>
     <string name="pictures_and_video">Obrázky a video</string>
@@ -292,6 +296,8 @@
     <string name="the_time_offered_is_the_next_free">Nabídnutý čas je nejbližší volný slot.</string>
     <string name="this_blog_s_engine_does_not_offer">Engine tohohle blogu tuhle kontrolu appce zatím nenabízí. Přijde s novějším ./blog.sh.</string>
     <string name="this_code_is_of_a_newer_kind">Tenhle kód je novějšího druhu, než appka zná. Aktualizuj appku.</string>
+    <string name="this_device_was_let_in_to_the">Tohle zařízení pustil k blogu kód, pod jménem %1$s.</string>
+    <string name="this_device_was_let_in_to_the_2">Tohle zařízení pustil k blogu kód.</string>
     <string name="this_is_not_a_code_from_blog">Tohle není kód z ./blog.sh pair.</string>
     <string name="this_post_cannot_be_edited_here">Tenhle příspěvek tady upravit nejde.</string>
     <string name="this_post_cannot_be_edited_here_at">Tenhle příspěvek tady upravit nejde: %1$s. U počítače se edit zeptá, než to ztratí; tady by neměl kdo odpovědět.</string>
@@ -323,11 +329,13 @@
     <string name="waiting_to_be_sent">Čeká na odeslání</string>
     <string name="what_do_you_want_to_do">Co chceš dělat?</string>
     <string name="what_is_cleared_out_is_gone_for">Co se uklidí, je pryč nadobro. Starší verze jsou to, co příspěvek říkal před posledními uloženími; každému zůstane ta nejnovější.</string>
+    <string name="where_the_blog_lies_on_the_server">Kde blog na serveru leží a co tohle zařízení smí spustit, je v řádku, který na serveru zapsal ./blog.sh pair; tady se z toho nic nenastavuje. Zařízení tam odebereš příkazem ./blog.sh pair --revoke.</string>
     <string name="with_a_code">Kódem</string>
     <string name="with_a_network_configured_it_announces_too">Zároveň se oznámí na síti — a oznámení nejde vzít zpět.</string>
     <string name="worth_a_look">Ke zvážení</string>
     <string name="written_here_and_never_saved_the_post">Napsáno tady %1$s a nikdy neuloženo; samotný příspěvek se nepodařilo otevřít. Text je níže, dá se zkopírovat.</string>
     <string name="your_own">Vlastní</string>
+    <string name="a_former_slug_of_the_text_redirects">bývalý slug (%1$s), přesměrovává sem</string>
     <string name="a_former_slug_redirects_here">bývalý slug, přesměrovává sem</string>
     <string name="all">vše</string>
     <string name="announce_3">oznámit (%1$s)</string>

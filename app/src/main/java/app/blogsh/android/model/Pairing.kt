@@ -225,6 +225,13 @@ object Pairing {
         }
     }
 
+    /**
+     * The name a blog keeps for this device: the one the server wrote it
+     * down under, and where the server said none, the device's own --
+     * the one it was handed.
+     */
+    fun known(said: String, here: String): String = said.trim().ifEmpty { here.trim() }
+
     /** Blocks; called off the main thread. */
     fun handIn(publicKey: String, name: String, code: PairingCode): Handed {
         val trust = Trust(code)

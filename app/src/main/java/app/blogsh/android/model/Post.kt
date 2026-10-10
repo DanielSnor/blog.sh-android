@@ -102,16 +102,12 @@ object Receipt {
 
 object Markdown {
     /**
-     * `written`: when the post was written, where that is not when it is
-     * sent -- one that waited on the device for its blog. The engine dates
-     * a post by the moment it arrives unless its header says otherwise.
-     *
      * `receipt`: the delivery's own name, by which the engine knows a
      * delivery it has seen before -- one whose answer was lost on the way
      * back and which is sent again -- and answers with the post it
      * already wrote instead of writing a second.
      */
-    fun frontMatter(title: String, tags: String, publish: Boolean = false, written: Long? = null, receipt: String? = null): String {
+    fun frontMatter(title: String, tags: String, publish: Boolean = false, receipt: String? = null): String {
         val lines = mutableListOf<String>()
         val cleanTitle = title.trim()
             // Unwrapped only where the whole title is wrapped once: a title
@@ -134,22 +130,22 @@ object Markdown {
             .filter { it.isNotEmpty() }
         if (cleanTags.isNotEmpty()) lines.add("tags: " + cleanTags.joinToString(", "))
         if (publish) lines.add("publish: yes")
-        if (written != null) lines.add("date: " + stamp(written))
         if (receipt != null && Receipt.isOne(receipt)) lines.add("receipt: $receipt")
         return if (lines.isEmpty()) "" else "---\n" + lines.joinToString("\n") + "\n---\n\n"
     }
 
     /**
-     * A moment as the header says it: to the second, with the device's
-     * own offset -- the day it was where it was written.
+     * A moment as the engine is told it: to the second, with the device's
+     * own offset -- the time a schedule was picked at, as the picker
+     * showed it.
      */
     fun stamp(moment: Long, zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): String =
         java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(Math.floorDiv(moment, 1000L)), zone)
             .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
-    fun file(title: String, tags: String, body: String, publish: Boolean = false, written: Long? = null, receipt: String? = null): String {
+    fun file(title: String, tags: String, body: String, publish: Boolean = false, receipt: String? = null): String {
         val text = body.trim()
-        val header = frontMatter(title, tags, publish, written, receipt)
+        val header = frontMatter(title, tags, publish, receipt)
         // A body that itself opens with --- would be read as a header.
         val guarded = if (header.isEmpty() && text.startsWith("---")) "---\n---\n\n" else header
         return guarded + text + "\n"

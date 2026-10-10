@@ -16,6 +16,7 @@ a_deploy_uploads_what_changed_and_stops	A deploy uploads what changed, and stops
 a_draft_has_no_public_address_yet	A draft has no public address yet; only its preview address changes.
 a_draft_is_scheduled_from_its_properties	A draft is scheduled from its properties, or with ./blog.sh schedule.
 a_new_blog	A new blog
+a_new_code_moves_this_blog_to	A new code moves this blog to where the code points: another address or another computer. What is written for it on the device stays.
 a_picture_is_shrunk_to_px_on	A picture is shrunk to %@ px on its long edge before it goes; a video is converted to H.264 at 720p. The whole post -- text, pictures, video -- has to stay under %lld MB, the server's limit, and the limit is measured on the encoded transfer, a third larger than the files: the files themselves get about %lld MB.
 a_post	A post
 a_post_without_words	A post without words
@@ -65,7 +66,9 @@ code_block	Code block
 colours	Colours
 comma_separated	Comma separated.
 connect	Connect
+connect_this_blog_by_a_code	Connect this blog by a code
 connect_to	Connect to %@?
+connected_by_a_code	Connected by a code
 connected	Connected: %@
 connecting	Connecting…
 connection	Connection
@@ -149,6 +152,7 @@ only_the_words_are_translated_the_date	Only the words are translated. The date, 
 open	Open
 open_the_blog_in_the_browser	Open the blog in the browser
 open_the_preview	Open the preview
+pair_again	Pair again
 picture_no_preview_on_this_device	Picture %@ -- no preview on this device
 picture	Picture: %@
 pictures_and_video	Pictures and video
@@ -289,6 +293,8 @@ the_text_did_not_come_with_the	The text did not come with the answer.
 the_time_offered_is_the_next_free	The time offered is the next free publishing slot.
 this_blog_s_engine_does_not_offer	This blog's engine does not offer this check to the app yet. It comes with a newer ./blog.sh.
 this_code_is_of_a_newer_kind	This code is of a newer kind than the app knows. Update the app.
+this_device_was_let_in_to_the	This device was let in to the blog by a code, under the name %@.
+this_device_was_let_in_to_the_2	This device was let in to the blog by a code.
 this_is_not_a_code_from_blog	This is not a code from ./blog.sh pair.
 this_post_cannot_be_edited_here	This post cannot be edited here.
 this_post_cannot_be_edited_here_at	This post cannot be edited here: %@. At the desk, edit asks before losing it; here nobody could answer.
@@ -320,11 +326,13 @@ usually_only_the_pages_that_changed_are	Usually only the pages that changed are 
 waiting_to_be_sent	Waiting to be sent
 what_do_you_want_to_do	What do you want to do?
 what_is_cleared_out_is_gone_for	What is cleared out is gone for good. Older versions are what a post said before its recent saves; each post keeps its newest.
+where_the_blog_lies_on_the_server	Where the blog lies on the server and what this device may run there is in the line ./blog.sh pair wrote on the server; nothing of it is set here. The device is taken off there with ./blog.sh pair --revoke.
 with_a_code	With a code
 with_a_network_configured_it_announces_too	With a network configured it announces too, which nothing takes back.
 worth_a_look	Worth a look
 written_here_and_never_saved_the_post	Written here %@ and never saved; the post itself could not be opened. The words are below, to copy.
 your_own	Your own
+a_former_slug_of_the_text_redirects	a former slug of the %@ text, redirects here
 a_former_slug_redirects_here	a former slug, redirects here
 all	all
 announce_3	announce (%@)

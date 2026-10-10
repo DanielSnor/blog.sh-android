@@ -153,11 +153,11 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
             }
             // The server that answered is the one this blog's connections expect from now on.
             BlogShelf.notes.write(TrustOnFirstUse.notesKey(code.host, code.port), handed.server)
-            val known = handed.device.ifEmpty { device }
+            val known = Pairing.known(handed.device, device)
             if (into == null) {
                 Blogs.adopt(blog.copy(pairedAs = known))
             } else {
-                Blogs.repaired(into.id, code.host, code.port, code.user, account, known)
+                Blogs.repaired(into.id, code.host, code.port, code.user, account, known, code.site)
                 // The key it had, where it was given another: nothing answers to it any more.
                 if (account != into.keyAccount) withContext(NonCancellable + Dispatchers.IO) { runCatching { KeyStore.deleteKey(into.keyAccount) } }
             }
@@ -176,11 +176,11 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
         SheetBars()
         Typed {
             SheetFrame {
-            PaperScreen(onBack = onBack, name = stringResource(if (into != null) R.string.android_pair_again else R.string.add_a_blog)) {
+            PaperScreen(onBack = onBack, name = stringResource(if (into != null) R.string.pair_again else R.string.add_a_blog)) {
                 // Which blog's, and what a new code does to it.
                 if (into != null) {
                     if (into.label.isNotEmpty()) Text(into.label, color = Theme.accent, style = mono(12f), modifier = Modifier.padding(top = 2.dp))
-                    Hint(stringResource(R.string.android_pair_again_hint), Modifier.gap(10))
+                    Hint(stringResource(R.string.a_new_code_moves_this_blog_to), Modifier.gap(10))
                 }
                 SectionLabel(stringResource(R.string.with_a_code))
                 Plate {

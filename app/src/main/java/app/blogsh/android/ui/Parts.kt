@@ -660,12 +660,20 @@ fun Command(
 @Composable
 fun PrimaryButton(label: String, modifier: Modifier = Modifier, enabled: Boolean = true, busy: Boolean = false, onClick: () -> Unit) {
     Pressable(onClick, modifier = modifier, enabled = enabled && !busy) {
+        // Out of reach it gives up its fill, as everything out of reach
+        // does, and keeps its shape as an outline in the one tone: never
+        // the filled key made transparent. So it is while it works.
+        val live = enabled && !busy && !LocalOutOfReach.current
+        val words = if (live) Color.White else Theme.faded
         Row(
-            Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.35f).clip(CircleShape).background(Theme.accent).padding(vertical = 14.dp, horizontal = 18.dp),
+            Modifier.fillMaxWidth().clip(CircleShape)
+                .then(if (live) Modifier.background(Theme.accent) else Modifier.border(1.dp, Theme.faded, CircleShape))
+                .padding(vertical = 14.dp, horizontal = 18.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (busy) Busy(16.dp, Color.White)
-            Text(voiced(label), color = Color.White, style = mono(13f).copy(letterSpacing = 0.8.sp), textAlign = TextAlign.Center)
+            // The wheel in the words' own colour: white on the fill, the faded tone on the outline.
+            if (busy) Busy(16.dp, words)
+            Text(voiced(label), color = words, style = mono(13f).copy(letterSpacing = 0.8.sp), textAlign = TextAlign.Center)
         }
     }
 }

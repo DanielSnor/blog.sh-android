@@ -450,9 +450,17 @@ fun AddressesSheet(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
                     PaperRow(Modifier.combinedClickable(onClick = { offering = address }, onLongClick = { offering = address })) {
                         Column(Modifier.padding(vertical = 11.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text(address.value, color = Theme.ink, style = mono(14f, bold = false))
+                            // What kind of old address it is; a language's former slug says whose.
+                            val lang = address.language
                             Text(
-                                // A former slug of the post, or of one of its languages (`translations.<lang>.former_slugs`).
-                                stringResource(if (address.kind.endsWith("former_slugs")) R.string.a_former_slug_redirects_here else R.string.redirects_here),
+                                if (lang != null) {
+                                    stringResource(
+                                        R.string.a_former_slug_of_the_text_redirects,
+                                        java.util.Locale.forLanguageTag(lang).getDisplayLanguage(java.util.Locale.getDefault()).ifEmpty { lang },
+                                    )
+                                } else {
+                                    stringResource(if (address.isFormerSlug) R.string.a_former_slug_redirects_here else R.string.redirects_here)
+                                },
                                 color = Theme.muted, style = ui(13f),
                             )
                         }

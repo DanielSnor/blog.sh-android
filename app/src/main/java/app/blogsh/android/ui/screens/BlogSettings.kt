@@ -155,17 +155,17 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
             // How it was let in, under which name -- what the server is told
             // to take this device off -- and the way to be let in again:
             // the blog moved, or its machine has another address.
-            SectionLabel(stringResource(R.string.android_paired_section))
+            SectionLabel(stringResource(R.string.connected_by_a_code))
             Plate {
                 row {
                     Text(
-                        if (paired.isEmpty()) stringResource(R.string.android_paired_plain) else stringResource(R.string.android_paired_as, paired),
+                        if (paired.isEmpty()) stringResource(R.string.this_device_was_let_in_to_the_2) else stringResource(R.string.this_device_was_let_in_to_the, paired),
                         color = Theme.ink, style = ui(15f),
                     )
                 }
-                row { Command(stringResource(R.string.android_pair_again), Symbols.qrcodeViewfinder) { pairing = true } }
+                row { Command(stringResource(R.string.pair_again), Symbols.qrcodeViewfinder) { pairing = true } }
             }
-            Hint(stringResource(R.string.android_paired_hint))
+            Hint(stringResource(R.string.where_the_blog_lies_on_the_server))
         } else {
         Hint(stringResource(R.string.the_line_for_the_server_s_ssh))
 
@@ -199,7 +199,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
         Hint(stringResource(R.string.the_key_is_made_on_this_device))
         // A blog set up by hand can be let in by a code as well.
         Plate(Modifier.gap(10)) {
-            row { Command(stringResource(R.string.android_pair_this), Symbols.qrcodeViewfinder) { pairing = true } }
+            row { Command(stringResource(R.string.connect_this_blog_by_a_code), Symbols.qrcodeViewfinder) { pairing = true } }
         }
         }
 

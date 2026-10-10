@@ -246,10 +246,15 @@ class BlogList(
      * key that was handed in. It stays the same blog: its name, its
      * numbers, and what was written for it on this device.
      */
-    fun repaired(id: String, host: String, port: Int, user: String, keyAccount: String, device: String) {
+    fun repaired(id: String, host: String, port: Int, user: String, keyAccount: String, device: String, site: String? = null) {
         val index = all.indexOfFirst { it.id == id }
         if (index < 0) return
-        val blog = all[index].copy(host = host, port = port, user = user, keyAccount = keyAccount, pairedAs = device, path = "", through = "")
+        val was = all[index]
+        val blog = was.copy(
+            host = host, port = port, user = user, keyAccount = keyAccount, pairedAs = device, path = "", through = "",
+            // What the blog called itself is kept; the code's word for it is a hint for a blog with none.
+            name = was.name.ifEmpty { site ?: "" },
+        )
         all = all.toMutableList().apply { this[index] = blog }
         // The kept connection was opened to where the blog was.
         hangUp()

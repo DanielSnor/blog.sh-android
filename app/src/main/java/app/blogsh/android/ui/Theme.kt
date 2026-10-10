@@ -111,7 +111,8 @@ private fun palette(shades: Shades, dark: Boolean): Palette {
     return Palette(
         paper = paper, ink = ink, muted = tone(shades.metaText), line = tone(shades.border),
         card = ink.copy(alpha = if (dark) 0.05f else 0.03f),
-        danger = if (dark) Color(0xFFFF7A5C) else Color(0xFFA81800),
+        // By day 0xC62800: the earlier one read as brown on the paper.
+        danger = if (dark) Color(0xFFFF7A5C) else Color(0xFFC62800),
         faded = tone(shades.faded),
     )
 }

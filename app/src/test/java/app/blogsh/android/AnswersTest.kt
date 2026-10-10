@@ -341,6 +341,16 @@ class OldAddressTest {
      */
     @Test
     fun theSameAddressInTwoListsIsTwoRows() {
+        val redirect = app.blogsh.android.model.PropsAnswer.OldAddress("redirect_from", "/2019/venku/")
+        // A language's former slug says whose it is.
+        assertEquals("en", en.language)
+        assertEquals("de", de.language)
+        assertNull(own.language)
+        assertNull(redirect.language)
+        assertTrue(en.isFormerSlug && own.isFormerSlug && !redirect.isFormerSlug)
+        // A kind that only looks like a language's is not read as one.
+        assertNull(app.blogsh.android.model.PropsAnswer.OldAddress("translations..former_slugs", "x").language)
+        assertNull(app.blogsh.android.model.PropsAnswer.OldAddress("translations.en.redirects", "x").language)
         val rows = listOf(en, de, own)
         assertEquals(3, rows.map { it.id }.toSet().size)
         assertTrue(en.id != de.id)

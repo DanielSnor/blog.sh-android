@@ -235,6 +235,16 @@ data class PropsAnswer(
         /** What tells one row from every other. */
         val id: String get() = kind + "\n" + value
 
+        /** The language whose former slug it is, where it is one's (`translations.<lang>.former_slugs`). */
+        val language: String?
+            get() {
+                val parts = kind.split(".")
+                return if (parts.size == 3 && parts[0] == "translations" && parts[2] == "former_slugs" && parts[1].isNotEmpty()) parts[1] else null
+            }
+
+        /** A former slug -- the post's or a language's -- rather than a redirect. */
+        val isFormerSlug: Boolean get() = kind.endsWith("former_slugs")
+
         /**
          * `props <slug> --drop-address <address>`, for this row. Where the
          * address stands in more than one of the post's lists the list is

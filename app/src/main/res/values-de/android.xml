@@ -11,11 +11,4 @@
     <string name="android_paste">Einfügen</string>
     <string name="android_queue_unattended">Auf diesem Blog schickt nichts die Warteschlange von selbst hinaus: Ein geplanter Lauf ist noch nie durch sie gegangen. Ein Beitrag, dessen Zeit gekommen ist, wartet, bis er von Hand veröffentlicht wird – halte seine Zeile.</string>
     <string name="android_picture_needs_network">Das Bild konnte nicht gelesen werden: Es liegt wohl nur in der Cloud und lässt sich ohne Netz nicht laden. Hinzufügen lässt sich eines, das ganz auf diesem Gerät liegt – etwa ein eben aufgenommenes.</string>
-    <string name="android_paired_section">Per Code verbunden</string>
-    <string name="android_paired_as">Dieses Gerät wurde per Code eingelassen, als %1$s.</string>
-    <string name="android_paired_plain">Dieses Gerät wurde per Code eingelassen.</string>
-    <string name="android_paired_hint">Wo der Blog auf dem Server liegt und was dieses Gerät dort ausführen darf, steht in der Zeile, die ./blog.sh pair auf dem Server geschrieben hat; hier wird davon nichts eingestellt. Um dieses Gerät zu entfernen, dort ./blog.sh pair --revoke ausführen.</string>
-    <string name="android_pair_again">Erneut koppeln</string>
-    <string name="android_pair_again_hint">Ein neuer Code bringt diesen Blog dorthin, wohin der Code zeigt – an eine andere Adresse, auf einen anderen Rechner. Was auf diesem Gerät für ihn geschrieben ist, bleibt.</string>
-    <string name="android_pair_this">Diesen Blog per Code verbinden</string>
 </resources>

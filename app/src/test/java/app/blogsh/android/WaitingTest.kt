@@ -83,11 +83,12 @@ class WaitingTest {
     }
 
     /**
-     * As a delivery: the pictures first, the markdown last -- and the
-     * markdown dated by when the post was written, not by when it goes.
+     * As a delivery: the pictures first, the markdown last -- and no
+     * date in it. A post that waited is a draft like any other: the blog
+     * dates it when it is published, not back to the day it was written.
      */
     @Test
-    fun aWaitingPostIsDeliveredDatedByWhenItWasWritten() = room { home ->
+    fun aWaitingPostIsDeliveredWithoutADateOfItsOwn() = room { home ->
         val blog = id()
         val post = Waiting(title = "Hello there", text = "![x](photo.jpg)", at = moment(0))
         WaitingRoom.put(post, listOf(Shot("photo.jpg", byteArrayOf(1), 1, 1)), blog, home)
@@ -98,13 +99,14 @@ class WaitingTest {
         val markdown = String(files[1].data, Charsets.UTF_8)
         // ...and under the receipt it was given when it was put by.
         val receipt = checkNotNull(kept.receipt)
-        assertTrue(markdown, markdown.startsWith("---\ntitle: Hello there\ndate: ${Markdown.stamp(moment(0))}\nreceipt: $receipt\n---\n\n"))
+        assertTrue(markdown, markdown.startsWith("---\ntitle: Hello there\nreceipt: $receipt\n---\n\n"))
+        assertFalse(markdown, markdown.contains("date:"))
         assertTrue(markdown, markdown.endsWith("![x](photo.jpg)\n"))
     }
 
-    /** The date in the header is a moment with its offset, to the second. */
+    /** A moment told to the engine carries its offset, to the second. */
     @Test
-    fun theWrittenDateCarriesItsOffset() {
+    fun aMomentCarriesItsOffset() {
         assertEquals("2026-05-28T22:26:40+02:00", Markdown.stamp(1_780_000_000_000, ZoneId.of("Europe/Prague")))
         assertEquals("2026-05-28T22:26:40+02:00", Markdown.stamp(1_780_000_000_999, ZoneId.of("Europe/Prague")))
         assertEquals("", Markdown.frontMatter("", ""))

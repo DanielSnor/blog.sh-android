@@ -22,7 +22,12 @@ data class Waiting(
     val title: String = "",
     val tags: String = "",
     val text: String = "",
-    /** When it was put by: the date the post is given on the blog. */
+    /**
+     * When it was put by: what the list says of it, and the order the
+     * posts go in. Not the post's date -- a draft is dated by the blog
+     * when it is published, as every draft is; sent with a date of its
+     * own it would come out dated back to the day it was written.
+     */
     val at: Long = 0,
     val pieces: List<Piece> = emptyList(),
     /** Why the blog turned it away the last time it was sent, in its own words. */
@@ -148,13 +153,12 @@ object WaitingRoom {
     }
 
     /**
-     * The post as a delivery: its pictures first and the markdown last,
-     * dated by when it was written.
+     * The post as a delivery: its pictures first and the markdown last.
      */
     fun delivery(post: Waiting, blog: String, home: File = this.home): List<DeliveryFile> {
         val place = place(post.id, blog, home)
         val files = post.pieces.map { DeliveryFile(it.name, file(it.name, "media", place).readBytes()) }
-        val markdown = Markdown.file(post.title, post.tags, post.text, written = post.at, receipt = post.receipt)
+        val markdown = Markdown.file(post.title, post.tags, post.text, receipt = post.receipt)
         return files + DeliveryFile(Markdown.fileName(post.title, post.text), markdown.toByteArray(Charsets.UTF_8))
     }
 

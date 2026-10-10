@@ -318,4 +318,30 @@ class PairingTest {
         assertEquals("blog-new", account)
         assertEquals(1, made)
     }
+
+    /**
+     * The blog keeps the name the server wrote the device down under; a
+     * server that said none leaves the device its own.
+     */
+    @Test
+    fun aDeviceTheServerDidNotNameKeepsItsOwnName() {
+        assertEquals("SeanoPad", Pairing.known("SeanoPad", "Pixel"))
+        assertEquals("Pixel", Pairing.known("", "Pixel"))
+        assertEquals("Pixel", Pairing.known("  \n", " Pixel "))
+        assertEquals("", Pairing.known("", ""))
+    }
+
+    /**
+     * The key is on a line of the server's that is not a device's: said
+     * as that, apart from every other no -- the code is still good, and
+     * a new key can go in with it.
+     */
+    @Test
+    fun aKeyThatIsInUseIsSaidApartFromOtherRefusals() {
+        assertEquals(
+            PairingError.Refused("This key already stands in authorized_keys.", "key_in_use"),
+            refusal("""{"ok":false,"error":"key_in_use","message":"This key already stands in authorized_keys."}"""),
+        )
+        assertEquals(PairingError.Spent, refusal("""{"ok":false,"error":"used"}"""))
+    }
 }

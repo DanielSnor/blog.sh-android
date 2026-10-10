@@ -180,7 +180,12 @@ not need it, and stays. With the server silent the form's own key keeps
 the post on the phone instead -- whole, with its pictures -- and the
 first screen counts what waits to be sent. The server is asked again
 without anybody thinking of it: when the phone finds a network, when the
-app is back in front, when a call from any screen gets through. What
+app is back in front, when a call from any screen gets through -- and,
+for as long as it stays silent and the app is in front, by itself: after
+five seconds, then at twice the wait each time, a minute at the most. A
+network that has just come back often carries no connection yet, and a
+server asked once would have stayed silent. Asked and silent still, the
+first screen keeps what it knew of the blog, out of reach. What
 waited goes then, as drafts, in the order it was written, each delivery
 under a name of its own -- so a post the server took just before the
 connection broke is not written twice. It carries no date of its own: a

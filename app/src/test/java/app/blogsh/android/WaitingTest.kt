@@ -742,6 +742,18 @@ class ReachTest {
         assertFalse(reach.isOffline(null))
     }
 
+    /**
+     * A silent server is asked again by itself: soon at first, then at
+     * twice the wait each time, and never further apart than a minute.
+     */
+    @Test
+    fun aSilentServerIsAskedAgainSoonThenLessOften() {
+        assertEquals(listOf(5_000L, 10_000L, 20_000L, 40_000L, 60_000L, 60_000L), (0..5).map { Reach.pause(it) })
+        assertEquals(60_000L, Reach.pause(1_000))
+        assertEquals(60_000L, Reach.pause(Int.MAX_VALUE))
+        assertEquals(5_000L, Reach.pause(-1))
+    }
+
     /** A blog whose port was never written down is on ssh's own. */
     @Test
     fun noPortIsTheUsualOne() {

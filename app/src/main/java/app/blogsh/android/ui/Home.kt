@@ -60,7 +60,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import app.blogsh.android.BlogshApp
 import app.blogsh.android.R
 import app.blogsh.android.model.Arrival
@@ -105,6 +108,7 @@ import app.blogsh.android.ui.screens.WaitingSheet
 import java.net.URI
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -204,9 +208,14 @@ class HomeState {
             // Called off, or another blog by now: the screen keeps what it shows.
             if (e.isCalledOff) throw e
             if (asked != Blogs.currentId) return
+            problem = e.said
+            // A server that did not answer says nothing new of the blog:
+            // what the screen knew of it stands, out of reach, until the
+            // server is heard from -- it is asked again and again while
+            // it is silent, and each asking must not take the screen apart.
+            if (e is EngineError.Unreachable) return
             identity = null
             glance = null
-            problem = e.said
         } finally {
             loading = false
         }
@@ -400,7 +409,33 @@ fun HomeScreen(state: HomeState) {
     LaunchedEffect(Unit) {
         snapshotFlow { Reach.shared.isOffline(Blogs.current) }.drop(1).collect { silent ->
             if (silent || state.loading) return@collect
-            if (state.identity == null) state.load() else state.sendWaiting()
+            if (state.identity == null) {
+                state.load()
+            } else {
+                state.sendWaiting()
+                state.loadGlance()
+            }
+        }
+    }
+    // A server that stays silent is asked again by itself for as long as
+    // the app is in front: after five seconds, then at twice the wait
+    // each time, a minute at the most. A network that has just come back
+    // often carries no connection yet -- the one asking above then fails,
+    // and nothing asked a second time.
+    val owner = LocalLifecycleOwner.current
+    LaunchedEffect(offline, Blogs.currentId, owner) {
+        if (!offline) return@LaunchedEffect
+        owner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            var attempt = 0
+            while (Reach.shared.isOffline(Blogs.current)) {
+                delay(Reach.pause(attempt))
+                attempt += 1
+                // Asked on the screen's own account, not on this waiting's:
+                // the answer ends the silence, the silence's end ends this
+                // waiting -- and the asking has still to send what waited
+                // and count the blog, which it would be called off from.
+                if (Reach.shared.isOffline(Blogs.current) && !state.loading) scope.launch { state.load() }
+            }
         }
     }
     // What changed on the way back is on the first screen again.

@@ -42,6 +42,16 @@ class Reach {
         /** The one the app has. */
         val shared = Reach()
 
+        /**
+         * How long a silent server is left alone before it is asked
+         * again by itself, attempt after attempt: five seconds, then
+         * twice as long each time, and a minute at the most. A network
+         * that has just come back often does not carry a connection yet;
+         * asked once and no more, a server that would have answered a
+         * moment later stayed silent until somebody thought of it.
+         */
+        fun pause(attempt: Int): Long = if (attempt >= 4) 60_000L else 5_000L shl attempt.coerceAtLeast(0)
+
         /** A server, as the app tells one from another. */
         fun server(host: String, port: Int): String = host.trim(' ', '\t').lowercase() + ":" + (if (port == 0) 22 else port)
     }

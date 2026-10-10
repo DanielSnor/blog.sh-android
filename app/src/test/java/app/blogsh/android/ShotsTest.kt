@@ -310,6 +310,29 @@ class ShotsTest(private val look: Look) {
         assertEquals("one", Unsent.kept(BLOG, BlogShelf.notes)?.from)
     }
 
+    /**
+     * A server that falls silent says nothing new of the blog: asked
+     * again -- and it is asked again and again while it is silent -- the
+     * first screen keeps what it knew, and only says why it has no more.
+     */
+    @Test
+    fun aSilentServerDoesNotTakeTheFirstScreenApart() {
+        val home = HomeState()
+        kotlinx.coroutines.runBlocking { home.load() }
+        val known = checkNotNull(home.identity)
+        val cards = checkNotNull(home.glance)
+        Engine.stand = { throw EngineError.Unreachable("blog.invalid", "") }
+        kotlinx.coroutines.runBlocking { home.load() }
+        assertEquals(known, home.identity)
+        assertEquals(cards, home.glance)
+        assertEquals(true, home.problem?.contains("blog.invalid"))
+        // Any other no is an answer about the blog, and is shown as one.
+        Engine.stand = { throw EngineError.KeyNotKnown() }
+        kotlinx.coroutines.runBlocking { home.load() }
+        assertEquals(null, home.identity)
+        assertEquals(null, home.glance)
+    }
+
     /** A held post no writing holds any more waits again once the first screen is asked for. */
     @Test
     fun aHeldPostNobodyHoldsIsBackOnTheFirstScreen() {

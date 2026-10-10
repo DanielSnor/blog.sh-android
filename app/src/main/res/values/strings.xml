@@ -28,6 +28,7 @@
     <string name="actions">Actions</string>
     <string name="add_a_blog">Add a blog</string>
     <string name="add_a_picture_or_video">Add a picture or video</string>
+    <string name="add_as_another_blog">Add as another blog</string>
     <string name="announce">Announce</string>
     <string name="announce_2">Announce \'%1$s\'?</string>
     <string name="announce_anyway">Announce anyway</string>
@@ -190,6 +191,7 @@
     <string name="rebuilt_the_deploy_is_owed_to_the">Rebuilt; the deploy is owed to the next scheduled run.</string>
     <string name="remove">Remove</string>
     <string name="remove_older_version_s_freeing_every_post">Remove %1$d older version(s), freeing %2$s? Every post keeps its newest one. This cannot be undone.</string>
+    <string name="remove_from_the_app_its_key_is_2">Remove \'%1$s\' from the app? Its key is deleted with it, and so is what was written for it on this device (%2$s). The blog itself is not touched.</string>
     <string name="remove_from_the_app_its_key_is">Remove \'%1$s\' from the app? Its key is deleted with it; the blog itself is not touched.</string>
     <string name="remove_older_versions">Remove older versions</string>
     <string name="remove_older_versions_file_s">Remove older versions — %1$d file(s), %2$s</string>
@@ -220,6 +222,7 @@
     <string name="search_the_archive_2">Search the archive.</string>
     <string name="send_to_the_blog_as_a_draft">Send to the blog as a draft</string>
     <string name="sending">Sending…</string>
+    <string name="sent_to_the_blog_as_drafts_2">Sent to the blog as drafts</string>
     <string name="sent_to_the_blog_as_drafts">Sent to the blog as drafts: %1$d</string>
     <string name="server">Server</string>
     <string name="server_key">Server key</string>
@@ -242,6 +245,7 @@
     <string name="test_the_connection">Test the connection</string>
     <string name="text">Text</string>
     <string name="text_size">Text size</string>
+    <string name="the_app_already_has_this_blog_as">The app already has this blog, as %1$s. Paired again, it stays the blog it is, with what is written for it on this device; added, it becomes a second blog beside the first.</string>
     <string name="the_app_could_not_make_its_key">The app could not make its key.</string>
     <string name="the_app_has_no_key_yet">The app has no key yet.</string>
     <string name="the_app_is_not_allowed_to_use">The app is not allowed to use the camera. Allow it in the system\'s settings, or paste the code as text.</string>
@@ -419,10 +423,12 @@
     <string name="tile_restore">Trash</string>
     <string name="type">type</string>
     <string name="type_2">type=%1$s</string>
+    <string name="unfinished_writing">unfinished writing: %1$d</string>
     <string name="unlisted">unlisted</string>
     <string name="unpin">unpin</string>
     <string name="unpublish_2">unpublish</string>
     <string name="video">video</string>
+    <string name="waiting_to_be_sent_2">waiting to be sent: %1$d</string>
     <string name="yes_held_at_the_top_of_the">yes -- held at the top of the front page</string>
     <string name="yes_reachable_by_its_address_in_no">yes -- reachable by its address, in no listing, feed, sitemap or search</string>
 </resources>

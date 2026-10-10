@@ -28,6 +28,7 @@
     <string name="actions">Aktionen</string>
     <string name="add_a_blog">Blog hinzufügen</string>
     <string name="add_a_picture_or_video">Bild oder Video hinzufügen</string>
+    <string name="add_as_another_blog">Als weiteren Blog hinzufügen</string>
     <string name="announce">Ankündigen</string>
     <string name="announce_2">„%1$s“ ankündigen?</string>
     <string name="announce_anyway">Trotzdem ankündigen</string>
@@ -190,6 +191,7 @@
     <string name="rebuilt_the_deploy_is_owed_to_the">Gebaut; ausgeliefert wird beim nächsten geplanten Lauf.</string>
     <string name="remove">Entfernen</string>
     <string name="remove_older_version_s_freeing_every_post">%1$d ältere Fassung(en) entfernen und %2$s freigeben? Jeder Beitrag behält seine neueste. Das lässt sich nicht zurücknehmen.</string>
+    <string name="remove_from_the_app_its_key_is_2">„%1$s“ aus der App entfernen? Sein Schlüssel wird mit gelöscht, ebenso was auf diesem Gerät für ihn geschrieben wurde (%2$s). Das Blog selbst bleibt unberührt.</string>
     <string name="remove_from_the_app_its_key_is">„%1$s“ aus der App entfernen? Sein Schlüssel wird mit gelöscht; das Blog selbst bleibt unberührt.</string>
     <string name="remove_older_versions">Ältere Fassungen entfernen</string>
     <string name="remove_older_versions_file_s">Ältere Fassungen entfernen — %1$d Datei(en), %2$s</string>
@@ -220,6 +222,7 @@
     <string name="search_the_archive_2">Such im Archiv.</string>
     <string name="send_to_the_blog_as_a_draft">Als Entwurf ans Blog senden</string>
     <string name="sending">Wird gesendet…</string>
+    <string name="sent_to_the_blog_as_drafts_2">Als Entwürfe an den Blog gesendet</string>
     <string name="sent_to_the_blog_as_drafts">Als Entwürfe an den Blog gesendet: %1$d</string>
     <string name="server">Server</string>
     <string name="server_key">Schlüssel des Servers</string>
@@ -242,6 +245,7 @@
     <string name="test_the_connection">Verbindung testen</string>
     <string name="text">Text</string>
     <string name="text_size">Schriftgröße</string>
+    <string name="the_app_already_has_this_blog_as">Diesen Blog hat die App schon, als „%1$s“. Erneut gekoppelt bleibt er derselbe Blog, mit allem, was auf diesem Gerät für ihn geschrieben ist; hinzugefügt wird er ein zweiter Blog daneben.</string>
     <string name="the_app_could_not_make_its_key">Die App konnte ihren Schlüssel nicht erzeugen.</string>
     <string name="the_app_has_no_key_yet">Die App hat noch keinen Schlüssel.</string>
     <string name="the_app_is_not_allowed_to_use">Die App darf die Kamera nicht verwenden. Erlaube es in den Systemeinstellungen oder füge den Code als Text ein.</string>
@@ -419,10 +423,12 @@
     <string name="tile_restore">Papierkorb</string>
     <string name="type">Typ</string>
     <string name="type_2">Typ=%1$s</string>
+    <string name="unfinished_writing">Angefangenes: %1$d</string>
     <string name="unlisted">ungelistet</string>
     <string name="unpin">lösen</string>
     <string name="unpublish_2">zurück auf Entwurf</string>
     <string name="video">Video</string>
+    <string name="waiting_to_be_sent_2">wartet auf den Versand: %1$d</string>
     <string name="yes_held_at_the_top_of_the">ja -- bleibt oben auf der Startseite</string>
     <string name="yes_reachable_by_its_address_in_no">ja -- über die eigene Adresse erreichbar, in keiner Liste, keinem Feed, keiner Sitemap und keiner Suche</string>
 </resources>

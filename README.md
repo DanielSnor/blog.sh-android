@@ -51,7 +51,12 @@ another machine -- and stays the blog it was, with what was written for
 it on the phone. The app hands in the key the blog already has, so the
 server writes the new line in place of the old; where that key stands on
 a line somebody wrote by hand, the blog is given a key of its own. A
-blog set up by hand can be connected with a code the same way.
+blog set up by hand can be connected with a code the same way. And a
+code read under **Add a blog** for a blog the app already has -- the same
+account at the same address, or on the server the blog has come to
+trust, which a machine keeps when its address changes -- offers that
+first: paired again, the blog stays the one it is; added as another, it
+becomes a second blog beside the first, one tap further.
 
 **By hand**, for a blog that lives in a container or a server whose
 `authorized_keys` somebody keeps themselves:
@@ -86,7 +91,9 @@ nothing more, even when two blogs share a server and an account. A new
 blog starts with the server of the one that was open -- a second blog
 most often lives beside the first -- and asks for its directory and a key
 of its own; removing a blog removes its key from the phone, and the line
-on the server is then yours to delete.
+on the server is then yours to delete. What was written for the blog on
+the phone goes with it, and the question before it says how much there
+is: writing begun and not finished, posts waiting to be sent.
 Switching changes everything the screen wears: the name, the favicon, the
 colours, what waits in the queue. The list is in the order you put it in:
 a row held offers the way up and down it, beside the way out of the app.
@@ -178,6 +185,9 @@ waited goes then, as drafts, in the order it was written, each delivery
 under a name of its own -- so a post the server took just before the
 connection broke is not written twice. It carries no date of its own: a
 draft is dated by the blog when it is published, as every draft is.
+What went by itself is said on the first screen, under the drafts it now
+is among, until somebody has looked: a post that is gone from the phone
+with nothing said looks like a post lost.
 A post the blog would not take stays, with the blog's reason beside it.
 From the list a post can be sent by hand, taken back into the form to be
 written on, or thrown away. One taken back is held, not deleted: it is
@@ -411,7 +421,7 @@ again; the posts that wait on the device -- put by, listed, delivered
 under their receipts -- and their sending: once, in turn, to the blog
 they were written for; a build owed to a blog that is not the open one.
 The screens are drawn on the desk and compared with how they were last
-looked at: twenty-three of them -- the first screen, the lists, a post, the
+looked at: twenty-five of them -- the first screen, the lists, a post, the
 forms, the sheets, a blog out of reach -- in seven looks: a phone in each of the three
 languages, by night, with the largest type, and a tablet on its side and
 upright. What the engine would answer comes from a test blog's own

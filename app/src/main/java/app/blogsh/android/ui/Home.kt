@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import app.blogsh.android.BlogshApp
 import app.blogsh.android.R
+import app.blogsh.android.model.Arrival
 import app.blogsh.android.model.Begun
 import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
@@ -370,6 +371,8 @@ fun HomeScreen(state: HomeState) {
     var trying by remember { mutableStateOf(false) }
     // The posts kept on this device for the open blog until its server answers.
     val waiting = remember(Blogs.currentId, Desk.changes) { Blogs.currentId?.let { WaitingRoom.all(it) } ?: emptyList() }
+    // The posts that went to the open blog by themselves and were not looked at since.
+    val arrived = remember(Blogs.currentId, Desk.changes) { Blogs.currentId?.let { WaitingRoom.arrived(it) } ?: emptyList() }
 
     // Another blog: its own name and colour are there before its server answers.
     LaunchedEffect(Blogs.currentId) {
@@ -513,9 +516,21 @@ fun HomeScreen(state: HomeState) {
                 // What needs the server is shown out of reach while the
                 // server is silent; writing a new post -- which does not --
                 // stays as it is.
-                if (glance != null || begun.isNotEmpty() || waiting.isNotEmpty()) {
+                if (glance != null || begun.isNotEmpty() || waiting.isNotEmpty() || arrived.isNotEmpty()) {
                     Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (glance != null) OutOfReach(offline) { Pressable({ open(MenuEntry.Browse, StateFilter.Draft) }) { DraftsCard(glance) } }
+                        // What went to the blog by itself, under the drafts it
+                        // now is among: it stands until it was looked at, and
+                        // leads to where the posts are now.
+                        if (arrived.isNotEmpty()) {
+                            OutOfReach(offline) {
+                                Pressable({
+                                    Blogs.currentId?.let { WaitingRoom.forgetArrived(it) }
+                                    Desk.changed()
+                                    open(MenuEntry.Browse, StateFilter.Draft)
+                                }) { ArrivedCard(arrived) }
+                            }
+                        }
                         for (one in begun) {
                             // A new post is written on the device; changes to
                             // one the blog has need its text from the server.
@@ -530,7 +545,7 @@ fun HomeScreen(state: HomeState) {
                 }
 
                 Column(
-                    Modifier.padding(top = if (glance == null && begun.isEmpty() && waiting.isEmpty()) 22.dp else 10.dp),
+                    Modifier.padding(top = if (glance == null && begun.isEmpty() && waiting.isEmpty() && arrived.isEmpty()) 22.dp else 10.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     for (row in MenuEntry.entries.chunked(3)) {
@@ -686,6 +701,23 @@ private fun BegunCard(one: Begun) {
             }
         }
         Mark(Symbols.chevronRight, 14.dp, Theme.muted)
+    }
+}
+
+/** The posts that went by themselves: how many, and the last by name. */
+@Composable
+private fun ArrivedCard(arrived: List<Arrival>) {
+    Card {
+        Mark(Symbols.checkmarkCircle, 21.dp)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                stringResource(R.string.sent_to_the_blog_as_drafts_2), color = Theme.accent,
+                style = ui(12f, FontWeight.Medium), maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+            val last = arrived.lastOrNull()?.title ?: ""
+            if (last.isNotEmpty()) Text(last, color = wordUnderPointer(Theme.ink), style = ui(15f, FontWeight.Medium), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        CountBadge(arrived.size)
     }
 }
 

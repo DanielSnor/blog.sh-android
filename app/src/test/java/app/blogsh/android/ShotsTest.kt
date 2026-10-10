@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
+import app.blogsh.android.model.Arrival
 import app.blogsh.android.model.Blog
 import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
@@ -245,6 +246,26 @@ class ShotsTest(private val look: Look) {
         silence()
         shot("home-offline")
     }
+
+    /** Two posts went to the blog by themselves and nobody has looked since: said on the first screen, under the drafts. */
+    @Test
+    fun homeWithPostsThatWentByThemselves() {
+        WaitingRoom.noteArrived(Arrival(title = "Ráno u rybníka", slug = "rano-u-rybnika", at = noon.minusSeconds(120).toEpochMilli()), BLOG)
+        WaitingRoom.noteArrived(Arrival(title = "Jen pár slov bez titulku.", slug = "jen-par-slov", at = noon.minusSeconds(60).toEpochMilli()), BLOG)
+        shot("home-arrived")
+    }
+
+    /** A code read from the list of blogs for a blog the app already has: let in again first, added as another one tap away. */
+    @Test
+    fun addBlogWithACodeForABlogItHas() = shot(
+        "add-blog-known",
+        over = {
+            AddBlogSheet(
+                initialCode = "blogsh://pair?v=1&h=blog.invalid&p=2222&u=me&k=AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8&n=blog.sh",
+                onBack = {}, onDone = {},
+            )
+        },
+    )
 
     @Test
     fun whatWaitsToBeSent() {

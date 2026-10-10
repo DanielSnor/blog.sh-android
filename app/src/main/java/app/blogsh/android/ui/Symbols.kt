@@ -143,4 +143,6 @@ object Symbols {
     val wifiSlash = R.drawable.ic_wifi_off
     /** tray.and.arrow.up */
     val trayAndArrowUp = R.drawable.ic_outbox
+    /** checkmark.circle */
+    val checkmarkCircle = R.drawable.ic_check_circle
 }

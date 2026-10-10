@@ -1,6 +1,8 @@
 package app.blogsh.android
 
 import app.blogsh.android.model.ActionAnswer
+import app.blogsh.android.model.Arrival
+import app.blogsh.android.model.Belongings
 import app.blogsh.android.model.Blog
 import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.DeliveryFile
@@ -601,6 +603,80 @@ class OutboxTest {
             assertEquals(1, outbox.sendAll(id))
             assertTrue(WaitingRoom.all(id, home).isEmpty())
         }
+    }
+}
+
+/**
+ * What went to the blog by itself, and what goes with a blog that
+ * leaves the app. A mistake here is a post that looks lost because
+ * nobody said where it went, or writing deleted without a word.
+ */
+class ArrivedTest {
+    /**
+     * A post the app sent by itself is said until it was seen; one sent
+     * by hand was seen going, and is not.
+     */
+    @Test
+    fun whatWentByItselfIsSaidUntilItWasSeen() = room { home ->
+        runBlocking {
+            val blog = id()
+            WaitingRoom.put(Waiting(title = "První", text = "Slova.", at = moment(0)), emptyList(), blog, home)
+            WaitingRoom.put(Waiting(text = "Bez titulku, jen slova.", at = moment(1)), emptyList(), blog, home)
+            WaitingRoom.put(Waiting(title = "Ručně", text = "Slova.", at = moment(2)), emptyList(), blog, home)
+            val outbox = Outbox({ home }, { blog }) { files, _ -> answer(files.last().name.removeSuffix(".md")) }
+            // The last one is sent from the list, by hand.
+            assertEquals(Outbox.Outcome.Sent("rucne"), outbox.send(WaitingRoom.all(blog, home).last(), blog))
+            assertTrue(WaitingRoom.arrived(blog, home).isEmpty())
+            // The others go by themselves.
+            assertEquals(2, outbox.sendAll(blog))
+            val arrived = WaitingRoom.arrived(blog, home)
+            assertEquals(listOf("První", "Bez titulku, jen slova."), arrived.map { it.title })
+            assertEquals(listOf("prvni", "bez-titulku-jen-slova"), arrived.map { it.slug })
+            // Nothing waits any more, and what is said of the arrivals is not a post that waits.
+            assertTrue(WaitingRoom.all(blog, home).isEmpty())
+            // Seen: nothing more is said.
+            WaitingRoom.forgetArrived(blog, home)
+            assertTrue(WaitingRoom.arrived(blog, home).isEmpty())
+            // Another blog's arrivals are its own; a blog that leaves takes them along.
+            WaitingRoom.noteArrived(Arrival(title = "x", slug = "x", at = moment(3)), blog, home)
+            assertTrue(WaitingRoom.arrived(id(), home).isEmpty())
+            WaitingRoom.removeAll(blog, home)
+            assertTrue(WaitingRoom.arrived(blog, home).isEmpty())
+        }
+    }
+
+    /** A post the blog would not take did not arrive, and is not said to have. */
+    @Test
+    fun whatWasRefusedDidNotArrive() = room { home ->
+        runBlocking {
+            val blog = id()
+            WaitingRoom.put(Waiting(title = "one", at = moment(0)), emptyList(), blog, home)
+            val outbox = Outbox({ home }, { blog }) { _, _ -> throw EngineError.Refused(Refusal(false, "too_large", "Too large.")) }
+            assertEquals(0, outbox.sendAll(blog))
+            assertTrue(WaitingRoom.arrived(blog, home).isEmpty())
+            assertEquals(1, WaitingRoom.all(blog, home).size)
+        }
+    }
+
+    /**
+     * What goes with a blog that leaves the app is counted: what was
+     * begun and not finished, and what waits to be sent.
+     */
+    @Test
+    fun whatGoesWithABlogIsCounted() = room { home ->
+        val notes = MemoryNotes()
+        val blog = id()
+        val other = id()
+        assertTrue(Belongings.of(blog, notes, home).isEmpty)
+        Unsent("Rozepsáno", "", "Text.", moment(0)).keep(blog, notes)
+        app.blogsh.android.model.Unsaved("změna", "K0", moment(1), "Venku").keep(blog, "venku", app.blogsh.android.model.Unsaved.What.Text, notes)
+        WaitingRoom.put(Waiting(title = "čeká", text = "x", at = moment(2)), emptyList(), blog, home)
+        WaitingRoom.put(Waiting(title = "jinde", text = "x", at = moment(3)), emptyList(), other, home)
+        assertEquals(Belongings(begun = 2, waiting = 1), Belongings.of(blog, notes, home))
+        assertEquals(Belongings(begun = 0, waiting = 1), Belongings.of(other, notes, home))
+        // What only says that posts arrived is not something that waits.
+        WaitingRoom.noteArrived(Arrival(title = "x", slug = "x", at = moment(4)), blog, home)
+        assertEquals(1, Belongings.of(blog, notes, home).waiting)
     }
 }
 

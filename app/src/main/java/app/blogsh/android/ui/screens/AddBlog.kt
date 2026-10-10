@@ -119,7 +119,13 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
     // The exchange: a key of the app's own is made, handed in with the
     // code's, and the blog is the app's from then on. A code that did
     // not take leaves nothing behind -- no blog, no key.
-    suspend fun connect(code: PairingCode) {
+    /**
+     * `again`: the blog of the app's the code is for, where it was found
+     * to be one -- let in again rather than added. `anew`: added all the
+     * same, as a second blog beside it.
+     */
+    suspend fun connect(code: PairingCode, again: Blog? = null, anew: Boolean = false) {
+        val into = if (anew) null else again ?: into
         connecting = true
         problem = null
         val blog = into ?: Blog(host = code.host, port = code.port, user = code.user, name = code.site ?: "")
@@ -160,6 +166,8 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
                 Blogs.repaired(into.id, code.host, code.port, code.user, account, known, code.site)
                 // The key it had, where it was given another: nothing answers to it any more.
                 if (account != into.keyAccount) withContext(NonCancellable + Dispatchers.IO) { runCatching { KeyStore.deleteKey(into.keyAccount) } }
+                // Let in again from the list of blogs, it is the one to open.
+                Blogs.select(into.id)
             }
             Herald.shared.say(context.getString(R.string.connected, handed.device.ifEmpty { blog.label }))
             onDone()
@@ -240,16 +248,33 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
 
                 read?.onSuccess { code ->
                     val hostLabel = stringResource(R.string.host)
+                    val addAsAnother = stringResource(R.string.add_as_another_blog)
                     val userLabel = stringResource(R.string.user)
                     Plate(Modifier.gap(14)) {
                         row { Text(stringResource(R.string.connect_to, code.site ?: code.host), color = Theme.ink, style = ui(15f, FontWeight.Medium)) }
                         info(hostLabel, "${code.host}:${code.port}", mono = true)
                         info(userLabel, code.user, mono = true)
                     }
-                    PrimaryButton(
-                        stringResource(if (connecting) R.string.connecting else R.string.connect),
-                        modifier = Modifier.gap(22), enabled = !connecting, busy = connecting,
-                    ) { scope.launch { connect(code) } }
+                    // A code for a blog the app has is first of all a way to
+                    // let that blog in again: a second blog beside it, with
+                    // what was written left at the first, is seldom what was
+                    // meant -- and stays one tap away.
+                    val known = if (into == null) remember(code, Blogs.all) { code.known(Blogs.all) } else null
+                    if (known != null) {
+                        Hint(stringResource(R.string.the_app_already_has_this_blog_as, known.label))
+                        PrimaryButton(
+                            stringResource(if (connecting) R.string.connecting else R.string.pair_again),
+                            modifier = Modifier.gap(18), enabled = !connecting, busy = connecting,
+                        ) { scope.launch { connect(code, again = known) } }
+                        Plate(Modifier.gap(12)) {
+                            row { Command(addAsAnother, Symbols.plus, enabled = !connecting) { scope.launch { connect(code, anew = true) } } }
+                        }
+                    } else {
+                        PrimaryButton(
+                            stringResource(if (connecting) R.string.connecting else R.string.connect),
+                            modifier = Modifier.gap(22), enabled = !connecting, busy = connecting,
+                        ) { scope.launch { connect(code) } }
+                    }
                 }?.onFailure { why ->
                     ProblemLine(
                         stringResource(

@@ -290,7 +290,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
     }
     if (confirmingRemoval && blog != null) {
         Asks(
-            stringResource(R.string.remove_from_the_app_its_key_is, blog.label),
+            leavingWords(blog),
             choices = listOf(Choice(stringResource(R.string.remove), danger = true) {
                 Blogs.remove(blog.id)
                 onBack()

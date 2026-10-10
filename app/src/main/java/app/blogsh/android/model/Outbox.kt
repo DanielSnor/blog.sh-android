@@ -87,8 +87,12 @@ class Outbox(
             while (true) {
                 val post = WaitingRoom.all(blog, home()).firstOrNull { it.problem == null && it.id !in tried } ?: return sent
                 tried.add(post.id)
-                when (send(post, blog)) {
-                    is Outcome.Sent -> sent += 1
+                when (val outcome = send(post, blog)) {
+                    is Outcome.Sent -> {
+                        sent += 1
+                        // Nobody sent this one by hand: said until it was seen.
+                        WaitingRoom.noteArrived(Arrival(title = post.headline, slug = outcome.slug, at = Now.instant().toEpochMilli()), blog, home())
+                    }
                     Outcome.Waits -> return sent
                     is Outcome.Refused -> continue
                 }

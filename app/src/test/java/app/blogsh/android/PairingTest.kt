@@ -344,4 +344,58 @@ class PairingTest {
         )
         assertEquals(PairingError.Spent, refusal("""{"ok":false,"error":"used"}"""))
     }
+
+    // ---- A code for a blog the app already has
+
+    private val nobody: (String, Int) -> String? = { _, _ -> null }
+
+    /**
+     * A code for the account and the place of a blog the app has is that
+     * blog's: read, it is a way to let it in again, not a second blog.
+     */
+    @Test
+    fun aCodeForABlogTheAppHasIsKnownAsThatBlog() {
+        val here = Blog(host = "blog.example.org ", port = 2222, user = "me", name = "Můj blog")
+        val elsewhere = Blog(host = "other.example.org", port = 2222, user = "me")
+        val code = PairingCode(link())
+        assertEquals(here.id, code.known(listOf(elsewhere, here), nobody)?.id)
+        // Another account, another port, another machine: not this blog.
+        assertNull(code.known(listOf(here.copy(user = "you")), nobody))
+        assertNull(code.known(listOf(here.copy(port = 22)), nobody))
+        assertNull(code.known(listOf(elsewhere), nobody))
+        assertNull(code.known(emptyList(), nobody))
+        // One account can hold more than one blog: where both say a name, it has to be the same.
+        assertNull(code.known(listOf(here.copy(name = "Jiný blog")), nobody))
+        assertEquals(here.id, code.known(listOf(here.copy(name = "")), nobody)?.id)
+        assertEquals(here.id, PairingCode(link { it["n"] = null }).known(listOf(here), nobody)?.id)
+    }
+
+    /**
+     * A machine keeps its keys when its address changes: a code that
+     * names the server a blog has come to trust is that blog's, wherever
+     * the code says the machine is now.
+     */
+    @Test
+    fun aBlogWhoseMachineMovedIsKnownByTheServerItTrusts() {
+        val blog = Blog(host = "10.0.0.39", port = 22, user = "me", name = "Můj blog")
+        val code = PairingCode(link { it["h"] = "192.168.1.20" })
+        val trusted: (String, Int) -> String? = { host, port -> if (host == "10.0.0.39" && port == 22) "SHA256:abc+DEF/123AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" else null }
+        assertEquals(blog.id, code.known(listOf(blog), trusted)?.id)
+        // Another server's key, or none remembered: a blog at another address is another blog.
+        assertNull(code.known(listOf(blog)) { _, _ -> "SHA256:somebody+else" })
+        assertNull(code.known(listOf(blog), nobody))
+        // A code that names no server cannot be matched by one.
+        assertNull(PairingCode(link { it["h"] = "192.168.1.20"; it["f"] = null }).known(listOf(blog), trusted))
+    }
+
+    /** Two blogs it could be: the one called what the code says; where that does not tell them apart, neither. */
+    @Test
+    fun ofTwoBlogsItCouldBeTheOneNamedIsMeant() {
+        val named = Blog(host = "blog.example.org", port = 2222, user = "me", name = "Můj blog")
+        val unnamed = Blog(host = "blog.example.org", port = 2222, user = "me")
+        val code = PairingCode(link())
+        assertEquals(named.id, code.known(listOf(unnamed, named), nobody)?.id)
+        assertNull(code.known(listOf(named, named.copy(id = "second")), nobody))
+        assertNull(PairingCode(link { it["n"] = null }).known(listOf(unnamed, named), nobody))
+    }
 }

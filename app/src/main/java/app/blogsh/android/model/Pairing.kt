@@ -95,6 +95,31 @@ class PairingCode(text: String) {
     }
 
     /**
+     * The blog of the app's that this code is for, where it has one: the
+     * same account at the same place -- the address the blog is at, or
+     * the server it has come to trust, which a machine keeps when its
+     * address changes -- and, where both say a name, the same name: one
+     * account can hold more than one blog. A code read for such a blog
+     * is a way to let it in again, not a second blog beside it.
+     */
+    fun known(blogs: List<Blog>, trusted: (host: String, port: Int) -> String? = { host, port -> TrustOnFirstUse.known(host, port) }): Blog? {
+        fun folded(name: String?): String = (name ?: "").trim(' ', '\t').lowercase()
+        val named = folded(site)
+        val here = blogs.filter { blog ->
+            if (blog.user.trim(' ', '\t') != user) return@filter false
+            val (at, door) = blog.reached
+            val place = at.lowercase() == host.lowercase() && door == port
+            val server = trusted(at, door)?.let { urlSafe(it) in fingerprints } ?: false
+            if (!place && !server) return@filter false
+            named.isEmpty() || folded(blog.name).isEmpty() || folded(blog.name) == named
+        }
+        if (here.size == 1) return here[0]
+        // More than one it could be: the one called what the code says.
+        val called = here.filter { named.isNotEmpty() && folded(it.name) == named }
+        return if (called.size == 1) called[0] else null
+    }
+
+    /**
      * The server that answered is one the code told the app to expect --
      * or the code named none, and the first one met is taken on trust,
      * as with a blog set up by hand.

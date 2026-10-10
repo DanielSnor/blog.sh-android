@@ -28,6 +28,7 @@
     <string name="actions">Akce</string>
     <string name="add_a_blog">Přidat blog</string>
     <string name="add_a_picture_or_video">Přidat obrázek nebo video</string>
+    <string name="add_as_another_blog">Přidat jako další blog</string>
     <string name="announce">Oznámit</string>
     <string name="announce_2">Oznámit „%1$s“?</string>
     <string name="announce_anyway">Přesto oznámit</string>
@@ -190,6 +191,7 @@
     <string name="rebuilt_the_deploy_is_owed_to_the">Sestaveno; nasazení dodělá příští plánovaný běh.</string>
     <string name="remove">Odebrat</string>
     <string name="remove_older_version_s_freeing_every_post">Smazat starší verze — souborů: %1$d, uvolní se %2$s? Nejnovější verze každého příspěvku zůstane. Tohle vzít zpět nejde.</string>
+    <string name="remove_from_the_app_its_key_is_2">Odebrat „%1$s“ z appky? Smaže se i jeho klíč a to, co je pro něj v tomhle zařízení napsáno (%2$s). Samotného blogu se to nedotkne.</string>
     <string name="remove_from_the_app_its_key_is">Odebrat „%1$s“ z appky? Smaže se i jeho klíč; samotného blogu se to nedotkne.</string>
     <string name="remove_older_versions">Smazat starší verze</string>
     <string name="remove_older_versions_file_s">Smazat starší verze — souborů: %1$d, %2$s</string>
@@ -220,6 +222,7 @@
     <string name="search_the_archive_2">Hledej v archivu.</string>
     <string name="send_to_the_blog_as_a_draft">Odeslat na blog jako koncept</string>
     <string name="sending">Odesílám…</string>
+    <string name="sent_to_the_blog_as_drafts_2">Odesláno na blog jako koncepty</string>
     <string name="sent_to_the_blog_as_drafts">Odesláno na blog jako koncepty: %1$d</string>
     <string name="server">Server</string>
     <string name="server_key">Klíč serveru</string>
@@ -242,6 +245,7 @@
     <string name="test_the_connection">Vyzkoušet spojení</string>
     <string name="text">Text</string>
     <string name="text_size">Velikost písma</string>
+    <string name="the_app_already_has_this_blog_as">Tenhle blog už appka má, jako „%1$s“. Když ho spáruješ znovu, zůstane tím blogem, kterým je, i s tím, co je pro něj v zařízení rozepsáno; přidáním vznikne vedle něj druhý blog.</string>
     <string name="the_app_could_not_make_its_key">Appce se nepodařilo vytvořit klíč.</string>
     <string name="the_app_has_no_key_yet">Appka ještě nemá klíč.</string>
     <string name="the_app_is_not_allowed_to_use">Appka nemá dovoleno použít kameru. Povol ji v nastavení systému, nebo kód vlož jako text.</string>
@@ -419,10 +423,12 @@
     <string name="tile_restore">Koš</string>
     <string name="type">typ</string>
     <string name="type_2">typ=%1$s</string>
+    <string name="unfinished_writing">rozepsané: %1$d</string>
     <string name="unlisted">nezalistován</string>
     <string name="unpin">odepnout</string>
     <string name="unpublish_2">stáhnout z webu</string>
     <string name="video">video</string>
+    <string name="waiting_to_be_sent_2">čekající na odeslání: %1$d</string>
     <string name="yes_held_at_the_top_of_the">ano — drží se nahoře na úvodní stránce</string>
     <string name="yes_reachable_by_its_address_in_no">ano — dostupný na své adrese, ale v žádném výpisu, feedu, sitemapě ani hledání</string>
 </resources>

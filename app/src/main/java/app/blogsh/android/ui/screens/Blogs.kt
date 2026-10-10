@@ -34,8 +34,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
+import app.blogsh.android.model.Belongings
 import app.blogsh.android.model.Blog
 import app.blogsh.android.model.Blogs
+import app.blogsh.android.model.Desk
 import app.blogsh.android.ui.Asks
 import app.blogsh.android.ui.Choice
 import app.blogsh.android.ui.Command
@@ -130,7 +132,7 @@ fun BlogsSheet(onDismiss: () -> Unit) {
     }
     removing?.let { blog ->
         Asks(
-            stringResource(R.string.remove_from_the_app_its_key_is, blog.label),
+            leavingWords(blog),
             choices = listOf(Choice(stringResource(R.string.remove), danger = true) { Blogs.remove(blog.id) }),
             onDismiss = { removing = null },
         )
@@ -164,4 +166,20 @@ fun BlogRow(blog: Blog, open: Boolean) {
             Mark(Symbols.checkmark, 18.dp, modifier = Modifier.semantics { contentDescription = label })
         }
     }
+}
+
+/**
+ * The question before a blog leaves the app: what goes with it is its
+ * key -- and whatever was written for it on this device, which is said
+ * with how much of it there is.
+ */
+@Composable
+fun leavingWords(blog: Blog): String {
+    val kept = remember(blog.id, Desk.changes) { Belongings.of(blog.id) }
+    val parts = listOfNotNull(
+        if (kept.begun > 0) stringResource(R.string.unfinished_writing, kept.begun) else null,
+        if (kept.waiting > 0) stringResource(R.string.waiting_to_be_sent_2, kept.waiting) else null,
+    )
+    return if (parts.isEmpty()) stringResource(R.string.remove_from_the_app_its_key_is, blog.label)
+    else stringResource(R.string.remove_from_the_app_its_key_is_2, blog.label, parts.joinToString(", "))
 }

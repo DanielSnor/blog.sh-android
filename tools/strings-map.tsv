@@ -25,6 +25,7 @@ accent	Accent
 actions	Actions
 add_a_blog	Add a blog
 add_a_picture_or_video	Add a picture or video
+add_as_another_blog	Add as another blog
 announce	Announce
 announce_2	Announce '%@'?
 announce_anyway	Announce anyway
@@ -187,6 +188,7 @@ rebuilt_and_deployed	Rebuilt and deployed.
 rebuilt_the_deploy_is_owed_to_the	Rebuilt; the deploy is owed to the next scheduled run.
 remove	Remove
 remove_older_version_s_freeing_every_post	Remove %lld older version(s), freeing %@? Every post keeps its newest one. This cannot be undone.
+remove_from_the_app_its_key_is_2	Remove '%@' from the app? Its key is deleted with it, and so is what was written for it on this device (%@). The blog itself is not touched.
 remove_from_the_app_its_key_is	Remove '%@' from the app? Its key is deleted with it; the blog itself is not touched.
 remove_older_versions	Remove older versions
 remove_older_versions_file_s	Remove older versions — %lld file(s), %@
@@ -217,6 +219,7 @@ search_the_archive	Search the archive
 search_the_archive_2	Search the archive.
 send_to_the_blog_as_a_draft	Send to the blog as a draft
 sending	Sending…
+sent_to_the_blog_as_drafts_2	Sent to the blog as drafts
 sent_to_the_blog_as_drafts	Sent to the blog as drafts: %lld
 server	Server
 server_key	Server key
@@ -239,6 +242,7 @@ tap_a_colour_to_change_it_it	Tap a colour to change it. It holds on this device,
 test_the_connection	Test the connection
 text	Text
 text_size	Text size
+the_app_already_has_this_blog_as	The app already has this blog, as %@. Paired again, it stays the blog it is, with what is written for it on this device; added, it becomes a second blog beside the first.
 the_app_could_not_make_its_key	The app could not make its key.
 the_app_has_no_key_yet	The app has no key yet.
 the_app_is_not_allowed_to_use	The app is not allowed to use the camera. Allow it in the system's settings, or paste the code as text.
@@ -416,9 +420,11 @@ tile_rebuild	tile.rebuild
 tile_restore	tile.restore
 type	type
 type_2	type=%@
+unfinished_writing	unfinished writing: %lld
 unlisted	unlisted
 unpin	unpin
 unpublish_2	unpublish
 video	video
+waiting_to_be_sent_2	waiting to be sent: %lld
 yes_held_at_the_top_of_the	yes -- held at the top of the front page
 yes_reachable_by_its_address_in_no	yes -- reachable by its address, in no listing, feed, sitemap or search

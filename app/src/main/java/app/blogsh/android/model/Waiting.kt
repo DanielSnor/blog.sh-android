@@ -56,6 +56,34 @@ data class Waiting(
 }
 
 /**
+ * A post that waited and has gone to its blog by itself. The post is
+ * the blog's now, a draft among its drafts; what is kept here is only
+ * the saying of it, until somebody has seen it -- a line that passes in
+ * six seconds is read by nobody who was not looking, and a post that
+ * is gone from the device with nothing said looks like a post lost.
+ */
+@Serializable
+data class Arrival(val id: String = UUID.randomUUID().toString(), val title: String, val slug: String, val at: Long)
+
+/**
+ * What is written for a blog on this device and goes when the blog
+ * leaves the app: counted, so that the question before it can say so.
+ */
+data class Belongings(
+    /** Writing begun and not finished: a new post, changes to a post or to one of its languages. */
+    val begun: Int,
+    /** Posts finished and waiting for the server. */
+    val waiting: Int,
+) {
+    val isEmpty: Boolean get() = begun == 0 && waiting == 0
+
+    companion object {
+        fun of(blog: String, notes: Notes = BlogShelf.notes, home: File = WaitingRoom.home): Belongings =
+            Belongings(Begun.all(blog, notes).size, WaitingRoom.all(blog, home).size)
+    }
+}
+
+/**
  * Where the posts that wait are kept: a directory to a blog, one to a
  * post in it -- `post.json`, and beside it the files the post goes with.
  * Files, not preferences: a delivery is megabytes.
@@ -183,6 +211,28 @@ object WaitingRoom {
     /** What the blog said to a post it would not take, kept with the post. */
     fun note(problem: String?, id: String, blog: String, home: File = this.home) {
         mark(id, blog, home) { it.copy(problem = problem) }
+    }
+
+    // ---- What has gone by itself
+
+    private fun arrivals(blog: String, home: File) = File(room(blog, home), "arrived.json")
+
+    /** The posts that went to the blog by themselves and were not looked at since, in the order they went. */
+    fun arrived(blog: String, home: File = this.home): List<Arrival> = runCatching {
+        EngineJson.decodeFromString(kotlinx.serialization.builtins.ListSerializer(Arrival.serializer()), arrivals(blog, home).readText(Charsets.UTF_8))
+    }.getOrDefault(emptyList())
+
+    fun noteArrived(arrival: Arrival, blog: String, home: File = this.home) {
+        val all = arrived(blog, home) + arrival
+        runCatching {
+            room(blog, home).mkdirs()
+            write(EngineJson.encodeToString(kotlinx.serialization.builtins.ListSerializer(Arrival.serializer()), all).toByteArray(Charsets.UTF_8), arrivals(blog, home))
+        }
+    }
+
+    /** Seen: nothing more is said of them. */
+    fun forgetArrived(blog: String, home: File = this.home) {
+        arrivals(blog, home).delete()
     }
 
     /** Sent, or thrown away: it waits no longer. */

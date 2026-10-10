@@ -20,7 +20,11 @@ import javax.crypto.spec.GCMParameterSpec
  * by, on purpose -- the key's forced command on the server fixes it
  * (scripts/remote.sh), so the app cannot be pointed anywhere else.
  */
-data class ServerSettings(val host: String, val port: Int, val user: String, val keyAccount: String) {
+data class ServerSettings(
+    val host: String, val port: Int, val user: String, val keyAccount: String,
+    /** The blog was let in by a code: what is said of a key the server does not know depends on it. */
+    val paired: Boolean = false,
+) {
     companion object {
         /**
          * `only`: the blog the call is meant for. Another one open by now
@@ -33,7 +37,7 @@ data class ServerSettings(val host: String, val port: Int, val user: String, val
             val (host, port) = blog.reached
             val user = blog.user.trim()
             if (host.isEmpty() || user.isEmpty()) return null
-            return ServerSettings(host, port, user, blog.keyAccount)
+            return ServerSettings(host, port, user, blog.keyAccount, paired = blog.pairedAs != null)
         }
     }
 }

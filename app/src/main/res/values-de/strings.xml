@@ -284,6 +284,7 @@
     <string name="the_sentences_are_the_blog_s_own">Die Sätze sind die des Blogs – in der Sprache der App, wo die Engine des Blogs sie hat, sonst in seiner eigenen. Von hier aus wird nichts repariert.</string>
     <string name="the_server_did_not_answer_is_this">Der Server %1$s hat nicht geantwortet. Ist dieses Gerät in einem Netz, aus dem der Server erreichbar ist?</string>
     <string name="the_server_closed_the_connection_without_an">Der Server hat die Verbindung ohne Antwort geschlossen.</string>
+    <string name="the_server_does_not_know_this_blog_2">Der Server kennt den Schlüssel dieses Blogs nicht. Der Blog wurde per Code verbunden; kopple ihn in seinen Einstellungen erneut.</string>
     <string name="the_server_does_not_know_this_blog">Der Server kennt den Schlüssel dieses Blogs nicht. Die Zeile unter dem Schlüssel in den Einstellungen des Blogs gehört auf dem Server in ~/.ssh/authorized_keys.</string>
     <string name="the_server_is_not_set_up_yet">Der Server ist noch nicht eingerichtet.</string>
     <string name="the_server_s_key_changed_if_the">Der Schlüssel des Servers hat sich geändert (%1$s). Wurde der Server neu aufgesetzt, vergiss den alten Schlüssel in den Einstellungen des Blogs.</string>

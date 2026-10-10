@@ -414,7 +414,8 @@ fun ComposeScreen() {
         PrimaryButton(
             stringResource(if (busy) R.string.sending else if (offline) R.string.keep_on_the_device else R.string.send_to_the_blog_as_a_draft),
             modifier = Modifier.gap(22),
-            enabled = !(busy || importing || (title.isEmpty() && text.trim().isEmpty()) || overweight),
+            // A title alone is not a post: the blog refuses one with nothing under its header.
+            enabled = !(busy || importing || !Unsent(title, tags, text).canBeSent || overweight),
             busy = busy,
         ) {
             // Neither ends with the form: a post on its way arrives, and is

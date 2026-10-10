@@ -13,7 +13,8 @@ object Fixture {
  */
 object English {
     private val texts: Map<String, String> by lazy {
-        val xml = java.io.File("src/main/res/values/strings.xml").readText()
+        // The words carried over from the iOS app, and the ones only this app has.
+        val xml = java.io.File("src/main/res/values/strings.xml").readText() + java.io.File("src/main/res/values/android.xml").readText()
         Regex("""<string name="([^"]+)">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL).findAll(xml).associate { m ->
             var text = m.groupValues[2]
             if (text.length >= 2 && text.startsWith("\"") && text.endsWith("\"")) text = text.substring(1, text.length - 1)

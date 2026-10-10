@@ -281,6 +281,7 @@ the_scheduled_post_queue	The scheduled-post queue
 the_sentences_are_the_blog_s_own	The sentences are the blog's own -- in this app's language where the blog's engine has it, in the blog's otherwise. Nothing is repaired from here.
 the_server_did_not_answer_is_this	The server %@ did not answer. Is this device on a network the server can be reached from?
 the_server_closed_the_connection_without_an	The server closed the connection without an answer.
+the_server_does_not_know_this_blog_2	The server does not know this blog's key. The blog was connected by a code; pair it again in its settings.
 the_server_does_not_know_this_blog	The server does not know this blog's key. The line under the key in the blog's settings belongs in ~/.ssh/authorized_keys on the server.
 the_server_is_not_set_up_yet	The server is not set up yet.
 the_server_s_key_changed_if_the	The server's key changed (%@). If the server was reinstalled, forget the old key in the blog's settings.

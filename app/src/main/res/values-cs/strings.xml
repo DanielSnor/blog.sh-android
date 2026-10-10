@@ -284,6 +284,7 @@
     <string name="the_sentences_are_the_blog_s_own">Věty jsou vlastní slova blogu – v jazyce appky, pokud ho engine blogu umí, jinak v jazyce blogu. Odsud se nic neopravuje.</string>
     <string name="the_server_did_not_answer_is_this">Server %1$s se neozval. Je tohle zařízení v síti, ze které je na server vidět?</string>
     <string name="the_server_closed_the_connection_without_an">Server zavřel spojení bez odpovědi.</string>
+    <string name="the_server_does_not_know_this_blog_2">Server klíč tohoto blogu nezná. Blog byl připojen kódem; v jeho nastavení ho spáruj znovu.</string>
     <string name="the_server_does_not_know_this_blog">Server klíč tohoto blogu nezná. Řádek pod klíčem v nastavení blogu patří na serveru do ~/.ssh/authorized_keys.</string>
     <string name="the_server_is_not_set_up_yet">Server ještě není nastavený.</string>
     <string name="the_server_s_key_changed_if_the">Klíč serveru se změnil (%1$s). Pokud byl server přeinstalovaný, zapomeň starý klíč v nastavení blogu.</string>

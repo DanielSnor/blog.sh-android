@@ -32,6 +32,19 @@ class UnsentTest {
         assertEquals(written, Unsent.kept(blog, notes))
     }
 
+    /**
+     * A title alone is not a post the blog takes: it refuses one with
+     * nothing under its header. The form's key waits for words.
+     */
+    @Test
+    fun aPostWithATitleAloneIsNotOneToSend() {
+        assertFalse(Unsent("Jen titulek", "", "").canBeSent)
+        assertFalse(Unsent("Jen titulek", "štítek", "  \n\t ").canBeSent)
+        assertFalse(Unsent().canBeSent)
+        assertTrue(Unsent("", "", "Slova bez titulku.").canBeSent)
+        assertTrue(Unsent("Titulek", "", "![Pes](photo-1.jpg)").canBeSent)
+    }
+
     /** A post belongs to the blog it was written for. */
     @Test
     fun eachBlogKeepsItsOwn() {

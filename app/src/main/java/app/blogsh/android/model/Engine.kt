@@ -39,7 +39,13 @@ sealed class EngineError : Exception() {
      * The server let the connection in and turned the key away: its
      * account has no line for it.
      */
-    object KeyNotKnown : EngineError()
+    class KeyNotKnown(
+        /**
+         * The blog was let in by a code: it has no line to put on the
+         * server by hand, and the way back in is to be paired again.
+         */
+        val paired: Boolean = false,
+    ) : EngineError()
     class HostKeyChanged(val fingerprint: String) : EngineError()
     class Refused(val refusal: Refusal) : EngineError()
     class Unreadable(val text: String) : EngineError()
@@ -59,7 +65,8 @@ sealed class EngineError : Exception() {
             return when (this) {
                 NotConfigured -> Spoken.say(R.string.the_server_is_not_set_up_yet)
                 NoKey -> Spoken.say(R.string.the_app_has_no_key_yet)
-                KeyNotKnown -> Spoken.say(R.string.the_server_does_not_know_this_blog)
+                // Said with what there is to do about it: a line to put on the server, or a new code.
+                is KeyNotKnown -> Spoken.say(if (paired) R.string.the_server_does_not_know_this_blog_2 else R.string.the_server_does_not_know_this_blog)
                 is HostKeyChanged -> Spoken.say(R.string.the_server_s_key_changed_if_the, fingerprint)
                 // The engine’s own sentence here speaks of --yes and of a screen the
                 // terminal has; on a phone neither is anything one can do.
@@ -309,6 +316,8 @@ object Engine {
                 line.take(door)
             } catch (e: Throwable) {
                 if (e is EngineError.Unreachable) Reach.shared.nothing(server)
+                // Whose key it was is known here, not where the connection is opened.
+                if (e is EngineError.KeyNotKnown && settings.paired) throw EngineError.KeyNotKnown(paired = true)
                 throw e
             }
             try {
@@ -348,7 +357,7 @@ object Engine {
             ssh.authPublickey(door.user, provider(seed))
         } catch (e: Exception) {
             runCatching { ssh.disconnect() }
-            if (e is UserAuthException) throw EngineError.KeyNotKnown
+            if (e is UserAuthException) throw EngineError.KeyNotKnown()
             if (e is CancellationException) throw e
             trust.changed?.let { throw EngineError.HostKeyChanged(it) }
             throw EngineError.Unreachable(door.host, e.toString())

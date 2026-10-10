@@ -225,7 +225,12 @@ class AnswersTest {
      */
     @Test
     fun aKeyTheServerDoesNotKnowIsSaidInWords() {
-        val said = EngineError.KeyNotKnown.message
+        val said = EngineError.KeyNotKnown().message
+        // A blog a code let in has no line to put anywhere: it is sent to pair again.
+        val paired = EngineError.KeyNotKnown(paired = true).message
+        assertTrue(paired, paired.contains("pair it again"))
+        assertFalse(paired, paired.contains("authorized_keys"))
+        assertTrue(said, said.contains("authorized_keys"))
         assertTrue(said.isNotEmpty())
         assertFalse(said.contains("UserAuthException"))
         assertTrue(said.contains("authorized_keys"))

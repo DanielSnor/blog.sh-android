@@ -39,6 +39,13 @@ data class Unsent(
      */
     val from: String? = null,
 ) {
+    /**
+     * A post the blog would take: it has words under its header. A title
+     * alone is refused there -- at once where the server answers, and
+     * only once it answers again where the post was put by meanwhile.
+     */
+    val canBeSent: Boolean get() = text.isNotBlank()
+
     /** Nothing worth keeping: spaces and line breaks are not writing. */
     val isEmpty: Boolean get() = listOf(title, tags, text).all { it.isBlank() }
 

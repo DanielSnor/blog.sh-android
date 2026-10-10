@@ -249,4 +249,19 @@ class BlogsTest {
         assertEquals("Druhý blog", list.all[0].name)
         assertEquals("", list.all[0].pairedAs)
     }
+
+    /** What is said of a key the server does not know depends on how the blog was let in: the connection is told. */
+    @Test
+    fun aConnectionKnowsWhetherACodeLetItsBlogIn() {
+        val notes = MemoryNotes()
+        val paired = Blog(host = "one.example", user = "me", pairedAs = "Pixel 9")
+        val byHand = Blog(host = "two.example", user = "me", path = "/home/me/blog")
+        BlogShelf.write(listOf(paired, byHand), paired.id, notes)
+        assertEquals(true, app.blogsh.android.model.ServerSettings.load(notes)?.paired)
+        BlogShelf.write(listOf(paired, byHand), byHand.id, notes)
+        assertEquals(false, app.blogsh.android.model.ServerSettings.load(notes)?.paired)
+        // Let in, with no name said for the device: let in all the same.
+        BlogShelf.write(listOf(paired.copy(pairedAs = "")), paired.id, notes)
+        assertEquals(true, app.blogsh.android.model.ServerSettings.load(notes)?.paired)
+    }
 }

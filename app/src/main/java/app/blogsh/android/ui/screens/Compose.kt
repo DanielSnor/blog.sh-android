@@ -259,7 +259,7 @@ fun ComposeScreen() {
             val markdown = Markdown.file(title, tags, body, receipt = receipt)
             val files = Kept.sent(shots, body).map { DeliveryFile(it.name, it.data) } +
                 DeliveryFile(Markdown.fileName(title, body), markdown.toByteArray(Charsets.UTF_8))
-            made = Engine.made(Engine.deliver(files, to = to))
+            made = Engine.delivered(files, to = to)
             // Forgotten here, not by the form's own noticing that it was
             // emptied: a form left while its post was going notices nothing.
             Unsent.forget(to, going, BlogShelf.notes)

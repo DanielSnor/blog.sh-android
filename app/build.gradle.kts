@@ -16,8 +16,8 @@ android {
         applicationId = "app.blogsh.android"
         minSdk = 29
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.7.2"
+        versionCode = 11
+        versionName = "0.7.3"
     }
 
     buildTypes {

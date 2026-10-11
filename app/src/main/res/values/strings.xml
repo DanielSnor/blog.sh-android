@@ -124,6 +124,7 @@
     <string name="light">Light</string>
     <string name="link">Link</string>
     <string name="list">List</string>
+    <string name="load_the_post_as_the_blog_has">Load the post as the blog has it now</string>
     <string name="look_at_the_picture">Look at the picture</string>
     <string name="make_a_new_key">Make a new key</string>
     <string name="make_a_new_key_the_server_will">Make a new key? The server will not know it until its line is put into authorized_keys again.</string>
@@ -204,6 +205,7 @@
     <string name="remove_this_blog">Remove this blog</string>
     <string name="rename">Rename</string>
     <string name="rename_slug">Rename slug</string>
+    <string name="renamed">Renamed: %1$s</string>
     <string name="reschedule">Reschedule</string>
     <string name="rescheduled">Rescheduled</string>
     <string name="restore">Restore</string>
@@ -239,6 +241,7 @@
     <string name="show_or_hide_the_menu">Show or hide the menu</string>
     <string name="show_the_original">Show the original</string>
     <string name="show_the_preview_on_the_web">Show the preview on the web</string>
+    <string name="something_else_holds_the_blog_just_now">Something else holds the blog just now -- a build, a publish or a save -- so nothing was written. Try again in a moment.</string>
     <string name="start_again_from_the_blog_s_colours">Start again from the blog\'s colours</string>
     <string name="start_with_an_empty_form">Start with an empty form</string>
     <string name="strikethrough">Strikethrough</string>
@@ -258,6 +261,7 @@
     <string name="the_app_speaks_the_chosen_language_after">The app speaks the chosen language after it is started again.</string>
     <string name="the_app_wears_the_colours_of_the">The app wears the colours of the blog that is open, its default ones, or the ones chosen here.</string>
     <string name="the_archive">The archive</string>
+    <string name="the_blog_said_no_2">The blog said no (%1$s).</string>
     <string name="the_blog_said_no">The blog said no: %1$s</string>
     <string name="the_blog_s_server_cannot_be_reached">The blog\'s server cannot be reached. Kept on the device, the post goes to the blog as a draft, with its pictures, once the server answers.</string>
     <string name="the_blog_s_server_cannot_be_reached_2">The blog\'s server cannot be reached. The posts go to the blog as drafts, in the order they were written, once it answers.</string>
@@ -340,6 +344,7 @@
     <string name="waiting_to_be_sent">Waiting to be sent</string>
     <string name="what_do_you_want_to_do">What do you want to do?</string>
     <string name="what_is_cleared_out_is_gone_for">What is cleared out is gone for good. Older versions are what a post said before its recent saves; each post keeps its newest.</string>
+    <string name="what_is_written_here_is_replaced_by">What is written here is replaced by the blog\'s text.</string>
     <string name="where_the_blog_lies_on_the_server">Where the blog lies on the server and what this device may run there is in the line ./blog.sh pair wrote on the server; nothing of it is set here. The device is taken off there with ./blog.sh pair --revoke.</string>
     <string name="with_a_code">With a code</string>
     <string name="with_a_network_configured_it_announces_too">With a network configured it announces too, which nothing takes back.</string>

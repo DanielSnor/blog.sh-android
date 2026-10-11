@@ -121,6 +121,7 @@ language	Language
 light	Light
 link	Link
 list	List
+load_the_post_as_the_blog_has	Load the post as the blog has it now
 look_at_the_picture	Look at the picture
 make_a_new_key	Make a new key
 make_a_new_key_the_server_will	Make a new key? The server will not know it until its line is put into authorized_keys again.
@@ -201,6 +202,7 @@ remove_older_versions_file_s	Remove older versions — %lld file(s), %@
 remove_this_blog	Remove this blog
 rename	Rename
 rename_slug	Rename slug
+renamed	Renamed: %@
 reschedule	Reschedule
 rescheduled	Rescheduled
 restore	Restore
@@ -236,6 +238,7 @@ show_on_the_web	Show on the web
 show_or_hide_the_menu	Show or hide the menu
 show_the_original	Show the original
 show_the_preview_on_the_web	Show the preview on the web
+something_else_holds_the_blog_just_now	Something else holds the blog just now -- a build, a publish or a save -- so nothing was written. Try again in a moment.
 start_again_from_the_blog_s_colours	Start again from the blog's colours
 start_with_an_empty_form	Start with an empty form
 strikethrough	Strikethrough
@@ -255,6 +258,7 @@ the_app_is_not_allowed_to_use	The app is not allowed to use the camera. Allow it
 the_app_speaks_the_chosen_language_after	The app speaks the chosen language after it is started again.
 the_app_wears_the_colours_of_the	The app wears the colours of the blog that is open, its default ones, or the ones chosen here.
 the_archive	The archive
+the_blog_said_no_2	The blog said no (%@).
 the_blog_said_no	The blog said no: %@
 the_blog_s_server_cannot_be_reached	The blog's server cannot be reached. Kept on the device, the post goes to the blog as a draft, with its pictures, once the server answers.
 the_blog_s_server_cannot_be_reached_2	The blog's server cannot be reached. The posts go to the blog as drafts, in the order they were written, once it answers.
@@ -337,6 +341,7 @@ usually_only_the_pages_that_changed_are	Usually only the pages that changed are 
 waiting_to_be_sent	Waiting to be sent
 what_do_you_want_to_do	What do you want to do?
 what_is_cleared_out_is_gone_for	What is cleared out is gone for good. Older versions are what a post said before its recent saves; each post keeps its newest.
+what_is_written_here_is_replaced_by	What is written here is replaced by the blog's text.
 where_the_blog_lies_on_the_server	Where the blog lies on the server and what this device may run there is in the line ./blog.sh pair wrote on the server; nothing of it is set here. The device is taken off there with ./blog.sh pair --revoke.
 with_a_code	With a code
 with_a_network_configured_it_announces_too	With a network configured it announces too, which nothing takes back.

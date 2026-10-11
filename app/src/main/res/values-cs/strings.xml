@@ -124,6 +124,7 @@
     <string name="light">Světlý</string>
     <string name="link">Odkaz</string>
     <string name="list">Seznam</string>
+    <string name="load_the_post_as_the_blog_has">Načíst příspěvek, jak je teď na blogu</string>
     <string name="look_at_the_picture">Prohlédnout obrázek</string>
     <string name="make_a_new_key">Vytvořit nový klíč</string>
     <string name="make_a_new_key_the_server_will">Vytvořit nový klíč? Server ho nebude znát, dokud jeho řádek znovu nedáš do authorized_keys.</string>
@@ -204,6 +205,7 @@
     <string name="remove_this_blog">Odebrat tento blog</string>
     <string name="rename">Přejmenovat</string>
     <string name="rename_slug">Přejmenovat slug</string>
+    <string name="renamed">Přejmenováno: %1$s</string>
     <string name="reschedule">Přeplánovat</string>
     <string name="rescheduled">Přeplánováno</string>
     <string name="restore">Obnovit</string>
@@ -239,6 +241,7 @@
     <string name="show_or_hide_the_menu">Zobrazit nebo skrýt menu</string>
     <string name="show_the_original">Zobrazit originál</string>
     <string name="show_the_preview_on_the_web">Zobrazit náhled na webu</string>
+    <string name="something_else_holds_the_blog_just_now">Blog zrovna drží jiný běh — sestavení, publikování nebo ukládání — takže se nic nezapsalo. Za chvíli to zkus znovu.</string>
     <string name="start_again_from_the_blog_s_colours">Začít znovu od barev blogu</string>
     <string name="start_with_an_empty_form">Začít s prázdným formulářem</string>
     <string name="strikethrough">Přeškrtnutě</string>
@@ -258,6 +261,7 @@
     <string name="the_app_speaks_the_chosen_language_after">Zvoleným jazykem appka promluví po novém spuštění.</string>
     <string name="the_app_wears_the_colours_of_the">Appka nosí barvy otevřeného blogu, své výchozí, nebo ty, které si tu zvolíš.</string>
     <string name="the_archive">Archiv</string>
+    <string name="the_blog_said_no_2">Blog odmítl (%1$s).</string>
     <string name="the_blog_said_no">Blog odmítl: %1$s</string>
     <string name="the_blog_s_server_cannot_be_reached">Server blogu není dostupný. Příspěvek uložený do zařízení odejde na blog jako koncept i s obrázky, jakmile se server ozve.</string>
     <string name="the_blog_s_server_cannot_be_reached_2">Server blogu není dostupný. Příspěvky odejdou na blog jako koncepty v pořadí, v jakém byly napsány, jakmile se ozve.</string>
@@ -340,6 +344,7 @@
     <string name="waiting_to_be_sent">Čeká na odeslání</string>
     <string name="what_do_you_want_to_do">Co chceš dělat?</string>
     <string name="what_is_cleared_out_is_gone_for">Co se uklidí, je pryč nadobro. Starší verze jsou to, co příspěvek říkal před posledními uloženími; každému zůstane ta nejnovější.</string>
+    <string name="what_is_written_here_is_replaced_by">Co je napsáno tady, nahradí text z blogu.</string>
     <string name="where_the_blog_lies_on_the_server">Kde blog na serveru leží a co tohle zařízení smí spustit, je v řádku, který na serveru zapsal ./blog.sh pair; tady se z toho nic nenastavuje. Zařízení tam odebereš příkazem ./blog.sh pair --revoke.</string>
     <string name="with_a_code">Kódem</string>
     <string name="with_a_network_configured_it_announces_too">Zároveň se oznámí na síti — a oznámení nejde vzít zpět.</string>

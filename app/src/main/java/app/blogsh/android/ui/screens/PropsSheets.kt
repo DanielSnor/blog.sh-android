@@ -54,6 +54,7 @@ import app.blogsh.android.model.TagStore
 import app.blogsh.android.model.VersionsAnswer
 import app.blogsh.android.model.engineInstant
 import app.blogsh.android.model.isCalledOff
+import app.blogsh.android.model.refusedAs
 import app.blogsh.android.model.said
 import app.blogsh.android.ui.Asks
 import app.blogsh.android.ui.Busy
@@ -432,6 +433,13 @@ fun AddressesSheet(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             problem = e.said
+            // The blog knows the address under another list, or not at
+            // all: what is listed here is no longer what it has.
+            if (e.refusedAs in PropsAnswer.OldAddress.stale) {
+                runCatching { Engine.call<PropsAnswer>("props", props.slug) }
+                    .onFailure { if (it.isCalledOff) throw it }
+                    .onSuccess { addresses = it.addresses }
+            }
         }
     }
 

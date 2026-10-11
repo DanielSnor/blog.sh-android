@@ -14,7 +14,9 @@ import app.blogsh.android.model.ServerPaths
 import app.blogsh.android.model.StatsAnswer
 import app.blogsh.android.model.VersionAnswer
 import app.blogsh.android.model.plain
+import app.blogsh.android.model.refusedAs
 import app.blogsh.android.model.seenAs
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -147,7 +149,7 @@ class AnswersTest {
             fail("a refusal was read as an answer")
         } catch (e: EngineError.Refused) {
             assertEquals("unknown_command", e.refusal.error)
-            assertTrue(e.refusal.message.startsWith("Only run"))
+            assertTrue(e.refusal.words.startsWith("Only run"))
         }
     }
 
@@ -376,6 +378,155 @@ class OldAddressTest {
         assertEquals(listOf("props", "klus", "--drop-address", "2026/old-jog"), en.dropArgs("klus", listOf(en, own)))
         // Still a command that changes the blog, with or without the list named.
         assertTrue(Engine.changesTheBlog(de.dropArgs("klus", rows)))
+    }
+}
+
+/**
+ * A no from the blog, and a blog that is held by another run. A mistake
+ * here is a refusal shown as the bytes it came in, or a write given up
+ * on that only had to wait its turn.
+ */
+class RefusalTest {
+    @Before
+    fun words() = English.speak()
+
+    private fun refusal(json: String): Refusal = app.blogsh.android.model.EngineJson.decodeFromString(Refusal.serializer(), json)
+
+    private fun busy() = EngineError.Refused(refusal("""{"ok":false,"error":"busy"}"""))
+
+    /**
+     * A blog held by another run can answer with its code alone: that is
+     * a refusal, said in words, not an answer the app could not read.
+     */
+    @Test
+    fun aRefusalWithNoSentenceIsStillARefusal() {
+        val bare = """{"ok":false,"error":"busy"}""".toByteArray()
+        try {
+            Engine.decode<app.blogsh.android.model.ActionAnswer>(bare)
+            fail("read as an answer")
+        } catch (e: EngineError.Refused) {
+            assertEquals("busy", e.refusal.error)
+            assertNull(e.refusal.message)
+            assertEquals(Refusal.held, e.refusal.words)
+        }
+        try {
+            Engine.made(listOf(bare))
+            fail("a delivery read as made")
+        } catch (e: EngineError.Refused) {
+            assertEquals("busy", e.refusal.error)
+        }
+    }
+
+    /**
+     * The engine's sentence is what is said, where it gave one; a code
+     * the app does not know and that came without one is said by name.
+     */
+    @Test
+    fun aRefusalIsSaidInWords() {
+        assertEquals("That date cannot be read.", refusal("""{"ok":false,"error":"bad_date","message":"That date cannot be read."}""").words)
+        val unknown = refusal("""{"ok":false,"error":"brand_new","message":"  "}""")
+        assertTrue(unknown.words.contains("brand_new"))
+        assertFalse(unknown.words.contains("{"))
+        // Held by another run: the app's own words, whatever language the blog said it in.
+        val held = refusal("""{"ok":false,"error":"busy","message":"Blog is busy."}""")
+        assertEquals(Refusal.held, held.words)
+        assertEquals(Refusal.held, EngineError.Refused(held).message)
+        assertTrue(Refusal.held.startsWith("Something else holds the blog"))
+    }
+
+    /**
+     * The commands that write wait their turn; reading does not, and the
+     * build is asked again by whoever owes it.
+     */
+    @Test
+    fun theCommandsThatWriteWaitTheirTurn() {
+        for (writes in listOf(
+            listOf("publish", "a", "--yes"), listOf("unpublish", "a", "--yes"), listOf("delete", "a", "--yes"), listOf("restore", "a"),
+            listOf("schedule", "a", "--cancel"), listOf("props", "a", "--rename", "b", "--yes"), listOf("props", "a", "--set", "pinned=yes"),
+            listOf("props", "a", "--drop-address", "2026/b"), listOf("props", "a", "--restore-version", "1"),
+            listOf("queue", "--up", "2026/a"), listOf("toot", "a"), listOf("bluesky", "a"), listOf("empty", "trash", "--yes"),
+        )) assertTrue(writes.toString(), Engine.waitsItsTurn(writes))
+        for (reads in listOf(listOf("rebuild"), listOf("props", "a"), listOf("queue"), listOf("list", "--drafts"), listOf("empty", "trash"), emptyList())) {
+            assertFalse(reads.toString(), Engine.waitsItsTurn(reads))
+        }
+    }
+
+    /**
+     * A held blog is asked again, a little later each time, and what it
+     * then answers is the answer.
+     */
+    @Test
+    fun aHeldBlogIsAskedAgain() = runBlocking {
+        var asked = 0
+        val waits = mutableListOf<Long>()
+        val answer = Engine.patiently(true, pause = { waits.add(it) }) {
+            asked += 1
+            if (asked < 3) throw busy()
+            "written"
+        }
+        assertEquals("written", answer)
+        assertEquals(3, asked)
+        assertEquals(listOf(1_000L, 2_000L), waits)
+    }
+
+    /**
+     * Held for longer than the waiting is worth, the no is the caller's
+     * -- as is every other no at once, and a `busy` to a command that
+     * does not wait.
+     */
+    @Test
+    fun theWaitingHasAnEnd() = runBlocking {
+        suspend fun asked(waits: Boolean, no: EngineError.Refused): Int {
+            var count = 0
+            try {
+                Engine.patiently<Unit>(waits, pause = {}) {
+                    count += 1
+                    throw no
+                }
+                fail("answered")
+            } catch (e: EngineError.Refused) {
+                assertEquals(no.refusal.error, e.refusal.error)
+            }
+            return count
+        }
+        assertEquals(Engine.turns.size + 1, asked(true, busy()))
+        assertEquals(15_000L, Engine.turns.sum())
+        assertEquals(1, asked(false, busy()))
+        assertEquals(1, asked(true, EngineError.Refused(refusal("""{"ok":false,"error":"not_found","message":"No such post."}"""))))
+    }
+
+    /** A command asked through the engine waits its turn by itself; one that only reads is answered `busy` at once. */
+    @Test
+    fun aCallThatWritesIsPatientByItself() = runBlocking {
+        var asked = 0
+        Engine.stand = {
+            asked += 1
+            (if (asked < 2) """{"ok":false,"error":"busy"}""" else """{"ok":true,"slug":"a","state":"draft"}""").toByteArray()
+        }
+        try {
+            val answer = Engine.call<app.blogsh.android.model.ActionAnswer>("unpublish", "a", "--yes")
+            assertEquals("a", answer.slug)
+            assertEquals(2, asked)
+            asked = -10
+            try {
+                Engine.call<app.blogsh.android.model.ActionAnswer>("props", "a")
+                fail("answered")
+            } catch (e: EngineError.Refused) {
+                assertEquals(-9, asked)
+            }
+        } finally {
+            Engine.stand = null
+        }
+    }
+
+    /** The refusals that say the list of old addresses on the screen is no longer the blog's. */
+    @Test
+    fun aStaleListOfAddressesIsKnownByItsRefusal() {
+        val stale = PropsAnswer.OldAddress.stale
+        assertTrue("kind_unknown" in stale && "address_unknown" in stale && "address_ambiguous" in stale)
+        assertFalse("busy" in stale)
+        assertEquals("changed", EngineError.Refused(refusal("""{"ok":false,"error":"changed","message":"x"}""")).refusedAs)
+        assertNull(IllegalStateException("x").refusedAs)
     }
 }
 

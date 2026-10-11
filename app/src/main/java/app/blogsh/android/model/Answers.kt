@@ -1,5 +1,6 @@
 package app.blogsh.android.model
 
+import app.blogsh.android.R
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -26,7 +27,37 @@ val EngineJson = Json {
  * can switch on, and a sentence a person can read.
  */
 @Serializable
-data class Refusal(val ok: Boolean, val error: String, val message: String)
+data class Refusal(
+    val ok: Boolean,
+    val error: String,
+    /**
+     * The engine's sentence for it. Not every no comes with one: a blog
+     * held by another run can answer with its code alone.
+     */
+    val message: String? = null,
+) {
+    /**
+     * What to say of it: the engine's sentence -- or, where it gave
+     * none, the app's own for a code it knows, and the code itself for
+     * one it does not. Never nothing, and never the answer as it came
+     * over the wire.
+     */
+    val words: String
+        get() = when {
+            error == "busy" -> held
+            !message.isNullOrBlank() -> message
+            else -> Spoken.say(R.string.the_blog_said_no_2, error)
+        }
+
+    companion object {
+        /**
+         * The blog is held by another run. Said in the app's words
+         * whatever the engine says: it says it in the blog's language,
+         * and this is the one no a person meets by doing nothing wrong.
+         */
+        val held: String get() = Spoken.say(R.string.something_else_holds_the_blog_just_now)
+    }
+}
 
 /**
  * `version --json`: the identity block the terminal shows above every
@@ -253,6 +284,14 @@ data class PropsAnswer(
          */
         fun dropArgs(slug: String, among: List<OldAddress>): List<String> =
             listOf("props", slug, "--drop-address", value) + if (among.count { it.value == value } > 1) listOf("--kind", kind) else emptyList()
+
+        companion object {
+            /**
+             * The refusals that say the list on the screen is out of date:
+             * the blog knows the address under another list, or not at all.
+             */
+            val stale = setOf("kind_unknown", "address_unknown", "address_ambiguous")
+        }
     }
 
     /**

@@ -416,7 +416,7 @@ private class PropsState(
             val refusal = (e as? EngineError.Refused)?.refusal
             said = if (refusal?.error == "outside_window") {
                 Said(
-                    title = say(R.string.announce), text = refusal.message,
+                    title = say(R.string.announce), text = refusal.words,
                     ask = ask(say(R.string.announce_anyway)) { announce(force = true) },
                 )
             } else {
@@ -448,7 +448,7 @@ private class PropsState(
         renamed(answer)
         // A draft's own preview follows it by itself; a published post's pages are owed a build.
         if (!wasDraft) Herald.shared.owe(owed = home)
-        tell(answer.warnings)
+        tell(answer.warnings, or = say(R.string.renamed, answer.slug))
     }
 
     /**

@@ -124,6 +124,7 @@
     <string name="light">Hell</string>
     <string name="link">Link</string>
     <string name="list">Liste</string>
+    <string name="load_the_post_as_the_blog_has">Beitrag laden, wie er jetzt im Blog steht</string>
     <string name="look_at_the_picture">Bild ansehen</string>
     <string name="make_a_new_key">Neuen Schlüssel erzeugen</string>
     <string name="make_a_new_key_the_server_will">Neuen Schlüssel erzeugen? Der Server kennt ihn erst, wenn seine Zeile wieder in authorized_keys steht.</string>
@@ -204,6 +205,7 @@
     <string name="remove_this_blog">Dieses Blog entfernen</string>
     <string name="rename">Umbenennen</string>
     <string name="rename_slug">Slug umbenennen</string>
+    <string name="renamed">Umbenannt: %1$s</string>
     <string name="reschedule">Umplanen</string>
     <string name="rescheduled">Umgeplant</string>
     <string name="restore">Wiederherstellen</string>
@@ -239,6 +241,7 @@
     <string name="show_or_hide_the_menu">Menü ein- oder ausblenden</string>
     <string name="show_the_original">Original anzeigen</string>
     <string name="show_the_preview_on_the_web">Vorschau im Web anzeigen</string>
+    <string name="something_else_holds_the_blog_just_now">Der Blog ist gerade von einem anderen Lauf belegt – einem Build, einer Veröffentlichung oder einem Speichern –, es wurde also nichts geschrieben. Versuch es gleich noch einmal.</string>
     <string name="start_again_from_the_blog_s_colours">Wieder mit den Farben des Blogs beginnen</string>
     <string name="start_with_an_empty_form">Mit einem leeren Formular beginnen</string>
     <string name="strikethrough">Durchgestrichen</string>
@@ -258,6 +261,7 @@
     <string name="the_app_speaks_the_chosen_language_after">Die gewählte Sprache spricht die App nach dem nächsten Start.</string>
     <string name="the_app_wears_the_colours_of_the">Die App trägt die Farben des geöffneten Blogs, ihre Standardfarben oder die hier gewählten.</string>
     <string name="the_archive">Das Archiv</string>
+    <string name="the_blog_said_no_2">Der Blog hat abgelehnt (%1$s).</string>
     <string name="the_blog_said_no">Der Blog hat abgelehnt: %1$s</string>
     <string name="the_blog_s_server_cannot_be_reached">Der Server des Blogs ist nicht erreichbar. Auf dem Gerät behalten, geht der Beitrag samt Bildern als Entwurf an den Blog, sobald der Server antwortet.</string>
     <string name="the_blog_s_server_cannot_be_reached_2">Der Server des Blogs ist nicht erreichbar. Die Beiträge gehen als Entwürfe an den Blog, in der Reihenfolge, in der sie geschrieben wurden, sobald er antwortet.</string>
@@ -340,6 +344,7 @@
     <string name="waiting_to_be_sent">Wartet auf den Versand</string>
     <string name="what_do_you_want_to_do">Was möchtest du tun?</string>
     <string name="what_is_cleared_out_is_gone_for">Was aufgeräumt wird, ist endgültig weg. Ältere Fassungen sind, was ein Beitrag vor seinen letzten Speicherungen sagte; jeder behält seine neueste.</string>
+    <string name="what_is_written_here_is_replaced_by">Was hier geschrieben steht, wird durch den Text des Blogs ersetzt.</string>
     <string name="where_the_blog_lies_on_the_server">Wo der Blog auf dem Server liegt und was dieses Gerät dort ausführen darf, steht in der Zeile, die ./blog.sh pair auf dem Server geschrieben hat; hier wird davon nichts eingestellt. Das Gerät entfernst du dort mit ./blog.sh pair --revoke.</string>
     <string name="with_a_code">Mit einem Code</string>
     <string name="with_a_network_configured_it_announces_too">Mit einem eingerichteten Netzwerk wird auch angekündigt — und eine Ankündigung lässt sich nicht zurücknehmen.</string>

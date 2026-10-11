@@ -70,7 +70,7 @@ sealed class EngineError : Exception() {
                 is HostKeyChanged -> Spoken.say(R.string.the_server_s_key_changed_if_the, fingerprint)
                 // The engine’s own sentence here speaks of --yes and of a screen the
                 // terminal has; on a phone neither is anything one can do.
-                is Refused -> if (refusal.error == "ambiguous_slug") Spoken.say(R.string.two_posts_in_different_years_share_this) else refusal.message
+                is Refused -> if (refusal.error == "ambiguous_slug") Spoken.say(R.string.two_posts_in_different_years_share_this) else refusal.words
                 is Unreadable -> Spoken.say(R.string.the_engine_did_not_answer_as_data, text)
                 is Unreachable -> Spoken.say(R.string.the_server_did_not_answer_is_this, server)
                 is Stage -> "$stage: ${error.message ?: error.javaClass.simpleName}"
@@ -138,7 +138,7 @@ object Engine {
      * Runs `./blog.sh <args>` and decodes its answer, or throws the
      * refusal the engine gave -- which is an answer too, just a no.
      */
-    suspend inline fun <reified T> call(args: List<String>): T = decode(run(args))
+    suspend inline fun <reified T> call(args: List<String>): T = patiently(waitsItsTurn(args)) { decode(run(args)) }
 
     suspend inline fun <reified T> call(vararg args: String): T = call(args.toList())
 
@@ -236,6 +236,51 @@ object Engine {
         }
         val last = answers.lastOrNull() ?: throw EngineError.Unreadable("")
         return decode<ActionAnswer>(last)
+    }
+
+    /**
+     * A delivery made and read: the files sent, the engine's answer for
+     * the markdown. A blog held by another run is waited for, as with
+     * every command that writes.
+     */
+    suspend fun delivered(files: List<DeliveryFile>, to: String? = null): ActionAnswer = patiently(true) { made(deliver(files, to)) }
+
+    /**
+     * How long a command that writes waits before asking again of a blog
+     * that another run holds: four more askings, a quarter of a minute
+     * in all. A build of a large site takes longer than that; by then it
+     * is the person's to try again, and the sentence says so.
+     */
+    val turns = listOf(1_000L, 2_000L, 4_000L, 8_000L)
+
+    /**
+     * The command writes a post, so the blog can answer `busy` to it --
+     * nothing was written, ask again -- and asking again is safe. The
+     * build is not among them: whoever owes it asks again on its own, at
+     * its own, longer pace.
+     */
+    fun waitsItsTurn(args: List<String>): Boolean = when (args.firstOrNull() ?: "") {
+        "rebuild" -> false
+        "toot", "bluesky" -> true
+        else -> changesTheBlog(args)
+    }
+
+    /**
+     * `work`, asked again while the blog answers that another run holds
+     * it -- where the command is one that waits its turn. Any other
+     * answer, and a `busy` that outlasts the waiting, is the caller's.
+     */
+    suspend fun <T> patiently(waits: Boolean, pause: suspend (Long) -> Unit = { delay(it) }, work: suspend () -> T): T {
+        var turn = 0
+        while (true) {
+            try {
+                return work()
+            } catch (e: EngineError.Refused) {
+                if (!waits || e.refusal.error != "busy" || turn >= turns.size) throw e
+                pause(turns[turn])
+                turn += 1
+            }
+        }
     }
 
     /**
@@ -485,6 +530,9 @@ object Engine {
  * Nobody is left to tell, so a screen keeps what it was saying.
  */
 val Throwable.isCalledOff: Boolean get() = this is CancellationException
+
+/** The engine's code for the no it gave, where the failure is one. */
+val Throwable.refusedAs: String? get() = (this as? EngineError.Refused)?.refusal?.error
 
 /** What to tell a person about a failure. */
 val Throwable.said: String get() = message ?: javaClass.simpleName

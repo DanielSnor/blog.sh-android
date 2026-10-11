@@ -29,6 +29,7 @@ import app.blogsh.android.model.TranslationAnswer
 import app.blogsh.android.model.TranslationEntry
 import app.blogsh.android.model.Unsaved
 import app.blogsh.android.model.isCalledOff
+import app.blogsh.android.model.refusedAs
 import app.blogsh.android.model.plain
 import app.blogsh.android.model.said
 import app.blogsh.android.ui.Asks
@@ -76,6 +77,9 @@ fun TranslateScreen(slug: String, lang: String) {
     var showingOriginal by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
+    // The save was turned away because the post has changed on the blog
+    // since its text was opened here.
+    var changedOnBlog by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf<ActionAnswer?>(null) }
     // The last save took the language off rather than wrote it.
     var tookOff by remember { mutableStateOf(false) }
@@ -142,8 +146,9 @@ fun TranslateScreen(slug: String, lang: String) {
         val going = state.text
         try {
             problem = null
+            changedOnBlog = false
             val file = DeliveryFile("$slug-$lang.md", fileText(body).toByteArray(Charsets.UTF_8))
-            saved = Engine.made(Engine.deliver(listOf(file), to = blog))
+            saved = Engine.delivered(listOf(file), to = blog)
             // What was done, by what was sent: emptied words take the
             // language off whichever key sent them.
             tookOff = takingOff || Preview.takesOff(body)
@@ -156,10 +161,19 @@ fun TranslateScreen(slug: String, lang: String) {
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             problem = e.said
+            changedOnBlog = e.refusedAs == "changed"
             answered += 1
         } finally {
             saving = false
         }
+    }
+
+    // The text as the blog has it now, in place of what is written here.
+    suspend fun takeAfresh() {
+        blog?.let { Unsaved.forget(it, slug, what, BlogShelf.notes) }
+        Desk.changed()
+        changedOnBlog = false
+        load()
     }
 
     LaunchedEffect(Unit) { load() }
@@ -204,6 +218,16 @@ fun TranslateScreen(slug: String, lang: String) {
                     busy = saving,
                 ) { Desk.outliving.launch { save(state.text) } }
                 problem?.let { ProblemLine(it) }
+                if (problem != null && changedOnBlog) {
+                    Plate(Modifier.gap(10)) {
+                        row {
+                            Command(stringResource(R.string.load_the_post_as_the_blog_has), Symbols.arrowClockwise, danger = true, enabled = !saving) {
+                                scope.launch { takeAfresh() }
+                            }
+                        }
+                    }
+                    Hint(stringResource(R.string.what_is_written_here_is_replaced_by))
+                }
                 if (post.written) {
                     Plate(Modifier.gap(14)) {
                         row {

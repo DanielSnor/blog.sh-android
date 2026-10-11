@@ -43,6 +43,7 @@ import app.blogsh.android.model.Preview
 import app.blogsh.android.model.Shot
 import app.blogsh.android.model.Unsaved
 import app.blogsh.android.model.isCalledOff
+import app.blogsh.android.model.refusedAs
 import app.blogsh.android.model.plain
 import app.blogsh.android.model.said
 import app.blogsh.android.ui.Asks
@@ -98,6 +99,9 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     var importing by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
+    // The save was turned away because the post has changed on the blog
+    // since its text was opened here.
+    var changedOnBlog by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf<ActionAnswer?>(null) }
     // Counted when a save has answered: the page goes to the answer.
     var answered by remember { mutableStateOf(0) }
@@ -227,9 +231,10 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
         val going = state.text
         try {
             problem = null
+            changedOnBlog = false
             val files = Kept.sent(shots, going).map { DeliveryFile(it.name, it.data) } +
                 DeliveryFile("$slug.md", fileText().toByteArray(Charsets.UTF_8))
-            val answer = Engine.made(Engine.deliver(files, to = blog))
+            val answer = Engine.delivered(files, to = blog)
             saved = answer
             shots = emptyList()
             // Saved: what went is not left to bring back.
@@ -244,9 +249,28 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             problem = e.said
+            changedOnBlog = e.refusedAs == "changed"
             answered += 1
         } finally {
             saving = false
+        }
+    }
+
+    // The post as the blog has it now, in place of what is written here.
+    suspend fun takeAfresh() {
+        try {
+            val answer = Engine.call<EditAnswer>("edit", slug)
+            entry = answer.post
+            broughtBack = null
+            shots = emptyList()
+            blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes) }
+            state.set(answer.post.text ?: "")
+            Desk.changed()
+            problem = if (answer.post.text == null) textMissing else null
+            changedOnBlog = false
+        } catch (e: Throwable) {
+            if (e.isCalledOff) throw e
+            problem = e.said
         }
     }
 
@@ -357,6 +381,18 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                 val wrong = problem
                 if (wrong != null) {
                     ProblemLine(wrong)
+                    // Changed on the blog meanwhile: nothing written here can
+                    // be saved over it, and the way on is the blog's text.
+                    if (changedOnBlog) {
+                        Plate(Modifier.gap(10)) {
+                            row {
+                                Command(stringResource(R.string.load_the_post_as_the_blog_has), Symbols.arrowClockwise, danger = true, enabled = !saving) {
+                                    scope.launch { takeAfresh() }
+                                }
+                            }
+                        }
+                        Hint(stringResource(R.string.what_is_written_here_is_replaced_by))
+                    }
                 } else if (!isDraft) {
                     Hint(stringResource(R.string.the_post_is_live_saving_rebuilds_and))
                 }

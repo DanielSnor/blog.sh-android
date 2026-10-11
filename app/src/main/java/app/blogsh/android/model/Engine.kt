@@ -262,6 +262,8 @@ object Engine {
     fun waitsItsTurn(args: List<String>): Boolean = when (args.firstOrNull() ?: "") {
         "rebuild" -> false
         "toot", "bluesky" -> true
+        // The file of keys has a lock of its own, and says `busy` the same way.
+        "pair" -> "--revoke" in args
         else -> changesTheBlog(args)
     }
 
@@ -285,14 +287,14 @@ object Engine {
 
     /**
      * The request as the forced command reads it: the argv, and -- for
-     * the two commands that answer in sentences, `check` and `doctor` --
-     * the language the app speaks. An engine that has it says its
+     * the commands that answer in sentences, `check`, `doctor` and what
+     * `pair` says no with -- the language the app speaks. An engine that has it says its
      * findings in it; one that has not, or an older one, which reads the
      * argv and nothing else, says them in the blog's own.
      */
     fun request(args: List<String>, lang: String? = app.blogsh.android.BlogshApp.spoken.language): JsonObject = buildJsonObject {
         put("args", JsonArray(args.map { JsonPrimitive(it) }))
-        if (args.firstOrNull() in listOf("check", "doctor") && lang != null && Regex("^[a-z]{2,3}$").matches(lang)) put("lang", JsonPrimitive(lang))
+        if (args.firstOrNull() in listOf("check", "doctor", "pair") && lang != null && Regex("^[a-z]{2,3}$").matches(lang)) put("lang", JsonPrimitive(lang))
     }
 
     /**

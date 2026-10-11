@@ -40,6 +40,7 @@ import app.blogsh.android.ui.screens.AddBlogSheet
 import app.blogsh.android.ui.screens.ArchiveScreen
 import app.blogsh.android.ui.screens.BlogSettingsSheet
 import app.blogsh.android.ui.screens.BlogsSheet
+import app.blogsh.android.ui.screens.DevicesSheet
 import app.blogsh.android.ui.screens.ComposeScreen
 import app.blogsh.android.ui.screens.Diagnosis
 import app.blogsh.android.ui.screens.DiagnosisScreen
@@ -419,6 +420,29 @@ class ShotsTest(private val look: Look) {
     fun settingsOfABlogACodeLetIn() {
         paired()
         shot("blog-settings-paired", over = { BlogSettingsSheet(onBack = {}, onDone = {}) })
+    }
+
+    /** What the blog says of the devices a code let in; the first is the one `paired()` gave a key. */
+    private fun devices(knowsWhoAsks: Boolean) {
+        paired()
+        val own = KeyStore.fingerprint(Blogs.current!!.keyAccount)
+        val list = """{"ok":true,"devices":[{"name":"motorola edge 70 fusion","fingerprint":"$own","self":$knowsWhoAsks},""" +
+            """{"name":"Tablet v kuchyni","fingerprint":"SHA256:ysUXkFzgUqoqTPIe2meJVL9qcNx4GcU/usa/kLQPlPY","self":false}],"self":${if (knowsWhoAsks) "\"$own\"" else "null"}}"""
+        Engine.stand = { args -> if (args.firstOrNull() == "pair") list.toByteArray() else answer(args) }
+    }
+
+    /** The devices a code let in: this one marked, and the way out for it. */
+    @Test
+    fun theDevicesACodeLetIn() {
+        devices(knowsWhoAsks = true)
+        shot("devices", over = { DevicesSheet(onBack = {}) })
+    }
+
+    /** An older pairing: the blog cannot tell who asks, the app knows itself by its key, and nothing is offered. */
+    @Test
+    fun theDevicesOfAnOlderPairing() {
+        devices(knowsWhoAsks = false)
+        shot("devices-older", over = { DevicesSheet(onBack = {}) })
     }
 
     @Test

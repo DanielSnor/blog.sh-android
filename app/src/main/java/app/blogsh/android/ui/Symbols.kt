@@ -147,4 +147,6 @@ object Symbols {
     val checkmarkCircle = R.drawable.ic_check_circle
     /** folder */
     val folder = R.drawable.ic_folder
+    /** ipad.and.iphone */
+    val ipadAndIphone = R.drawable.ic_devices
 }

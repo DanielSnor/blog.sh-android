@@ -138,6 +138,7 @@
     <string name="new_slug">Neuer Slug</string>
     <string name="night">Nacht</string>
     <string name="no_description_yet">Noch ohne Beschreibung</string>
+    <string name="no_device_was_let_in_to_this">Zu diesem Blog hat ein Code noch kein Gerät gelassen.</string>
     <string name="no_drafts_in_progress">Keine Entwürfe in Arbeit</string>
     <string name="no_earlier_versions_yet">Noch keine früheren Fassungen</string>
     <string name="no_posts">Keine Beiträge</string>
@@ -164,6 +165,7 @@
     <string name="open_the_blog_in_the_browser">Blog im Browser öffnen</string>
     <string name="open_the_preview">Vorschau öffnen</string>
     <string name="pair_again">Erneut koppeln</string>
+    <string name="paired_devices">Gekoppelte Geräte</string>
     <string name="picture_no_preview_on_this_device">Bild %1$s -- auf diesem Gerät ohne Vorschau</string>
     <string name="picture">Bild: %1$s</string>
     <string name="pictures_and_video">Bilder und Video</string>
@@ -248,6 +250,8 @@
     <string name="take_it_off">Entfernen</string>
     <string name="take_the_text_off_the_post_then">Den Text auf %1$s von „%2$s“ entfernen? Der Beitrag sieht dann genau so aus wie vor der Übersetzung.</string>
     <string name="take_the_text_as_the_blog_has">Den Text nehmen, wie er im Blog steht</string>
+    <string name="take_this_device_off_the_blog">Dieses Gerät vom Blog entfernen</string>
+    <string name="take_this_device_off_the_blog_the">Dieses Gerät vom Blog „%1$s“ entfernen? Der Server lässt es dann nicht mehr herein; für eine neue Verbindung braucht es einen neuen Code aus ./blog.sh pair. Der Blog bleibt in der App, mit allem, was auf diesem Gerät für ihn geschrieben ist.</string>
     <string name="take_this_language_off_the_post">Diese Sprache vom Beitrag entfernen</string>
     <string name="taken_off">Entfernt</string>
     <string name="tap_a_colour_to_change_it_it">Tippe auf ein Feld, um die Farbe zu ändern. Gilt auf diesem Gerät, für jeden Blog.</string>
@@ -261,6 +265,7 @@
     <string name="the_app_speaks_the_chosen_language_after">Die gewählte Sprache spricht die App nach dem nächsten Start.</string>
     <string name="the_app_wears_the_colours_of_the">Die App trägt die Farben des geöffneten Blogs, ihre Standardfarben oder die hier gewählten.</string>
     <string name="the_archive">Das Archiv</string>
+    <string name="the_blog_cannot_tell_yet_which_of">Der Blog erkennt noch nicht, welches dieser Geräte fragt, deshalb lässt sich dieses von hier aus nicht entfernen. Auf dem Server bringt ./blog.sh pair --list eine ältere Kopplung auf den Stand.</string>
     <string name="the_blog_said_no_2">Der Blog hat abgelehnt (%1$s).</string>
     <string name="the_blog_said_no">Der Blog hat abgelehnt: %1$s</string>
     <string name="the_blog_s_server_cannot_be_reached">Der Server des Blogs ist nicht erreichbar. Auf dem Gerät behalten, geht der Beitrag samt Bildern als Entwurf an den Blog, sobald der Server antwortet.</string>
@@ -271,6 +276,7 @@
     <string name="the_code_is_no_longer_good_it">Der Code gilt nicht mehr: Er hält zehn Minuten und funktioniert einmal. Fordere einen neuen an: ./blog.sh pair</string>
     <string name="the_code_is_not_whole_copy_the">Der Code ist nicht vollständig. Kopiere die ganze Zeile unter dem Bild.</string>
     <string name="the_default_scheme">Standardschema</string>
+    <string name="the_devices_a_code_let_in_to">Die Geräte, die ein Code zu diesem Blog gelassen hat, so wie ./blog.sh pair --list sie auf dem Server zeigt. Ein anderes Gerät wird dort entfernt: ./blog.sh pair --revoke.</string>
     <string name="the_engine_did_not_answer_as_data">Die Engine hat nicht mit Daten geantwortet: %1$s</string>
     <string name="the_first_is_the_size_the_system">Die erste ist die Größe, die das System hat; die anderen sind Stufen darüber. Sie gilt auf diesem Gerät, für jedes Blog.</string>
     <string name="the_form_holds_a_post_that_is">Im Formular steht ein Beitrag, an dem geschrieben wird: sende ihn oder leere das Formular, bevor ein anderer hineingeholt wird.</string>
@@ -309,10 +315,13 @@
     <string name="the_site_will_be_built_in_a">Die Website wird gleich gebaut.</string>
     <string name="the_text_did_not_come_with_the">Der Text kam nicht mit der Antwort.</string>
     <string name="the_time_offered_is_the_next_free">Die angebotene Zeit ist der nächste freie Slot.</string>
+    <string name="this_blog_does_not_show_its_devices">Dieser Blog zeigt der App seine Geräte noch nicht; ein neueres ./blog.sh kann es. Auf dem Server zeigt ./blog.sh pair --list sie.</string>
     <string name="this_blog_s_engine_does_not_offer">Die Engine dieses Blogs bietet der App diese Prüfung noch nicht an. Sie kommt mit einem neueren ./blog.sh.</string>
     <string name="this_code_is_of_a_newer_kind">Dieser Code ist neuer, als die App ihn kennt. Aktualisiere die App.</string>
     <string name="this_device_was_let_in_to_the">Dieses Gerät hat ein Code zum Blog gelassen, unter dem Namen %1$s.</string>
     <string name="this_device_was_let_in_to_the_2">Dieses Gerät hat ein Code zum Blog gelassen.</string>
+    <string name="this_device_was_taken_off_the_blog">Dieses Gerät ist vom Blog entfernt.</string>
+    <string name="this_device_was_taken_off_the_blog_2">Dieses Gerät ist vom Blog entfernt. Ein neuer Code lässt es wieder herein: „Erneut koppeln“ in den Einstellungen des Blogs.</string>
     <string name="this_device_s_key">Schlüssel dieses Geräts</string>
     <string name="this_is_not_a_code_from_blog">Das ist kein Code von ./blog.sh pair.</string>
     <string name="this_post_cannot_be_edited_here">Dieser Beitrag lässt sich hier nicht bearbeiten.</string>
@@ -426,6 +435,7 @@
     <string name="tag_2">Schlagwort=%1$s</string>
     <string name="tags">Schlagwörter</string>
     <string name="the_text_2">Text</string>
+    <string name="this_device">dieses Gerät</string>
     <string name="through">über</string>
     <string name="tile_add">Neu</string>
     <string name="tile_browse">Archiv</string>

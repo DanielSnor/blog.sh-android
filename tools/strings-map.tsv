@@ -135,6 +135,7 @@ new_post	New post
 new_slug	New slug
 night	Night
 no_description_yet	No description yet
+no_device_was_let_in_to_this	No device was let in to this blog by a code.
 no_drafts_in_progress	No drafts in progress
 no_earlier_versions_yet	No earlier versions yet
 no_posts	No posts
@@ -161,6 +162,7 @@ open	Open
 open_the_blog_in_the_browser	Open the blog in the browser
 open_the_preview	Open the preview
 pair_again	Pair again
+paired_devices	Paired devices
 picture_no_preview_on_this_device	Picture %@ -- no preview on this device
 picture	Picture: %@
 pictures_and_video	Pictures and video
@@ -245,6 +247,8 @@ strikethrough	Strikethrough
 take_it_off	Take it off
 take_the_text_off_the_post_then	Take the %@ text off '%@'? The post then looks exactly as it did before the translation existed.
 take_the_text_as_the_blog_has	Take the text as the blog has it
+take_this_device_off_the_blog	Take this device off the blog
+take_this_device_off_the_blog_the	Take this device off the blog '%@'? The server will not let it in any more; to connect again, it needs a new code from ./blog.sh pair. The blog stays in the app, with what is written for it on this device.
 take_this_language_off_the_post	Take this language off the post
 taken_off	Taken off
 tap_a_colour_to_change_it_it	Tap a colour to change it. It holds on this device, for every blog.
@@ -258,6 +262,7 @@ the_app_is_not_allowed_to_use	The app is not allowed to use the camera. Allow it
 the_app_speaks_the_chosen_language_after	The app speaks the chosen language after it is started again.
 the_app_wears_the_colours_of_the	The app wears the colours of the blog that is open, its default ones, or the ones chosen here.
 the_archive	The archive
+the_blog_cannot_tell_yet_which_of	The blog cannot tell yet which of these devices is asking, so this one cannot be taken off from here. On the server, ./blog.sh pair --list brings an older pairing up to date.
 the_blog_said_no_2	The blog said no (%@).
 the_blog_said_no	The blog said no: %@
 the_blog_s_server_cannot_be_reached	The blog's server cannot be reached. Kept on the device, the post goes to the blog as a draft, with its pictures, once the server answers.
@@ -268,6 +273,7 @@ the_chosen_colours_cannot_be_read_here	The chosen colours cannot be read here, s
 the_code_is_no_longer_good_it	The code is no longer good: it lasts ten minutes and works once. Ask for a new one: ./blog.sh pair
 the_code_is_not_whole_copy_the	The code is not whole. Copy the whole line under the picture.
 the_default_scheme	The default scheme
+the_devices_a_code_let_in_to	The devices a code let in to this blog, as ./blog.sh pair --list shows them on the server. Another device is taken off there: ./blog.sh pair --revoke.
 the_engine_did_not_answer_as_data	The engine did not answer as data: %@
 the_first_is_the_size_the_system	The first is the size the system has; the others are steps above it. It holds on this device, for every blog.
 the_form_holds_a_post_that_is	The form holds a post that is being written: send it or clear it before another is taken back into it.
@@ -306,10 +312,13 @@ the_site_has_no_address_set_so	The site has no address set, so there is nothing 
 the_site_will_be_built_in_a	The site will be built in a moment.
 the_text_did_not_come_with_the	The text did not come with the answer.
 the_time_offered_is_the_next_free	The time offered is the next free publishing slot.
+this_blog_does_not_show_its_devices	This blog does not show its devices to the app yet; a newer ./blog.sh will. On the server, ./blog.sh pair --list shows them.
 this_blog_s_engine_does_not_offer	This blog's engine does not offer this check to the app yet. It comes with a newer ./blog.sh.
 this_code_is_of_a_newer_kind	This code is of a newer kind than the app knows. Update the app.
 this_device_was_let_in_to_the	This device was let in to the blog by a code, under the name %@.
 this_device_was_let_in_to_the_2	This device was let in to the blog by a code.
+this_device_was_taken_off_the_blog	This device was taken off the blog.
+this_device_was_taken_off_the_blog_2	This device was taken off the blog. A new code lets it in again: Pair again, in the blog's settings.
 this_device_s_key	This device's key
 this_is_not_a_code_from_blog	This is not a code from ./blog.sh pair.
 this_post_cannot_be_edited_here	This post cannot be edited here.
@@ -423,6 +432,7 @@ tag	tag
 tag_2	tag=%@
 tags	tags
 the_text_2	the text
+this_device	this device
 through	through
 tile_add	tile.add
 tile_browse	tile.browse

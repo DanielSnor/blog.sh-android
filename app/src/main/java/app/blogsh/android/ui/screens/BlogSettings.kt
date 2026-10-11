@@ -88,6 +88,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
     var confirmingRemoval by remember { mutableStateOf(false) }
     // A new code is being read for this blog.
     var pairing by remember { mutableStateOf(false) }
+    var showingDevices by remember { mutableStateOf(false) }
     // The server's remembered key is read again after it is forgotten or first seen.
     var keyTick by remember { mutableStateOf(0) }
     val blog = Blogs.current
@@ -173,6 +174,8 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
                         }
                     }
                 }
+                // Who else a code let in, and the way out for this one.
+                row { Command(stringResource(R.string.paired_devices), Symbols.ipadAndIphone, leads = true) { showingDevices = true } }
                 row { Command(stringResource(R.string.pair_again), Symbols.qrcodeViewfinder) { pairing = true } }
             }
             Hint(stringResource(R.string.where_the_blog_lies_on_the_server))
@@ -284,6 +287,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
         }
     }
 
+    if (showingDevices) DevicesSheet(onBack = { showingDevices = false })
     if (pairing && blog != null) {
         AddBlogSheet(into = blog, onBack = { pairing = false }, onDone = {
             pairing = false

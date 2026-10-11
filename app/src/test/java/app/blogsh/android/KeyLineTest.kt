@@ -92,4 +92,36 @@ class KeyLineTest {
         val line = KeyStore.publicKeyLine(ByteArray(32) { it.toByte() }, "blogsh-app")
         assertEquals("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4f blogsh-app", line)
     }
+
+    /**
+     * The key's fingerprint is the one ./blog.sh pair --list prints: the
+     * SHA-256 of the key as it goes over the wire, in base64 with no
+     * padding, after "SHA256:". A blog's own, and another's is another.
+     */
+    @Test
+    fun aBlogsKeyIsKnownByTheFingerprintTheServerLists() {
+        val seeds = mapOf("blog-a" to ByteArray(32) { it.toByte() }, "blog-b" to ByteArray(32) { (it + 1).toByte() })
+        KeyStore.stand = { seeds[it] }
+        try {
+            val print = KeyStore.fingerprint("blog-a")
+            val blob = java.util.Base64.getDecoder().decode(KeyStore.publicKeyLine("blog-a").split(" ")[1])
+            val digest = java.util.Base64.getEncoder().withoutPadding().encodeToString(java.security.MessageDigest.getInstance("SHA-256").digest(blob))
+            assertEquals("SHA256:$digest", print)
+            assertEquals(7 + 43, print.length)
+            // What ssh-keygen -lf says of the line the test above this one composes.
+            assertEquals("SHA256:ZkAslGjFiUHdGf/WUL8rQvkib4PTvQatUV0OUQSncCA", KeyStore.fingerprintOf(KeyStore.publicKeyLine(ByteArray(32) { it.toByte() })))
+            assertEquals(print, KeyStore.fingerprintOf(KeyStore.publicKeyLine("blog-a", "another comment")))
+            assertTrue(KeyStore.fingerprint("blog-b") != print)
+            for (none in listOf({ KeyStore.fingerprint("blog-none") }, { KeyStore.fingerprintOf("ssh-ed25519") }, { KeyStore.fingerprintOf("ssh-ed25519 %%% x") })) {
+                try {
+                    none()
+                    org.junit.Assert.fail("a fingerprint of no key")
+                } catch (e: KeyStore.NoKey) {
+                    // As it should be.
+                }
+            }
+        } finally {
+            KeyStore.stand = null
+        }
+    }
 }

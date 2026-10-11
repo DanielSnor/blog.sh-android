@@ -313,6 +313,7 @@
     <string name="this_code_is_of_a_newer_kind">This code is of a newer kind than the app knows. Update the app.</string>
     <string name="this_device_was_let_in_to_the">This device was let in to the blog by a code, under the name %1$s.</string>
     <string name="this_device_was_let_in_to_the_2">This device was let in to the blog by a code.</string>
+    <string name="this_device_s_key">This device\'s key</string>
     <string name="this_is_not_a_code_from_blog">This is not a code from ./blog.sh pair.</string>
     <string name="this_post_cannot_be_edited_here">This post cannot be edited here.</string>
     <string name="this_post_cannot_be_edited_here_at">This post cannot be edited here: %1$s. At the desk, edit asks before losing it; here nobody could answer.</string>
@@ -345,7 +346,7 @@
     <string name="what_do_you_want_to_do">What do you want to do?</string>
     <string name="what_is_cleared_out_is_gone_for">What is cleared out is gone for good. Older versions are what a post said before its recent saves; each post keeps its newest.</string>
     <string name="what_is_written_here_is_replaced_by">What is written here is replaced by the blog\'s text.</string>
-    <string name="where_the_blog_lies_on_the_server">Where the blog lies on the server and what this device may run there is in the line ./blog.sh pair wrote on the server; nothing of it is set here. The device is taken off there with ./blog.sh pair --revoke.</string>
+    <string name="where_the_blog_lies_on_the_server">Where the blog lies on the server and what this device may run there is in the line ./blog.sh pair wrote on the server; nothing of it is set here. The device is taken off there with ./blog.sh pair --revoke. In what ./blog.sh pair --list shows, it is the line with this key.</string>
     <string name="with_a_code">With a code</string>
     <string name="with_a_network_configured_it_announces_too">With a network configured it announces too, which nothing takes back.</string>
     <string name="worth_a_look">Worth a look</string>

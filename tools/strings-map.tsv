@@ -310,6 +310,7 @@ this_blog_s_engine_does_not_offer	This blog's engine does not offer this check t
 this_code_is_of_a_newer_kind	This code is of a newer kind than the app knows. Update the app.
 this_device_was_let_in_to_the	This device was let in to the blog by a code, under the name %@.
 this_device_was_let_in_to_the_2	This device was let in to the blog by a code.
+this_device_s_key	This device's key
 this_is_not_a_code_from_blog	This is not a code from ./blog.sh pair.
 this_post_cannot_be_edited_here	This post cannot be edited here.
 this_post_cannot_be_edited_here_at	This post cannot be edited here: %@. At the desk, edit asks before losing it; here nobody could answer.
@@ -342,7 +343,7 @@ waiting_to_be_sent	Waiting to be sent
 what_do_you_want_to_do	What do you want to do?
 what_is_cleared_out_is_gone_for	What is cleared out is gone for good. Older versions are what a post said before its recent saves; each post keeps its newest.
 what_is_written_here_is_replaced_by	What is written here is replaced by the blog's text.
-where_the_blog_lies_on_the_server	Where the blog lies on the server and what this device may run there is in the line ./blog.sh pair wrote on the server; nothing of it is set here. The device is taken off there with ./blog.sh pair --revoke.
+where_the_blog_lies_on_the_server	Where the blog lies on the server and what this device may run there is in the line ./blog.sh pair wrote on the server; nothing of it is set here. The device is taken off there with ./blog.sh pair --revoke. In what ./blog.sh pair --list shows, it is the line with this key.
 with_a_code	With a code
 with_a_network_configured_it_announces_too	With a network configured it announces too, which nothing takes back.
 worth_a_look	Worth a look

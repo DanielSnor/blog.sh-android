@@ -58,8 +58,16 @@ object KeyStore {
 
     fun hasKey(account: String): Boolean = file(account).exists()
 
+    /**
+     * In a test, what stands in for the device's keystore: an account's
+     * seed, or nothing where it has no key. Nothing sets it in the app.
+     */
+    @Volatile
+    internal var stand: ((String) -> ByteArray?)? = null
+
     /** The 32 bytes the key is made from. */
     fun seed(account: String): ByteArray {
+        stand?.let { held -> return held(account) ?: throw NoKey() }
         val file = file(account)
         if (!file.exists()) throw NoKey()
         val all = file.readBytes()
@@ -87,6 +95,21 @@ object KeyStore {
 
     /** The line for authorized_keys, as ssh-keygen would print it. */
     fun publicKeyLine(account: String, comment: String = "blogsh-app"): String = publicKeyLine(publicBytes(seed(account)), comment)
+
+    /**
+     * The key's fingerprint as ssh prints one, and as `./blog.sh pair
+     * --list` prints it beside a device: by it a line on the server is
+     * known for this blog's, where two devices -- or one device twice --
+     * go by the same name.
+     */
+    fun fingerprint(account: String): String = fingerprintOf(publicKeyLine(account))
+
+    /** The fingerprint of the key a line for authorized_keys carries. */
+    fun fingerprintOf(line: String): String {
+        val blob = line.split(" ").getOrNull(1)?.let { runCatching { Base64.getDecoder().decode(it) }.getOrNull() }
+        if (blob == null || blob.isEmpty()) throw NoKey()
+        return PairingCode.fingerprint(blob)
+    }
 
     fun publicKeyLine(public: ByteArray, comment: String = "blogsh-app"): String {
         val wire = ByteArrayOutputStream()

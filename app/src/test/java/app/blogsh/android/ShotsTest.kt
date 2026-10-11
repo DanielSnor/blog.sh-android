@@ -19,6 +19,7 @@ import app.blogsh.android.model.DayNight
 import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
+import app.blogsh.android.model.KeyStore
 import app.blogsh.android.model.Now
 import app.blogsh.android.model.Reach
 import app.blogsh.android.model.Reading
@@ -176,6 +177,7 @@ class ShotsTest(private val look: Look) {
         WaitingRoom.removeAll(BLOG)
         Reach.shared.heard(SERVER)
         Engine.stand = null
+        KeyStore.stand = null
         Now.clock = { Instant.now() }
         TimeZone.setDefault(zone)
         Locale.setDefault(locale)
@@ -409,6 +411,8 @@ class ShotsTest(private val look: Look) {
     /** The open blog, as one a code let in: where it is, how it was let in, and nothing of a line to compose. */
     private fun paired() {
         Blogs.update { it.copy(pairedAs = "motorola edge 70 fusion") }
+        // The key it was let in with: its fingerprint is what the settings show.
+        KeyStore.stand = { ByteArray(32) { it.toByte() } }
     }
 
     @Test

@@ -313,6 +313,7 @@
     <string name="this_code_is_of_a_newer_kind">Tenhle kód je novějšího druhu, než appka zná. Aktualizuj appku.</string>
     <string name="this_device_was_let_in_to_the">Tohle zařízení pustil k blogu kód, pod jménem %1$s.</string>
     <string name="this_device_was_let_in_to_the_2">Tohle zařízení pustil k blogu kód.</string>
+    <string name="this_device_s_key">Klíč tohoto zařízení</string>
     <string name="this_is_not_a_code_from_blog">Tohle není kód z ./blog.sh pair.</string>
     <string name="this_post_cannot_be_edited_here">Tenhle příspěvek tady upravit nejde.</string>
     <string name="this_post_cannot_be_edited_here_at">Tenhle příspěvek tady upravit nejde: %1$s. U počítače se edit zeptá, než to ztratí; tady by neměl kdo odpovědět.</string>
@@ -345,7 +346,7 @@
     <string name="what_do_you_want_to_do">Co chceš dělat?</string>
     <string name="what_is_cleared_out_is_gone_for">Co se uklidí, je pryč nadobro. Starší verze jsou to, co příspěvek říkal před posledními uloženími; každému zůstane ta nejnovější.</string>
     <string name="what_is_written_here_is_replaced_by">Co je napsáno tady, nahradí text z blogu.</string>
-    <string name="where_the_blog_lies_on_the_server">Kde blog na serveru leží a co tohle zařízení smí spustit, je v řádku, který na serveru zapsal ./blog.sh pair; tady se z toho nic nenastavuje. Zařízení tam odebereš příkazem ./blog.sh pair --revoke.</string>
+    <string name="where_the_blog_lies_on_the_server">Kde blog na serveru leží a co tohle zařízení smí spustit, je v řádku, který na serveru zapsal ./blog.sh pair; tady se z toho nic nenastavuje. Zařízení tam odebereš příkazem ./blog.sh pair --revoke. Ve výpisu ./blog.sh pair --list je to řádek s tímhle klíčem.</string>
     <string name="with_a_code">Kódem</string>
     <string name="with_a_network_configured_it_announces_too">Zároveň se oznámí na síti — a oznámení nejde vzít zpět.</string>
     <string name="worth_a_look">Ke zvážení</string>

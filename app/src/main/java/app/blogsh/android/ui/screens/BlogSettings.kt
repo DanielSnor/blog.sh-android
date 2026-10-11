@@ -163,6 +163,16 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
                         color = Theme.ink, style = ui(15f),
                     )
                 }
+                // The key the server knows it by: two lines there can
+                // carry the same name, and only this tells them apart.
+                key?.let { runCatching { KeyStore.fingerprintOf(it) }.getOrNull() }?.let { print ->
+                    row {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            EngineLabel(stringResource(R.string.this_device_s_key))
+                            SelectionContainer { Text(print, color = Theme.ink, style = mono(12f, bold = false)) }
+                        }
+                    }
+                }
                 row { Command(stringResource(R.string.pair_again), Symbols.qrcodeViewfinder) { pairing = true } }
             }
             Hint(stringResource(R.string.where_the_blog_lies_on_the_server))

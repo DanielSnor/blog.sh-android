@@ -313,6 +313,7 @@
     <string name="this_code_is_of_a_newer_kind">Dieser Code ist neuer, als die App ihn kennt. Aktualisiere die App.</string>
     <string name="this_device_was_let_in_to_the">Dieses Gerät hat ein Code zum Blog gelassen, unter dem Namen %1$s.</string>
     <string name="this_device_was_let_in_to_the_2">Dieses Gerät hat ein Code zum Blog gelassen.</string>
+    <string name="this_device_s_key">Schlüssel dieses Geräts</string>
     <string name="this_is_not_a_code_from_blog">Das ist kein Code von ./blog.sh pair.</string>
     <string name="this_post_cannot_be_edited_here">Dieser Beitrag lässt sich hier nicht bearbeiten.</string>
     <string name="this_post_cannot_be_edited_here_at">Dieser Beitrag lässt sich hier nicht bearbeiten: %1$s. Am Schreibtisch fragt edit, bevor etwas verloren geht; hier könnte niemand antworten.</string>
@@ -345,7 +346,7 @@
     <string name="what_do_you_want_to_do">Was möchtest du tun?</string>
     <string name="what_is_cleared_out_is_gone_for">Was aufgeräumt wird, ist endgültig weg. Ältere Fassungen sind, was ein Beitrag vor seinen letzten Speicherungen sagte; jeder behält seine neueste.</string>
     <string name="what_is_written_here_is_replaced_by">Was hier geschrieben steht, wird durch den Text des Blogs ersetzt.</string>
-    <string name="where_the_blog_lies_on_the_server">Wo der Blog auf dem Server liegt und was dieses Gerät dort ausführen darf, steht in der Zeile, die ./blog.sh pair auf dem Server geschrieben hat; hier wird davon nichts eingestellt. Das Gerät entfernst du dort mit ./blog.sh pair --revoke.</string>
+    <string name="where_the_blog_lies_on_the_server">Wo der Blog auf dem Server liegt und was dieses Gerät dort ausführen darf, steht in der Zeile, die ./blog.sh pair auf dem Server geschrieben hat; hier wird davon nichts eingestellt. Das Gerät entfernst du dort mit ./blog.sh pair --revoke. In der Liste von ./blog.sh pair --list ist es die Zeile mit diesem Schlüssel.</string>
     <string name="with_a_code">Mit einem Code</string>
     <string name="with_a_network_configured_it_announces_too">Mit einem eingerichteten Netzwerk wird auch angekündigt — und eine Ankündigung lässt sich nicht zurücknehmen.</string>
     <string name="worth_a_look">Zum Nachsehen</string>

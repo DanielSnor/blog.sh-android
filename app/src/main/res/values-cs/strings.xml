@@ -29,6 +29,7 @@
     <string name="add_a_blog">Přidat blog</string>
     <string name="add_a_picture_or_video">Přidat obrázek nebo video</string>
     <string name="add_as_another_blog">Přidat jako další blog</string>
+    <string name="add_from_files">Přidat ze souborů</string>
     <string name="announce">Oznámit</string>
     <string name="announce_2">Oznámit „%1$s“?</string>
     <string name="announce_anyway">Přesto oznámit</string>
@@ -38,6 +39,8 @@
     <string name="archive_check">Kontrola archivu</string>
     <string name="as_the_blog_has_them">Podle blogu</string>
     <string name="as_the_system_has_it">Podle systému</string>
+    <string name="auto">Auto</string>
+    <string name="auto_goes_by_the_system_day_and">Auto se řídí systémem. Denní a noční platí vždy, ať je systém nastavený jakkoli.</string>
     <string name="back">Zpět</string>
     <string name="back_in_the_editor_the_changes_written">V editoru jsou zpátky změny, které tu byly rozepsány %1$s a neuloženy.</string>
     <string name="back_in_the_form_what_was_written">Ve formuláři je zpátky, co tu bylo rozepsáno %1$s a neodesláno.</string>
@@ -79,6 +82,7 @@
     <string name="copied">Zkopírováno</string>
     <string name="copy_the_authorized_keys_line">Zkopírovat řádek pro authorized_keys</string>
     <string name="dark">Tmavý</string>
+    <string name="day">Denní</string>
     <string name="delete">Smazat</string>
     <string name="delete_item_s_from_the_trash_for">Vysypat koš nadobro — položek: %1$d, uvolní se %2$s? Tohle vzít zpět nejde.</string>
     <string name="deleted">Smazáno</string>
@@ -125,11 +129,13 @@
     <string name="make_a_new_key_the_server_will">Vytvořit nový klíč? Server ho nebude znát, dokud jeho řádek znovu nedáš do authorized_keys.</string>
     <string name="make_the_app_s_key">Vytvořit klíč appky</string>
     <string name="markdown_a_picture_goes_in_as_description">Markdown. Obrázek se vkládá jako ![popis](foto.jpg), video jako !![popis](klip.mp4) — jenom jméno, bez cesty.</string>
+    <string name="mode">Režim</string>
     <string name="moved">Přesunuto</string>
     <string name="muted_text">Tlumený text</string>
     <string name="near_enough_not_exact_the_blog_itself">Přibližně, ne přesně: příspěvek vykresluje až blog a skutečný náhled je náhled konceptu po odeslání.</string>
     <string name="new_post">Nový příspěvek</string>
     <string name="new_slug">Nový slug</string>
+    <string name="night">Noční</string>
     <string name="no_description_yet">Zatím bez popisu</string>
     <string name="no_drafts_in_progress">Žádné rozepsané koncepty</string>
     <string name="no_earlier_versions_yet">Zatím žádné starší verze</string>

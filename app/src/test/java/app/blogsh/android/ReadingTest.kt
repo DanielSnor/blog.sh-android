@@ -3,6 +3,7 @@ package app.blogsh.android
 import app.blogsh.android.model.AppLanguage
 import app.blogsh.android.model.Colouring
 import app.blogsh.android.model.Colours
+import app.blogsh.android.model.DayNight
 import app.blogsh.android.model.Reading
 import app.blogsh.android.model.Shades
 import app.blogsh.android.model.TextSize
@@ -119,6 +120,48 @@ class TextSizeTest {
     @Test
     fun noStepMakesTheTypeSmaller() {
         for (step in TextSize.entries) assertTrue(step.zoom() >= 1f)
+    }
+}
+
+/**
+ * Day or night, chosen in the settings. A mistake here is an app that is
+ * dark at noon because the phone is, after somebody chose otherwise --
+ * or one that cannot be given back to the system.
+ */
+class DayNightTest {
+    @Test
+    fun aChoiceThatIsNotOneIsTheSystems() {
+        assertEquals(DayNight.System, DayNight.kept(0))
+        assertEquals(DayNight.Day, DayNight.kept(1))
+        assertEquals(DayNight.Night, DayNight.kept(2))
+        assertEquals(DayNight.System, DayNight.kept(3))
+        assertEquals(DayNight.System, DayNight.kept(-1))
+        assertEquals(DayNight.System, DayNight.kept(null))
+    }
+
+    /** Left to the system it goes by the system; held, it holds whatever the system is set to. */
+    @Test
+    fun whatIsHeldHoldsWhateverTheSystemSays() {
+        for (system in listOf(false, true)) {
+            assertEquals(system, DayNight.System.night(system))
+            assertFalse(DayNight.Day.night(system))
+            assertTrue(DayNight.Night.night(system))
+        }
+    }
+
+    /** Kept for the next start, and nothing is kept of the system's own way: the same as never having chosen. */
+    @Test
+    fun theChoiceIsKeptAndCanBeGivenBack() {
+        val notes = MemoryNotes()
+        assertEquals(DayNight.System, Reading(notes).dayNight)
+        Reading(notes).hold(DayNight.Night)
+        assertEquals("2", notes.read(DayNight.KEY))
+        assertEquals(DayNight.Night, Reading(notes).dayNight)
+        Reading(notes).hold(DayNight.Day)
+        assertEquals(DayNight.Day, Reading(notes).dayNight)
+        Reading(notes).hold(DayNight.System)
+        assertNull(notes.read(DayNight.KEY))
+        assertEquals(DayNight.System, Reading(notes).dayNight)
     }
 }
 

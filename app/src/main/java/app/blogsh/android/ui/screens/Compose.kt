@@ -340,6 +340,11 @@ fun ComposeScreen() {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { items ->
         scope.launch { load(items) }
     }
+    // The photo library is one place a picture can be; the device's
+    // folders and whatever is plugged into it are others.
+    val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { items ->
+        scope.launch { load(items) }
+    }
 
     fun forget() {
         made = null
@@ -404,6 +409,9 @@ fun ComposeScreen() {
                     stringResource(if (importing) R.string.reading else R.string.add_a_picture_or_video), Symbols.photoOnRectangle,
                     busy = importing, enabled = !busy,
                 ) { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
+            }
+            row {
+                Command(stringResource(R.string.add_from_files), Symbols.folder, enabled = !(importing || busy)) { files.launch(Media.FROM_FILES) }
             }
         }
         unread?.let { ProblemLine(it) }

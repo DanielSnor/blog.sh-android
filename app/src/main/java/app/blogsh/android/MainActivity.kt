@@ -3,15 +3,18 @@ package app.blogsh.android
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import app.blogsh.android.model.Colours
+import app.blogsh.android.model.DayNight
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.Reading
 import app.blogsh.android.ui.BlogshTheme
@@ -40,14 +43,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         BlogshApp.speak(this)
         take(intent)
-        bars(Colours.own)
+        bars(Colours.own, Reading.shared.dayNight)
         setContent {
             // The bars at the screen's edges are the ground's own colour, by day and by
             // night -- where the system would otherwise lay a veil of its own over a bar
             // of three keys. The ground is the one that is worn: the open blog's, the
-            // app's own, or the one chosen here.
+            // app's own, or the one chosen here -- by the hour the app wears, which
+            // is the system's unless day or night was chosen over it.
             val worn = Reading.shared.worn
-            LaunchedEffect(worn.light.bg, worn.dark.bg) { bars(worn) }
+            val mode = Reading.shared.dayNight
+            LaunchedEffect(worn.light.bg, worn.dark.bg, mode, isSystemInDarkTheme()) { bars(worn, mode) }
             // The blog's own colours and its accent, as its pages wear them: every
             // control of the app, the sheets included. Until a blog has said its own,
             // the app's.
@@ -82,9 +87,21 @@ class MainActivity : ComponentActivity() {
         Engine.hangUp()
     }
 
-    private fun bars(worn: Colours) {
+    private fun bars(worn: Colours, mode: DayNight) {
         val light = (0xFF000000 or worn.light.bg).toInt()
         val dark = (0xFF000000 or worn.dark.bg).toInt()
-        enableEdgeToEdge(statusBarStyle = SystemBarStyle.auto(light, dark), navigationBarStyle = SystemBarStyle.auto(light, dark))
+        // Left to the system, the bars follow it by themselves; held to day
+        // or to night, they are told which -- the system would go on drawing
+        // their marks for its own hour.
+        val style = when (mode) {
+            DayNight.System -> SystemBarStyle.auto(light, dark)
+            DayNight.Day -> SystemBarStyle.light(light, dark)
+            DayNight.Night -> SystemBarStyle.dark(dark)
+        }
+        enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+        // What shows behind a screen for the moment it is not drawn yet --
+        // the keyboard coming up, a turn -- is the same ground.
+        val systemNight = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        window.setBackgroundDrawable(ColorDrawable(if (mode.night(systemNight)) dark else light))
     }
 }

@@ -29,6 +29,7 @@
     <string name="add_a_blog">Blog hinzufügen</string>
     <string name="add_a_picture_or_video">Bild oder Video hinzufügen</string>
     <string name="add_as_another_blog">Als weiteren Blog hinzufügen</string>
+    <string name="add_from_files">Aus Dateien hinzufügen</string>
     <string name="announce">Ankündigen</string>
     <string name="announce_2">„%1$s“ ankündigen?</string>
     <string name="announce_anyway">Trotzdem ankündigen</string>
@@ -38,6 +39,8 @@
     <string name="archive_check">Archivprüfung</string>
     <string name="as_the_blog_has_them">Wie im Blog</string>
     <string name="as_the_system_has_it">Wie das System</string>
+    <string name="auto">Auto</string>
+    <string name="auto_goes_by_the_system_day_and">Auto richtet sich nach dem System. Tag und Nacht gelten immer, wie auch immer das System eingestellt ist.</string>
     <string name="back">Zurück</string>
     <string name="back_in_the_editor_the_changes_written">Wieder im Editor: die Änderungen, die hier %1$s geschrieben und nicht gespeichert wurden.</string>
     <string name="back_in_the_form_what_was_written">Wieder im Formular: was hier %1$s geschrieben und nicht gesendet wurde.</string>
@@ -79,6 +82,7 @@
     <string name="copied">Kopiert</string>
     <string name="copy_the_authorized_keys_line">Zeile für authorized_keys kopieren</string>
     <string name="dark">Dunkel</string>
+    <string name="day">Tag</string>
     <string name="delete">Löschen</string>
     <string name="delete_item_s_from_the_trash_for">%1$d Element(e) endgültig aus dem Papierkorb löschen und %2$s freigeben? Das lässt sich nicht zurücknehmen.</string>
     <string name="deleted">Gelöscht</string>
@@ -125,11 +129,13 @@
     <string name="make_a_new_key_the_server_will">Neuen Schlüssel erzeugen? Der Server kennt ihn erst, wenn seine Zeile wieder in authorized_keys steht.</string>
     <string name="make_the_app_s_key">Schlüssel der App erzeugen</string>
     <string name="markdown_a_picture_goes_in_as_description">Markdown. Ein Bild kommt als ![Beschreibung](foto.jpg) hinein, ein Video als !![Beschreibung](clip.mp4) -- nur der Name, kein Pfad.</string>
+    <string name="mode">Modus</string>
     <string name="moved">Verschoben</string>
     <string name="muted_text">Gedämpfter Text</string>
     <string name="near_enough_not_exact_the_blog_itself">Nah dran, nicht genau: den Beitrag rendert erst das Blog, und die echte Vorschau ist die des Entwurfs nach dem Senden.</string>
     <string name="new_post">Neuer Beitrag</string>
     <string name="new_slug">Neuer Slug</string>
+    <string name="night">Nacht</string>
     <string name="no_description_yet">Noch ohne Beschreibung</string>
     <string name="no_drafts_in_progress">Keine Entwürfe in Arbeit</string>
     <string name="no_earlier_versions_yet">Noch keine früheren Fassungen</string>

@@ -86,11 +86,32 @@ object Media {
         return if (online) Unread.Unreadable else Unread.NeedsNetwork
     }
 
-    /** One picked item as a shot; thrown, why nothing could be read of it. */
+    /**
+     * Whether what was picked is a video. The library says what each of
+     * its items is; a folder's keeper -- a volume plugged in, a cloud --
+     * may say nothing, or only that it is a file, and then the name is
+     * what there is to go by.
+     */
+    fun isVideo(type: String?, name: String?): Boolean {
+        val said = (type ?: "").lowercase(java.util.Locale.ROOT)
+        if (said.startsWith("video/")) return true
+        if (said.startsWith("image/")) return false
+        return Kept.isVideo(name ?: "")
+    }
+
+    /** What the device's files are asked for: pictures and videos, wherever they are kept. */
+    val FROM_FILES = arrayOf("image/*", "video/*")
+
+    /**
+     * One picked item as a shot; thrown, why nothing could be read of it.
+     * Whether it came from the photo library or from the device's files
+     * -- its folders, a cloud folder, a volume plugged into it -- it is
+     * treated the same: a picture shrunk and written as JPEG, a video
+     * exported, each called by the name it has where it came from.
+     */
     suspend fun shot(context: Context, uri: Uri, index: Int, taken: List<String>): Shot = withContext(Dispatchers.IO) {
-        val type = context.contentResolver.getType(uri) ?: ""
         val original = displayName(context, uri)
-        if (type.startsWith("video/")) {
+        if (isVideo(context.contentResolver.getType(uri), original)) {
             return@withContext video(context, uri, original, index, taken) ?: throw NotRead(unread(null, NetworkWatch.hasNetwork))
         }
         val bytes = try {

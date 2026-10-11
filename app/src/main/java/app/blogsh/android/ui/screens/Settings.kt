@@ -10,7 +10,6 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -67,6 +66,7 @@ import app.blogsh.android.R
 import app.blogsh.android.model.AppLanguage
 import app.blogsh.android.model.BuildStamp
 import app.blogsh.android.model.Colouring
+import app.blogsh.android.model.DayNight
 import app.blogsh.android.model.Hsv
 import app.blogsh.android.model.Reading
 import app.blogsh.android.model.Shades
@@ -91,6 +91,7 @@ import app.blogsh.android.ui.blog
 import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.tone
+import app.blogsh.android.ui.wearsNight
 import app.blogsh.android.ui.ui
 import app.blogsh.android.ui.wordUnderPointer
 import app.blogsh.android.ui.worn
@@ -129,6 +130,10 @@ fun SettingsSheet(onDismiss: () -> Unit) {
 
         ColoursSection { picking = it }
 
+        SectionLabel(stringResource(R.string.mode))
+        DayNightPicker()
+        Hint(stringResource(R.string.auto_goes_by_the_system_day_and))
+
         SectionLabel(stringResource(R.string.text_size))
         TextSizePicker()
         Hint(stringResource(R.string.the_first_is_the_size_the_system))
@@ -164,7 +169,7 @@ class Picking(val title: String, val value: () -> Long, val set: (Long) -> Unit)
 @Composable
 fun ColoursSection(choose: (Picking) -> Unit) {
     val reading = Reading.shared
-    val dark = isSystemInDarkTheme()
+    val dark = wearsNight()
     // The chosen colours cannot be read on this screen as it is now: the
     // section then keeps to the app's own, so there is always a way back.
     val unreadable = reading.wearing == Colouring.Chosen && !reading.worn.scheme(dark).legible
@@ -380,6 +385,36 @@ fun BuildMark(modifier: Modifier = Modifier, stamp: BuildStamp = BuildStamp.own)
         Image(painterResource(R.drawable.engine_mark), contentDescription = null, modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
         stamp.built?.let { Text(RowDate.numeric(Instant.ofEpochMilli(it)), color = Theme.muted, style = mono(12f)) }
         stamp.commit?.let { SelectionContainer { Text(it, color = Theme.muted, style = mono(12f)) } }
+    }
+}
+
+/**
+ * Day or night: three words in a row, the first of them the system's
+ * own way. Drawn as the sizes of the type are, one key beside the next.
+ */
+@Composable
+fun DayNightPicker() {
+    val reading = Reading.shared
+    val shape = RoundedCornerShape(Theme.corner)
+    val names = listOf(R.string.auto, R.string.day, R.string.night).map { stringResource(it) }
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).clip(shape).background(Theme.card).border(1.dp, Theme.line, shape)) {
+        DayNight.entries.forEachIndexed { index, one ->
+            val chosen = one == reading.dayNight
+            val source = remember { MutableInteractionSource() }
+            val over by source.collectIsHoveredAsState()
+            if (index > 0) Box(Modifier.width(1.dp).fillMaxHeight().background(Theme.line))
+            Box(
+                Modifier.weight(1f).heightIn(min = 52.dp).background(if (chosen) Theme.accent else Color.Transparent)
+                    .clickable(interactionSource = source, indication = LocalIndication.current, role = Role.RadioButton) { reading.hold(one) }
+                    .semantics { selected = chosen },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    names[index], color = if (chosen) Color.White else if (over) Theme.accent else Theme.ink,
+                    style = ui(15f, FontWeight.Medium), maxLines = 1,
+                )
+            }
+        }
     }
 }
 

@@ -256,6 +256,9 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { items ->
         scope.launch { loadPictures(items) }
     }
+    val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { items ->
+        scope.launch { loadPictures(items) }
+    }
 
     fun leave() = nav.pop()
 
@@ -324,6 +327,9 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                             stringResource(if (importing) R.string.reading else R.string.add_a_picture_or_video), Symbols.photoOnRectangle,
                             busy = importing, enabled = post.editable,
                         ) { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
+                    }
+                    row {
+                        Command(stringResource(R.string.add_from_files), Symbols.folder, enabled = post.editable && !importing) { files.launch(Media.FROM_FILES) }
                     }
                 }
                 unread?.let { ProblemLine(it) }

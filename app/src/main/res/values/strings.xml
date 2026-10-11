@@ -29,6 +29,7 @@
     <string name="add_a_blog">Add a blog</string>
     <string name="add_a_picture_or_video">Add a picture or video</string>
     <string name="add_as_another_blog">Add as another blog</string>
+    <string name="add_from_files">Add from files</string>
     <string name="announce">Announce</string>
     <string name="announce_2">Announce \'%1$s\'?</string>
     <string name="announce_anyway">Announce anyway</string>
@@ -38,6 +39,8 @@
     <string name="archive_check">Archive check</string>
     <string name="as_the_blog_has_them">As the blog has them</string>
     <string name="as_the_system_has_it">As the system has it</string>
+    <string name="auto">Auto</string>
+    <string name="auto_goes_by_the_system_day_and">Auto goes by the system. Day and night hold whatever the system is set to.</string>
     <string name="back">Back</string>
     <string name="back_in_the_editor_the_changes_written">Back in the editor: the changes written here %1$s and not saved.</string>
     <string name="back_in_the_form_what_was_written">Back in the form: what was written here %1$s and not sent.</string>
@@ -79,6 +82,7 @@
     <string name="copied">Copied</string>
     <string name="copy_the_authorized_keys_line">Copy the authorized_keys line</string>
     <string name="dark">Dark</string>
+    <string name="day">Day</string>
     <string name="delete">Delete</string>
     <string name="delete_item_s_from_the_trash_for">Delete %1$d item(s) from the trash for good, freeing %2$s? This cannot be undone.</string>
     <string name="deleted">Deleted</string>
@@ -125,11 +129,13 @@
     <string name="make_a_new_key_the_server_will">Make a new key? The server will not know it until its line is put into authorized_keys again.</string>
     <string name="make_the_app_s_key">Make the app\'s key</string>
     <string name="markdown_a_picture_goes_in_as_description">Markdown. A picture goes in as ![description](photo.jpg), a video as !![description](clip.mp4) -- the bare name, no path.</string>
+    <string name="mode">Mode</string>
     <string name="moved">Moved</string>
     <string name="muted_text">Muted text</string>
     <string name="near_enough_not_exact_the_blog_itself">Near enough, not exact: the blog itself renders the post, and the draft\'s preview after sending is the real thing.</string>
     <string name="new_post">New post</string>
     <string name="new_slug">New slug</string>
+    <string name="night">Night</string>
     <string name="no_description_yet">No description yet</string>
     <string name="no_drafts_in_progress">No drafts in progress</string>
     <string name="no_earlier_versions_yet">No earlier versions yet</string>

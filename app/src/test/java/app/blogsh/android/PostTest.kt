@@ -3,6 +3,7 @@ package app.blogsh.android
 import app.blogsh.android.model.Delivery
 import app.blogsh.android.model.Kept
 import app.blogsh.android.model.Markdown
+import app.blogsh.android.model.Media
 import app.blogsh.android.model.Pictures
 import app.blogsh.android.model.Shot
 import app.blogsh.android.model.encodedSize
@@ -513,6 +514,24 @@ class PostTest {
         assertTrue(Kept.fewer(listOf("01.mov"), listOf(picture), "![a](photo-2.jpg)"))
         assertFalse(Kept.fewer(listOf("01.mov"), listOf(video), "!![a](clip.mp4)"))
         assertTrue(Kept.isVideo("01.MOV") && Kept.isVideo("a.mp4") && !Kept.isVideo("a.jpg") && !Kept.isVideo("mov"))
+    }
+
+    /**
+     * What comes from the device's files is whatever its keeper says it
+     * is -- and a volume plugged in, or a cloud, may say nothing, or only
+     * "a file". Then the name decides; a video taken for a picture would
+     * be handed to the picture decoder and come back as unreadable.
+     */
+    @Test
+    fun aFileIsAVideoByWhatItsKeeperSaysOrByItsName() {
+        assertTrue(Media.isVideo("video/mp4", "IMG_0001"))
+        assertTrue(Media.isVideo("VIDEO/quicktime", null))
+        assertFalse(Media.isVideo("image/jpeg", "clip.mp4"))
+        assertTrue(Media.isVideo(null, "Holiday.MOV"))
+        assertTrue(Media.isVideo("application/octet-stream", "clip.mp4"))
+        assertFalse(Media.isVideo("application/octet-stream", "photo.jpg"))
+        assertFalse(Media.isVideo(null, null))
+        assertFalse(Media.isVideo("", ""))
     }
 
     /**

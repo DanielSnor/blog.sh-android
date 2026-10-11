@@ -9,7 +9,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,6 +76,7 @@ import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.Pressable
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
+import app.blogsh.android.ui.wearsNight
 import app.blogsh.android.ui.Typed
 import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.ui
@@ -131,14 +131,16 @@ fun PreviewSheet(title: String, markdown: String, shown: Map<String, Preview.Sho
  */
 @Composable
 private fun WebPage(html: String, base: String?, zoom: Float = 1f, modifier: Modifier = Modifier) {
-    // The app's own window is a light one whatever the hour; the page asks
-    // the view it is shown in whether it is night, so by night the view is
-    // made in a dark one and the blog's stylesheet answers with its night.
-    val night = isSystemInDarkTheme()
+    // The page asks the view it is shown in whether it is night, and the
+    // view answers by the window it was made in -- which is the system's
+    // hour, not the one chosen in the settings. So the view is made in a
+    // window of the hour the app wears, and the blog's stylesheet answers
+    // with its day or its night.
+    val night = wearsNight()
     AndroidView(
         modifier = modifier,
         factory = { context ->
-            val dressed = if (night) ContextThemeWrapper(context, android.R.style.Theme_Material_NoActionBar) else context
+            val dressed = ContextThemeWrapper(context, if (night) android.R.style.Theme_Material_NoActionBar else android.R.style.Theme_Material_Light_NoActionBar)
             WebView(dressed).apply {
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = true

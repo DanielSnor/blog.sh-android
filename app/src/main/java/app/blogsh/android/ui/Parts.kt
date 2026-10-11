@@ -68,7 +68,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
@@ -296,7 +295,7 @@ private fun SheetCard(content: @Composable () -> Unit) {
 @Composable
 fun SheetBars() {
     val view = LocalView.current
-    val dark = isSystemInDarkTheme()
+    val dark = wearsNight()
     SideEffect {
         val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
         WindowCompat.getInsetsController(window, view).apply {

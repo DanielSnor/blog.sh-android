@@ -145,4 +145,6 @@ object Symbols {
     val trayAndArrowUp = R.drawable.ic_outbox
     /** checkmark.circle */
     val checkmarkCircle = R.drawable.ic_check_circle
+    /** folder */
+    val folder = R.drawable.ic_folder
 }

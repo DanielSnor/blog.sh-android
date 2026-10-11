@@ -128,13 +128,21 @@ val Reading.blog: Colours
 val Reading.worn: Colours get() = Colours.worn(wearing, chosen, blog)
 
 /**
+ * Night is what the app wears now: the system's, unless day or night was
+ * chosen over it in the settings. Asked here by everything that is drawn
+ * one way by day and another by night -- the system alone is not asked.
+ */
+@Composable
+fun wearsNight(): Boolean = Reading.shared.dayNight.night(isSystemInDarkTheme())
+
+/**
  * A part of a screen that does not wear the worn colours but the app's
  * own: the place the colours are chosen in keeps to them once the chosen
  * ones cannot be read, so there is always a way back.
  */
 @Composable
 fun PlainGround(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+    val dark = wearsNight()
     val shades = Colours.own.scheme(dark)
     val palette = remember(dark) { palette(shades, dark) }
     CompositionLocalProvider(LocalPalette provides palette, LocalAccent provides tone(shades.accent), content = content)
@@ -242,7 +250,7 @@ fun Typed(content: @Composable () -> Unit) {
  */
 @Composable
 fun BlogshTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+    val dark = wearsNight()
     val reading = Reading.shared
     val shades = reading.worn.scheme(dark)
     // The same palette while the colours are the same: everything on the screen is drawn

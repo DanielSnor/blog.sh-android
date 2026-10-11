@@ -45,6 +45,31 @@ enum class TextSize {
 }
 
 /**
+ * Whether the app is read on its day ground or its night ground: as the
+ * system has it -- light by day, dark by night, or whichever the device
+ * was set to stay in -- or held to one of the two, whatever the system
+ * says.
+ */
+enum class DayNight {
+    System, Day, Night;
+
+    /** Night is what is worn: the choice, or the system's where it was left to it. */
+    fun night(system: Boolean): Boolean = when (this) {
+        System -> system
+        Day -> false
+        Night -> true
+    }
+
+    companion object {
+        /** Where the choice is kept. */
+        const val KEY = "dayNight"
+
+        /** What is kept, read back; anything else is the system's own. */
+        fun kept(value: Int?): DayNight = entries.getOrNull(value ?: 0) ?: System
+    }
+}
+
+/**
  * The language the app speaks: the system's, or one of the three it is
  * written in. Like a language chosen in the system's own settings, it is
  * taken up when the app is next started, not in the middle of a screen.
@@ -89,8 +114,8 @@ enum class AppLanguage(
  * How the app is read on this device, as it is chosen in the settings
  * and kept: whose colours it wears and the ones chosen here -- the open
  * blog's, the app's own, or the ones somebody chose on this device,
- * colour by colour -- the size of its type, and its language. The
- * device's, not a blog's: eyes do not change with the blog.
+ * colour by colour -- day or night, the size of its type, and its
+ * language. The device's, not a blog's: eyes do not change with the blog.
  */
 class Reading(private val notes: Notes) {
     var wearing by mutableStateOf(Colouring.kept(notes.read(Colouring.KEY), switchedToOwn = notes.read(Colouring.SWITCH_KEY) == "yes"))
@@ -98,6 +123,9 @@ class Reading(private val notes: Notes) {
 
     /** The ones chosen here; null until somebody chose. */
     var chosen by mutableStateOf(Colours.kept(notes.read(Colours.KEY)))
+        private set
+
+    var dayNight by mutableStateOf(DayNight.kept(notes.read(DayNight.KEY)?.toIntOrNull()))
         private set
 
     var textSize by mutableStateOf(TextSize.kept(notes.read(TextSize.KEY)?.toIntOrNull()))
@@ -124,6 +152,11 @@ class Reading(private val notes: Notes) {
     fun choose(colours: Colours?) {
         chosen = colours
         notes.write(Colours.KEY, colours?.kept)
+    }
+
+    fun hold(choice: DayNight) {
+        dayNight = choice
+        notes.write(DayNight.KEY, if (choice == DayNight.System) null else choice.ordinal.toString())
     }
 
     fun set(size: TextSize) {

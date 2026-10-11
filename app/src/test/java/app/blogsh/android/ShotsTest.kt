@@ -15,6 +15,7 @@ import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.BuildStamp
 import app.blogsh.android.model.Colouring
+import app.blogsh.android.model.DayNight
 import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
@@ -166,6 +167,7 @@ class ShotsTest(private val look: Look) {
         Reach.shared.heard(SERVER)
         Reading.shared.wear(Colouring.Blog)
         Reading.shared.choose(null)
+        Reading.shared.hold(DayNight.System)
         Reading.shared.set(look.type)
     }
 
@@ -384,6 +386,16 @@ class ShotsTest(private val look: Look) {
 
     @Test
     fun settings() = shot("settings", over = { SettingsSheet(onDismiss = {}) })
+
+    /**
+     * Held the other way from the system's: the sheet and the screen
+     * under it wear the hour that was chosen, not the device's.
+     */
+    @Test
+    fun settingsHeldAgainstTheSystem() {
+        Reading.shared.hold(if (look.night) DayNight.Day else DayNight.Night)
+        shot("settings-held", over = { SettingsSheet(onDismiss = {}) })
+    }
 
     @Test
     fun settingsWithColoursOfOnesOwn() {

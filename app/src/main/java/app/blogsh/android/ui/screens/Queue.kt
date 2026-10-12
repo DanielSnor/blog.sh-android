@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -313,7 +314,7 @@ fun QueueScreen(languages: List<String> = emptyList()) {
                     item(key = "unattended") {
                         PaperRow {
                             Text(
-                                stringResource(R.string.android_queue_unattended), color = Theme.danger, style = ui(13f, FontWeight.Medium),
+                                stringResource(R.string.nothing_on_this_blog_sends_the_queue_2), color = Theme.danger, style = ui(13f, FontWeight.Medium),
                                 modifier = Modifier.padding(vertical = 12.dp),
                             )
                         }
@@ -356,14 +357,26 @@ fun QueueScreen(languages: List<String> = emptyList()) {
                                 menuFor = id
                             }
                         }
+                        // A row opens its post, as in the archive: its text, its
+                        // properties, and so its slug -- which the queue has no key for.
+                        val open: () -> Unit = {
+                            val post = PostRow(row)
+                            nav.push { PostCrossroadsScreen(post, languages, gone = { scope.launch { load() } }) }
+                        }
                         val press = when {
                             still -> Modifier
-                            // It cannot be lifted, and it still has its keys.
+                            // It cannot be lifted, and it still has its keys -- and
+                            // opens its post like any other row: what watches for
+                            // the long press here takes the tap too, and has to
+                            // pass it on.
                             row.overdue -> Modifier.pointerInput(row.id) {
-                                detectTapGestures(onLongPress = {
-                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    menuFor = row.id
-                                })
+                                detectTapGestures(
+                                    onTap = { open() },
+                                    onLongPress = {
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        menuFor = row.id
+                                    },
+                                )
                             }
                             else -> Modifier.longPressDraggableHandle(onDragStarted = lifted, onDragStopped = dropped)
                         }
@@ -371,17 +384,12 @@ fun QueueScreen(languages: List<String> = emptyList()) {
                             PaperRow(
                                 // In the hand it is a sheet of its own over the others.
                                 (if (dragging) Modifier.background(Theme.paper).background(Theme.accent.copy(alpha = 0.12f)) else Modifier)
-                                    // A row opens its post, as in the archive: its text, its
-                                    // properties, and so its slug -- which the queue has no key for.
-                                    .clickable(enabled = !still) {
-                                        val post = PostRow(row)
-                                        nav.push { PostCrossroadsScreen(post, languages, gone = { scope.launch { load() } }) }
-                                    }
+                                    .clickable(enabled = !still, onClick = open)
                                     .then(press)
                                     .semantics {
                                         customActions = keys.filter { it.enabled }.map { key -> CustomAccessibilityAction(key.label) { key.run(); true } }
                                     }
-                            ) { QueueRowView(row, unattended) }
+                            ) { QueueRowView(row, unattended, publish = if (unattended && row.overdue && !still) ({ leaving = Leaving(row, publish = true) }) else null) }
                             Menu(menuFor == row.id, { menuFor = null }) {
                                 keys.forEachIndexed { index, key ->
                                     if (index == 3) HorizontalDivider(color = Theme.line)
@@ -463,7 +471,14 @@ fun QueueScreen(languages: List<String> = emptyList()) {
  * otherwise show an hour nobody scheduled.
  */
 @Composable
-fun QueueRowView(row: QueueRow, unattended: Boolean = false) {
+fun QueueRowView(
+    row: QueueRow, unattended: Boolean = false,
+    /**
+     * Publishes the post now -- a key in sight on the row that waits
+     * for a hand, where a gesture would have to be known of.
+     */
+    publish: (() -> Unit)? = null,
+) {
     val due = engineInstant(row.date)
     Row(Modifier.fillMaxWidth().padding(vertical = 11.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
         KeyChip("${row.position}")
@@ -471,8 +486,20 @@ fun QueueRowView(row: QueueRow, unattended: Boolean = false) {
             Text(row.title.ifEmpty { row.slug }, color = Theme.ink, style = ui(15f, FontWeight.Bold), maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(if (due != null) whole(due) else row.date, color = Theme.muted, style = ui(13f))
             // Waiting helps only where something comes for the post.
-            if (row.overdue && unattended) Text(stringResource(R.string.its_time_has_come_publish_it_by), color = Theme.danger, style = ui(13f, FontWeight.Medium))
-            else if (row.overdue) Text(stringResource(R.string.waiting_for_the_cron), color = Theme.muted, style = ui(13f))
+            if (row.overdue && unattended) {
+                Text(stringResource(R.string.its_time_has_come_publish_it_by), color = Theme.danger, style = ui(13f, FontWeight.Medium))
+                if (publish != null) {
+                    // Its own key inside a row that is a key too.
+                    Pressable(publish) {
+                        Row(Modifier.heightIn(min = 40.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Mark(Symbols.paperplane, 17.dp, Theme.accent)
+                            Text(stringResource(R.string.publish_now_2), color = Theme.accent, style = ui(14f, FontWeight.SemiBold))
+                        }
+                    }
+                }
+            } else if (row.overdue) {
+                Text(stringResource(R.string.waiting_for_the_cron), color = Theme.muted, style = ui(13f))
+            }
         }
         Spacer(Modifier.width(8.dp))
         if (due != null) Text(RowDate.soon(due), color = Theme.accent, style = mono(11f), modifier = Modifier.padding(top = 3.dp))

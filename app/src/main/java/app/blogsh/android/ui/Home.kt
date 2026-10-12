@@ -96,6 +96,7 @@ import app.blogsh.android.ui.screens.AddBlogSheet
 import app.blogsh.android.ui.screens.ArchiveScreen
 import app.blogsh.android.ui.screens.BlogsSheet
 import app.blogsh.android.ui.screens.ComposeScreen
+import app.blogsh.android.ui.screens.OpenedBySettings
 import app.blogsh.android.ui.screens.PostPickerScreen
 import app.blogsh.android.ui.screens.QueueScreen
 import app.blogsh.android.ui.screens.SettingsSheet
@@ -687,6 +688,9 @@ fun HomeScreen(state: HomeState) {
         // them is asked of the server again when the list closes.
         BlogsSheet(onDismiss = {
             showingBlogs = false
+            // Said once the list is gone and the note can be seen.
+            OpenedBySettings.label?.let { label -> if (label == Blogs.current?.label) Herald.shared.say(app.blogsh.android.model.Spoken.say(R.string.open_now, label)) }
+            OpenedBySettings.label = null
             scope.launch { state.load() }
         })
     }

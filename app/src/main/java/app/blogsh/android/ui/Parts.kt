@@ -119,7 +119,13 @@ fun BarKey(symbol: Int, label: String, enabled: Boolean = true, tint: Color = Th
 fun RowScope.BarName(name: String? = null, count: String? = null, title: String? = null, symbol: Int? = null) {
     Box(Modifier.weight(1f).padding(horizontal = 6.dp).semantics(mergeDescendants = true) { heading() }, contentAlignment = Alignment.CenterStart) {
         if (!title.isNullOrEmpty()) {
-            Text(title, color = Theme.ink, style = ui(18f, FontWeight.Bold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // A post has three screens under one title -- the post, its
+            // text, its properties: which of them this is stands under
+            // the title, in the engine's voice.
+            Column {
+                Text(title, color = Theme.ink, style = ui(if (name.isNullOrEmpty()) 18f else 16f, FontWeight.Bold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (!name.isNullOrEmpty()) Text(voiced(name), color = Theme.muted, style = mono(11f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         } else if (!name.isNullOrEmpty()) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // The mark of the tile the screen was opened from. In ink,
@@ -165,6 +171,13 @@ fun PaperScaffold(
     Box(Modifier.fillMaxSize().background(Theme.paper).windowInsetsPadding(WindowInsets.safeDrawing)) {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                // The keys at the bar's leading end, in one order on every
+                // screen: the menu's key first, where the key that put the
+                // menu away stood -- the same place takes it away and
+                // brings it back -- and the way back after it. With the
+                // way back there instead, a second tap on that place left
+                // the screen.
+                if (menu != null) BarKey(Symbols.sidebarLeft, stringResource(R.string.show_or_hide_the_menu), onClick = menu)
                 if (onBack != null) {
                     BarKey(
                         if (close) Symbols.xmark else Symbols.chevronLeft,
@@ -173,7 +186,6 @@ fun PaperScaffold(
                 } else if (menu == null) {
                     Spacer(Modifier.width(Theme.gutter - 14.dp))
                 }
-                if (menu != null) BarKey(Symbols.sidebarLeft, stringResource(R.string.show_or_hide_the_menu), onClick = menu)
                 BarName(name, count, title, symbol)
                 actions()
             }

@@ -434,6 +434,41 @@ class ShotsTest(private val look: Look) {
         shot("home-unattended")
     }
 
+    /**
+     * The queue of such a blog, with a post whose time has come: the
+     * row that waits for a hand has its key in sight.
+     */
+    @Test
+    fun queueOfABlogWhoseQueueNothingSendsOut() {
+        Engine.stand = { args ->
+            if (args == listOf("queue")) {
+                String(answer(args)).replaceFirst("{", "{\"scheduler\":{\"last_run\":null},")
+                    .replaceFirst("\"overdue\": false", "\"overdue\": true").toByteArray()
+            } else {
+                answer(args)
+            }
+        }
+        shot("queue-unattended", MenuEntry.Queue) { QueueScreen() }
+    }
+
+    /** A post reached from a finding of the check: its properties, with the way to its text. */
+    @Test
+    fun propertiesWithTheWayToTheText() = shot("properties-with-text", MenuEntry.Rebuild) { PropsScreen("dobehnuto", withText = true) }
+
+    /**
+     * The trash with something in it: a row says by its mark that a tap
+     * restores its post, a sentence under the rows says it in words, and
+     * a row of media alone has no mark -- those are the terminal's.
+     */
+    @Test
+    fun trashWithPostsInIt() {
+        val held = """{"ok":true,"trash":[""" +
+            """{"slug":"stary-zapisek","year":"2026","date":"2026-10-03T09:00:00+02:00","title":"Starý zápisek","type":"text","tags":["les"],"state":"published","media_only":false},""" +
+            """{"slug":"jen-fotky","year":"2025","date":"2025-08-14T18:30:00+02:00","tags":[],"media_only":true}]}"""
+        Engine.stand = { args -> if (args == listOf("restore")) held.toByteArray() else answer(args) }
+        shot("trash-rows", MenuEntry.Restore) { TrashScreen() }
+    }
+
     /** The app with no blog yet: the way to a first one, and everything that needs a blog out of reach. */
     @Test
     fun homeWithNoBlog() {

@@ -53,6 +53,7 @@ import app.blogsh.android.ui.CommandRow
 import app.blogsh.android.ui.EmptyNote
 import app.blogsh.android.ui.Hint
 import app.blogsh.android.ui.LocalNav
+import app.blogsh.android.ui.Mark
 import app.blogsh.android.ui.Menu
 import app.blogsh.android.ui.MenuEntry
 import app.blogsh.android.ui.MenuKey
@@ -223,6 +224,11 @@ fun TrashScreen() {
                         }
                     }
                 }
+                if (rows.isNotEmpty()) {
+                    item(key = "hint") {
+                        PaperRow(rule = false) { Hint(stringResource(R.string.a_row_restores_its_post_tap_it), Modifier.padding(vertical = 6.dp)) }
+                    }
+                }
                 val trash = held?.takeIf { it.count > 0 }
                 val versions = older?.takeIf { it.count > 0 }
                 if (trash != null || versions != null) {
@@ -243,7 +249,8 @@ fun TrashScreen() {
                                         }
                                     }
                                 }
-                                Hint(stringResource(R.string.what_is_cleared_out_is_gone_for))
+                                // The versions are explained where their key is.
+                                Hint(stringResource(if (versions != null) R.string.what_is_cleared_out_is_gone_for else R.string.what_is_cleared_out_is_gone_for_2))
                             }
                         }
                     }
@@ -306,5 +313,8 @@ fun TrashRowView(row: TrashRow) {
         engineInstant(row.date)?.let { day ->
             Text(RowDate.short(day), color = Theme.accent, style = mono(11f, bold = false), modifier = Modifier.padding(top = 3.dp))
         }
+        // What a tap on the row does, as a version's row says it: a row
+        // in the archive looks the same and opens its post.
+        if (!row.mediaOnly) Mark(Symbols.arrowUturnBackward, 16.dp, Theme.accent, Modifier.padding(top = 2.dp))
     }
 }

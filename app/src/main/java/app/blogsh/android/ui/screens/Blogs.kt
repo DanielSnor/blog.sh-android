@@ -61,6 +61,14 @@ import java.text.NumberFormat
  * offers to carry it a place up or down the list, or to remove its blog.
  */
 @OptIn(ExperimentalFoundationApi::class)
+/**
+ * The blog that became the open one through the key to its settings,
+ * until whoever closes the list has said so.
+ */
+object OpenedBySettings {
+    var label: String? = null
+}
+
 @Composable
 fun BlogsSheet(onDismiss: () -> Unit) {
     var held by remember { mutableStateOf<Blog?>(null) }
@@ -89,6 +97,10 @@ fun BlogsSheet(onDismiss: () -> Unit) {
                         // The settings are the open blog's: the key opens the blog with them.
                         Pressable(
                             {
+                                // Another blog than the open one: said, since
+                                // the key reads as a look at its settings and
+                                // not as a change of the blog that is open.
+                                if (blog.id != Blogs.currentId && Blogs.currentId != null) OpenedBySettings.label = blog.label
                                 Blogs.select(blog.id)
                                 settingUp = true
                             },

@@ -82,7 +82,15 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PropsScreen(slug: String, gone: (() -> Unit)? = null, renamed: ((PropsAnswer) -> Unit)? = null) {
+fun PropsScreen(
+    slug: String, gone: (() -> Unit)? = null, renamed: ((PropsAnswer) -> Unit)? = null,
+    /**
+     * Opened from somewhere that is not the post's own screen -- a
+     * finding of the check, say: the way to its text is offered here, or
+     * there would be none short of finding the post again.
+     */
+    withText: Boolean = false,
+) {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val uri = LocalUriHandler.current
@@ -106,7 +114,7 @@ fun PropsScreen(slug: String, gone: (() -> Unit)? = null, renamed: ((PropsAnswer
     // A build holds the lock most of these keys need: while one runs, they wait.
     val still = state.busy || Herald.shared.isBuilding
     PaperScaffold(
-        onBack = { nav.pop() }, title = props?.title ?: state.slug, doing = state.doing,
+        onBack = { nav.pop() }, name = stringResource(R.string.properties_and_actions), title = props?.title ?: state.slug, doing = state.doing,
         actions = { props?.let { PostLink.of(it) }?.let { ShareKey(it) } },
     ) {
         PullToRefreshBox(
@@ -142,6 +150,16 @@ fun PropsScreen(slug: String, gone: (() -> Unit)? = null, renamed: ((PropsAnswer
                                 // Everything on the screen waits while the engine is asked; so does the way out to the web.
                                 Pressable({ runCatching { uri.openUri(props.url) } }, enabled = !still) {
                                     CommandRow(label, Symbols.safari, enabled = !still)
+                                }
+                            }
+                        }
+                    }
+                    if (withText) {
+                        val words = stringResource(R.string.the_text_2)
+                        Plate(Modifier.gap(10)) {
+                            row {
+                                Pressable({ val now = state.slug; nav.push { TextEditScreen(now) } }, enabled = !still) {
+                                    CommandRow(words, Symbols.textAlignleft, leads = true, enabled = !still)
                                 }
                             }
                         }

@@ -287,7 +287,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     fun leave() = nav.pop()
 
     Box(Modifier.fillMaxSize()) {
-        PaperScreen(title = entry?.title, answered = answered) {
+        PaperScreen(name = stringResource(R.string.the_text_2), title = entry?.title, answered = answered) {
             val post = entry
             if (post != null) {
                 broughtBack?.let { back ->

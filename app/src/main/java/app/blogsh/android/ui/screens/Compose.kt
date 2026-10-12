@@ -494,6 +494,13 @@ fun ComposeScreen() {
                 if (!url.isNullOrEmpty()) {
                     row { Command(stringResource(R.string.show_the_preview_on_the_web), Symbols.safari) { runCatching { links.openUri(url) } } }
                 }
+                // What the preview shows wrong is put right in the text.
+                row {
+                    Command(stringResource(R.string.edit_its_text), Symbols.textAlignleft, leads = true) {
+                        val slug = made.slug
+                        nav.push { TextEditScreen(slug) }
+                    }
+                }
                 row {
                     // Deleted from there, the post is not this form's to point at any more.
                     Command(stringResource(R.string.its_properties_and_the_actions_on_it), Symbols.sliderHorizontal3, leads = true) {

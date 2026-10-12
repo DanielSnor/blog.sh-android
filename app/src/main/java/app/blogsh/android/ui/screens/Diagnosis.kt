@@ -103,7 +103,7 @@ fun DiagnosisScreen(what: Diagnosis) {
                     row {
                         val slug = finding.slug
                         if (!slug.isNullOrEmpty()) {
-                            Pressable({ nav.push { PropsScreen(slug) } }) { FindingLine(finding, leads = true) }
+                            Pressable({ nav.push { PropsScreen(slug, withText = true) } }) { FindingLine(finding, leads = true) }
                         } else if (finding.kind == "trash" && finding.level != DiagnosisAnswer.Finding.Level.Fine) {
                             Pressable({ nav.push { TrashScreen() } }) { FindingLine(finding, leads = true) }
                         } else {

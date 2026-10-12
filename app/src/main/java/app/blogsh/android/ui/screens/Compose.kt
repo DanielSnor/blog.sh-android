@@ -49,6 +49,7 @@ import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
 import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
+import app.blogsh.android.model.CodeQuotes
 import app.blogsh.android.model.Delivery
 import app.blogsh.android.model.DeliveryFile
 import app.blogsh.android.model.Desk
@@ -282,7 +283,10 @@ fun ComposeScreen() {
             val body = state.text
             // The text is what goes: a description typed on a card is in it
             // already, one typed into the text itself was never the card's.
-            val markdown = Markdown.file(title, tags, body, receipt = receipt)
+            // What goes has code's quotes in its code, whether or not the
+            // editor was left before the key was pressed. The form's own
+            // text is not written over for it: the keyboard may still be in it.
+            val markdown = Markdown.file(title, tags, CodeQuotes.settled(body), receipt = receipt)
             val files = Kept.sent(shots, body).map { DeliveryFile(it.name, it.data) } +
                 DeliveryFile(Markdown.fileName(title, body), markdown.toByteArray(Charsets.UTF_8))
             made = Engine.delivered(files, to = to)
@@ -316,7 +320,8 @@ fun ComposeScreen() {
         problem = null
         made = null
         try {
-            val post = Waiting(title = title, tags = tags, text = state.text, at = Now.instant().toEpochMilli(), receipt = receipt)
+            // What is put by has code's quotes in its code, as what is sent has.
+            val post = Waiting(title = title, tags = tags, text = CodeQuotes.settled(state.text), at = Now.instant().toEpochMilli(), receipt = receipt)
             val going = Kept.sent(shots, state.text)
             withContext(Dispatchers.IO) { WaitingRoom.put(post, going, to) }
             startEmpty()

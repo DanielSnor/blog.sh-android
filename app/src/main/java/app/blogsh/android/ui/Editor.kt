@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,9 +54,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.blogsh.android.R
+import app.blogsh.android.model.CodeQuotes
 import app.blogsh.android.model.Delivery
 import app.blogsh.android.model.Kept
 import app.blogsh.android.model.Marks
@@ -75,6 +78,22 @@ class EditorState(text: String = "") {
 
     val text: String get() = value.text
 
+    /**
+     * The text as the blog has it, where the post came from there: what
+     * is put right in the text is put right in what was written here,
+     * and not in what was only opened.
+     */
+    var original: String? = null
+
+    /**
+     * The writing has stopped: code gets code's quotes. One mark stands
+     * for one, so the caret stays where it is.
+     */
+    fun settle() {
+        val fixed = CodeQuotes.settled(value.text, original)
+        if (fixed != value.text) value = value.copy(text = fixed)
+    }
+
     /** The text from outside -- read from the server, or changed by the screen: the caret stays where it can. */
     fun set(text: String) {
         if (text == value.text) return
@@ -90,7 +109,10 @@ class EditorState(text: String = "") {
 
     fun mark(kind: Marks.Kind, words: Marks.Words) {
         val out = Marks.apply(value.text, range(), kind, words)
-        value = TextFieldValue(out.value, TextRange(out.selection.location, out.selection.location + out.selection.length))
+        val chosen = out.selection.location until out.selection.location + out.selection.length
+        // What was just made code has code's quotes.
+        val written = if (kind == Marks.Kind.Code || kind == Marks.Kind.Fence) CodeQuotes.straightened(out.value, chosen) else out.value
+        value = TextFieldValue(written, TextRange(out.selection.location, out.selection.location + out.selection.length))
         touched = true
     }
 
@@ -118,8 +140,27 @@ fun rememberEditorState(text: String = ""): EditorState = remember { EditorState
  * closes it again. Both are the one text.
  */
 @Composable
-fun PaperEditor(state: EditorState, minHeight: Dp = 220.dp, enabled: Boolean = true) {
+fun PaperEditor(
+    state: EditorState, minHeight: Dp = 220.dp, enabled: Boolean = true,
+    /** The text as the blog has it, where the post came from there. */
+    original: String? = null,
+) {
     var whole by remember { mutableStateOf(false) }
+    SideEffect { state.original = original }
+    // The editor was left: the keyboard is no longer in the text, and
+    // code gets code's quotes. A moment later, and only if it is still
+    // left -- a keyboard may settle the last word it offered after the
+    // field says it is done.
+    var focused by remember { mutableStateOf(false) }
+    var written by remember { mutableStateOf(false) }
+    LaunchedEffect(focused) {
+        if (focused) {
+            written = true
+        } else if (written) {
+            delay(500)
+            state.settle()
+        }
+    }
     // As tall as the text asks, up to what stays in sight: a text that
     // grew on down the page took its caret behind the keyboard, and the
     // page does not follow a caret. Past that height the text moves
@@ -151,10 +192,18 @@ fun PaperEditor(state: EditorState, minHeight: Dp = 220.dp, enabled: Boolean = t
             modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
                 .onGloballyPositioned { top = it.positionInWindow().y.roundToInt().toFloat() }
                 .heightIn(min = minOf(minHeight, room), max = room)
-                .onFocusChanged { if (it.isFocused) state.touched = true },
+                .onFocusChanged {
+                    focused = it.isFocused
+                    if (it.isFocused) state.touched = true
+                },
         )
     }
-    if (whole) WritingScreen(state) { whole = false }
+    if (whole) {
+        WritingScreen(state) {
+            whole = false
+            state.settle()
+        }
+    }
 }
 
 /**

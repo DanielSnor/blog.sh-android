@@ -21,6 +21,7 @@ import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
 import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
+import app.blogsh.android.model.CodeQuotes
 import app.blogsh.android.model.DeliveryFile
 import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
@@ -147,7 +148,8 @@ fun TranslateScreen(slug: String, lang: String) {
         try {
             problem = null
             changedOnBlog = false
-            val file = DeliveryFile("$slug-$lang.md", fileText(body).toByteArray(Charsets.UTF_8))
+            // What goes has code's quotes in its code.
+            val file = DeliveryFile("$slug-$lang.md", fileText(CodeQuotes.settled(body, entry?.text)).toByteArray(Charsets.UTF_8))
             saved = Engine.delivered(listOf(file), to = blog)
             // What was done, by what was sent: emptied words take the
             // language off whichever key sent them.
@@ -205,7 +207,7 @@ fun TranslateScreen(slug: String, lang: String) {
                 SectionLabel(stringResource(R.string.s_in, languageName))
                 Plate {
                     // Left alone while a save is on its way.
-                    row { PaperEditor(state, minHeight = 280.dp, enabled = !saving) }
+                    row { PaperEditor(state, minHeight = 280.dp, enabled = !saving, original = post.text) }
                 }
                 Plate(Modifier.gap(10)) {
                     row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }

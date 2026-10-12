@@ -29,6 +29,7 @@ import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
 import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
+import app.blogsh.android.model.CodeQuotes
 import app.blogsh.android.model.Delivery
 import app.blogsh.android.model.DeliveryFile
 import app.blogsh.android.model.Desk
@@ -219,7 +220,9 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
         val post = entry ?: return state.text
         // The text is what goes: a description typed on a card is in it
         // already, one typed into the text itself was never the card's.
-        val marked = state.text
+        // ...with code's quotes in the code written here, whether or not
+        // the editor was left before the key was pressed.
+        val marked = CodeQuotes.settled(state.text, post.text)
         val lines = "edits: ${post.slug}\nbase: ${post.base}\n"
         if (marked.startsWith("---\n")) return "---\n" + lines + marked.drop(4)
         return "---\n" + lines + "---\n\n" + marked
@@ -305,7 +308,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                 Plate(Modifier.padding(top = if (post.editable) 0.dp else 14.dp)) {
                     // Left alone while a save is on its way: what is typed
                     // then would be neither in what was saved nor kept.
-                    row { PaperEditor(state, minHeight = 320.dp, enabled = post.editable && !saving) }
+                    row { PaperEditor(state, minHeight = 320.dp, enabled = post.editable && !saving, original = post.text) }
                 }
                 Hint(stringResource(R.string.the_post_as_the_blog_keeps_it))
                 Plate(Modifier.gap(10)) {

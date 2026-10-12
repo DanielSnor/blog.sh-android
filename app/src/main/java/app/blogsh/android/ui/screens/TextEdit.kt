@@ -43,6 +43,7 @@ import app.blogsh.android.model.PostState
 import app.blogsh.android.model.Preview
 import app.blogsh.android.model.Shot
 import app.blogsh.android.model.Unsaved
+import app.blogsh.android.model.UnsentShots
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.refusedAs
 import app.blogsh.android.model.plain
@@ -69,8 +70,10 @@ import app.blogsh.android.ui.broughtBackWords
 import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.ui
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * "the text": what `./blog.sh edit` opens in the editor, opened here.
@@ -155,7 +158,16 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
         broughtBack = null
         shots = emptyList()
         state.set(entry?.text ?: "")
-        blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes) }
+        blog?.let {
+            Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes)
+            UnsentShots.forget(it, slug)
+        }
+    }
+
+    // The pictures added to this post here and not saved with it yet.
+    fun bringShotsBack() {
+        if (shots.isNotEmpty() || entry?.editable != true || blog == null) return
+        shots = UnsentShots.shots(blog, slug)
     }
 
     suspend fun load() {
@@ -165,6 +177,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
             tookLoaded = true
             entry = loaded
             state.set(opened(loaded, handed))
+            bringShotsBack()
             return
         }
         tookLoaded = true
@@ -172,6 +185,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
             val answer = Engine.call<EditAnswer>("edit", slug)
             entry = answer.post
             state.set(opened(answer.post, answer.post.text ?: ""))
+            bringShotsBack()
             problem = if (answer.post.text == null) textMissing else null
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
@@ -241,7 +255,10 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
             saved = answer
             shots = emptyList()
             // Saved: what went is not left to bring back.
-            blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, going, BlogShelf.notes) }
+            blog?.let {
+                Unsaved.forget(it, slug, Unsaved.What.Text, going, BlogShelf.notes)
+                UnsentShots.forget(it, slug)
+            }
             broughtBack = null
             Desk.changed()
             // Saving a published post builds the site: nothing is owed
@@ -266,7 +283,10 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
             entry = answer.post
             broughtBack = null
             shots = emptyList()
-            blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes) }
+            blog?.let {
+                Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes)
+                UnsentShots.forget(it, slug)
+            }
             state.set(answer.post.text ?: "")
             Desk.changed()
             problem = if (answer.post.text == null) textMissing else null
@@ -279,6 +299,14 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
 
     LaunchedEffect(Unit) { load() }
     LaunchedEffect(Unit) { snapshotFlow { state.text }.drop(1).collect { keep(it) } }
+    // The pictures added here are kept as the changed text is, until the
+    // change is saved: a screen left took them along.
+    LaunchedEffect(Unit) {
+        snapshotFlow { shots.map { it.name + "\u0000" + it.alt } }.drop(1).collect {
+            val now = shots
+            if (entry?.editable == true && blog != null) withContext(Dispatchers.IO) { UnsentShots.keep(now, blog, slug) }
+        }
+    }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { items ->
         scope.launch { loadPictures(items) }
@@ -422,7 +450,10 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                 val stranded = remember(Desk.changes) { blog?.let { Unsaved.kept(it, slug, Unsaved.What.Text, BlogShelf.notes) } }
                 if (problem != null && stranded != null) {
                     Stranded(stranded) {
-                        blog?.let { Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes) }
+                        blog?.let {
+                            Unsaved.forget(it, slug, Unsaved.What.Text, BlogShelf.notes)
+                            UnsentShots.forget(it, slug)
+                        }
                         Desk.changed()
                     }
                 }

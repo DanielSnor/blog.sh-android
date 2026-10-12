@@ -15,10 +15,10 @@ import kotlinx.serialization.Serializable
 /**
  * A post being written and not sent yet: its title, its tags, its text.
  *
- * The pictures are not kept: they are large, and come back from the
- * library in a moment. The marks the text has for them are text, and
- * stay; a picture chosen again takes its name and its description back
- * from its mark.
+ * Its pictures are kept beside it, in files (`UnsentShots`); the marks
+ * the text has for them are text, and stay here. Where a picture's file
+ * is gone all the same, one chosen again takes its name and its
+ * description back from its mark.
  */
 @Serializable
 data class Unsent(

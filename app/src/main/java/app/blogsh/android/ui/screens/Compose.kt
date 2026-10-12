@@ -66,6 +66,7 @@ import app.blogsh.android.model.Shot
 import app.blogsh.android.model.TagStore
 import app.blogsh.android.model.TextFile
 import app.blogsh.android.model.Unsent
+import app.blogsh.android.model.UnsentShots
 import app.blogsh.android.model.Waiting
 import app.blogsh.android.model.WaitingRoom
 import app.blogsh.android.model.isCalledOff
@@ -128,13 +129,18 @@ fun ComposeScreen() {
     // sent is put back.
     // A post that waited to be sent and was taken back to be written
     // on: it is the form's now and waits no longer -- but its files stay
-    // where they are, held, for as long as the form has it. The form
-    // keeps pictures in memory only; left, or stopped with the app, it
-    // would take the post's pictures along.
+    // where they are, held, for as long as the form has it.
     val handed = remember { if (blog == null) null else Desk.takeHanded()?.let { it to WaitingRoom.shots(it, blog) } }
+    // The pictures chosen for the post are kept as its words are
+    // (`UnsentShots`): a post of pictures alone, with no word written
+    // yet, is a post begun too.
+    val pictures = remember { if (handed != null || blog == null) emptyList() else UnsentShots.shots(blog) }
     val kept = remember {
         if (handed != null) null
-        else blog?.let { Unsent.kept(it, BlogShelf.notes) ?: Unsent.carriedOver(it, BlogShelf.notes, Now.instant().toEpochMilli()) }
+        else blog?.let {
+            Unsent.kept(it, BlogShelf.notes) ?: Unsent.carriedOver(it, BlogShelf.notes, Now.instant().toEpochMilli())
+                ?: if (pictures.isEmpty()) null else Unsent(at = UnsentShots.kept(it) ?: Now.instant().toEpochMilli())
+        }
     }
     var title by remember { mutableStateOf(handed?.first?.title ?: kept?.title ?: "") }
     var tags by remember { mutableStateOf(handed?.first?.tags ?: kept?.tags ?: "") }
@@ -148,7 +154,9 @@ fun ComposeScreen() {
     // again or been emptied.
     var from by remember { mutableStateOf(handed?.first?.id ?: keptHeld?.id) }
     var shots by remember {
-        mutableStateOf(handed?.second ?: (if (blog != null && keptHeld != null) WaitingRoom.shots(keptHeld, blog) else emptyList()))
+        // What the form itself kept is the later word on them: a picture
+        // added since, or taken out, is in it.
+        mutableStateOf(handed?.second ?: pictures.ifEmpty { if (blog != null && keptHeld != null) WaitingRoom.shots(keptHeld, blog) else emptyList() })
     }
     // The name this post's delivery goes under, however often it is
     // tried: kept with the writing, and another for the next post.
@@ -262,6 +270,9 @@ fun ComposeScreen() {
         tags = ""
         state.set("")
         shots = emptyList()
+        // Said here and not left to the form's own noticing: a form that
+        // was left while its post was going notices nothing.
+        blog?.let { UnsentShots.forget(it) }
         broughtBack = null
         receipt = Receipt.mint()
     }
@@ -365,6 +376,19 @@ fun ComposeScreen() {
         snapshotFlow { Triple(title, tags, state.text) }.drop(1).collect { (title, tags, text) ->
             blog?.let { Unsent(title, tags, text, Now.instant().toEpochMilli(), receipt, from).keep(it, BlogShelf.notes) }
             Desk.changed()
+        }
+    }
+
+    // The pictures are kept as the words are, when one comes, goes or is
+    // described: there is no moment at which a form is told it is being
+    // left. A post taken back from the device is the form's own keeping
+    // from the start, whatever it held.
+    LaunchedEffect(Unit) {
+        val keeping = blog ?: return@LaunchedEffect
+        if (handed != null) withContext(Dispatchers.IO) { UnsentShots.keep(shots, keeping) }
+        snapshotFlow { shots.map { it.name + "\u0000" + it.alt } }.drop(1).collect {
+            val now = shots
+            withContext(Dispatchers.IO) { UnsentShots.keep(now, keeping) }
         }
     }
 

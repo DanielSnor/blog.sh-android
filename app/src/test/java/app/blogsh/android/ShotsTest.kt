@@ -27,6 +27,7 @@ import app.blogsh.android.model.Shot
 import app.blogsh.android.model.TextSize
 import app.blogsh.android.model.Unsaved
 import app.blogsh.android.model.Unsent
+import app.blogsh.android.model.UnsentShots
 import app.blogsh.android.model.Waiting
 import app.blogsh.android.model.WaitingRoom
 import app.blogsh.android.ui.BlogshTheme
@@ -166,6 +167,7 @@ class ShotsTest(private val look: Look) {
         Unsent.forget(BLOG, BlogShelf.notes)
         Unsaved.forgetAll(BLOG, BlogShelf.notes)
         WaitingRoom.removeAll(BLOG)
+        UnsentShots.forgetAll(BLOG)
         Reach.shared.heard(SERVER)
         Reading.shared.wear(Colouring.Blog)
         Reading.shared.choose(null)
@@ -176,6 +178,7 @@ class ShotsTest(private val look: Look) {
     @After
     fun undress() {
         WaitingRoom.removeAll(BLOG)
+        UnsentShots.forgetAll(BLOG)
         Reach.shared.heard(SERVER)
         Engine.stand = null
         KeyStore.stand = null
@@ -298,6 +301,28 @@ class ShotsTest(private val look: Look) {
         assertEquals(listOf("two"), WaitingRoom.all(BLOG).map { it.id })
         assertEquals("one", Unsent.kept(BLOG, BlogShelf.notes)?.from)
         assertEquals("0123456789abcdef", Unsent.kept(BLOG, BlogShelf.notes)?.receipt)
+        // ...and its pictures are the form's own keeping from then on,
+        // written beside the form's work and not in its way.
+        var kept = emptyList<String>()
+        for (attempt in 1..40) {
+            kept = UnsentShots.shots(BLOG).map { it.name }
+            if (kept.isNotEmpty()) break
+            Thread.sleep(50)
+        }
+        assertEquals(listOf("photo-1.jpg"), kept)
+    }
+
+    /**
+     * A new post left with a picture chosen for it and not yet put into
+     * the text: the form is back with its words and the picture on its
+     * card, described as it was, and nothing is said to be missing.
+     */
+    @Test
+    fun newPostBroughtBackWithThePicturesItKept() {
+        UnsentShots.keep(listOf(Shot("hladina.jpg", ByteArray(3), 4, 3, "Hladina po ránu")), BLOG)
+        Unsent("Ráno u rybníka", "", "Mlha nad vodou.\n", noon.minusSeconds(3600).toEpochMilli()).keep(BLOG, BlogShelf.notes)
+        shot("new-post-pictures-kept", MenuEntry.Add) { ComposeScreen() }
+        assertEquals(listOf("hladina.jpg" to "Hladina po ránu"), UnsentShots.shots(BLOG).map { it.name to it.alt })
     }
 
     /**

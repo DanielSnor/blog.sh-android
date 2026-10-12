@@ -279,4 +279,8 @@ class BlogList(
 }
 
 /** The one list the app has. */
-val Blogs: BlogList by lazy { BlogList(BlogShelf.notes, hangUp = { Engine.hangUp() }, forgetWaiting = { WaitingRoom.removeAll(it) }) { KeyStore.deleteKey(it) } }
+val Blogs: BlogList by lazy { BlogList(BlogShelf.notes, hangUp = { Engine.hangUp() }, forgetWaiting = {
+        WaitingRoom.removeAll(it)
+        UnsentShots.forgetAll(it)
+    },
+) { KeyStore.deleteKey(it) } }

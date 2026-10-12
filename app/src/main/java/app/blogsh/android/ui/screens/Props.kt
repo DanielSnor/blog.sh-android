@@ -36,6 +36,7 @@ import app.blogsh.android.model.QueueAnswer
 import app.blogsh.android.model.RebuildAnswer
 import app.blogsh.android.model.Spoken
 import app.blogsh.android.model.Unsaved
+import app.blogsh.android.model.UnsentShots
 import app.blogsh.android.model.engineInstant
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.plain
@@ -473,6 +474,7 @@ private class PropsState(
         // What was written for the post and not saved follows it to its new name.
         home?.let {
             Unsaved.move(it, slug, answer.slug, BlogShelf.notes)
+            UnsentShots.move(it, slug, answer.slug)
             Desk.changed()
         }
         slug = answer.slug

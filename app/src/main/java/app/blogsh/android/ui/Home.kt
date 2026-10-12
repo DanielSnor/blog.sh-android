@@ -138,7 +138,12 @@ enum class MenuEntry(val nameId: Int, val shortId: Int, val symbol: Int) {
  * What waits, read once for the first screen: the queue, and how many
  * drafts are in progress.
  */
-data class Glance(val queue: List<QueueRow>, val drafts: Int)
+data class Glance(
+    val queue: List<QueueRow>,
+    val drafts: Int,
+    /** Nothing on the blog sends its queue out by itself. */
+    val unattended: Boolean = false,
+)
 
 /** What the first screen knows, kept while other screens are over it. */
 class HomeState {
@@ -295,7 +300,7 @@ class HomeState {
     private fun glance(queue: ByteArray, drafts: ByteArray): Glance? {
         val waiting = runCatching { Engine.decode<QueueAnswer>(queue) }.getOrNull() ?: return null
         val unpublished = runCatching { Engine.decode<ListAnswer>(drafts) }.getOrNull() ?: return null
-        return Glance(waiting.queue, unpublished.posts.count { !it.scheduled })
+        return Glance(waiting.queue, unpublished.posts.count { !it.scheduled }, waiting.unattended)
     }
 }
 
@@ -376,6 +381,8 @@ fun HomeScreen(state: HomeState) {
     // The open blog's server did not answer the last time it was asked --
     // this screen, or any other: the blog is offline until it does.
     val offline = Reach.shared.isOffline(blog)
+    // The app has no blog yet: nothing on this screen has anything to act on until it has one.
+    val noBlog = Blogs.all.isEmpty()
     var showingWaiting by remember { mutableStateOf(false) }
     var trying by remember { mutableStateOf(false) }
     // The posts kept on this device for the open blog until its server answers.
@@ -538,8 +545,13 @@ fun HomeScreen(state: HomeState) {
                     }
                 } else if (identity == null) {
                     val problem = state.problem
-                    if (problem != null) Text(problem, color = Theme.muted, style = ui(14f), modifier = Modifier.padding(top = 14.dp))
-                    else Busy(modifier = Modifier.padding(top = 14.dp))
+                    if (problem != null) {
+                        Text(problem, color = Theme.muted, style = ui(14f), modifier = Modifier.padding(top = 14.dp))
+                        // The way to a first blog, while the app has none.
+                        if (noBlog) PrimaryButton(stringResource(R.string.add_a_blog), Modifier.padding(top = 14.dp)) { Incoming.code = "" }
+                    } else {
+                        Busy(modifier = Modifier.padding(top = 14.dp))
+                    }
                 }
 
                 // What waits, in the order it wants a hand: the drafts on
@@ -588,7 +600,7 @@ fun HomeScreen(state: HomeState) {
                             for (entry in row) {
                                 val label = stringResource(entry.nameId)
                                 Box(Modifier.weight(1f)) {
-                                    OutOfReach(offline && entry != MenuEntry.Add) {
+                                    OutOfReach((offline && entry != MenuEntry.Add) || noBlog) {
                                         Pressable({ open(entry) }, modifier = Modifier.semantics { contentDescription = label }) {
                                             // Beside its screen, the entry that is open says so.
                                             Tile(entry, highlighted = layout == Layout.Columns && nav.root == entry)
@@ -600,7 +612,7 @@ fun HomeScreen(state: HomeState) {
                     }
                 }
 
-                OutOfReach(offline) {
+                OutOfReach(offline || noBlog) {
                     Pressable({ open(MenuEntry.Browse, searching = true) }, modifier = Modifier.padding(top = 14.dp)) {
                         Card(capsule = true) {
                             // A glass, not the terminal's own key for it: a slash says
@@ -688,10 +700,20 @@ private fun QueueCard(glance: Glance) {
         val next = glance.queue.firstOrNull()
         if (next != null) {
             val whenText = engineInstant(next.date)?.let { RowDate.soon(it) } ?: ""
-            Text(
-                "${next.title.ifEmpty { next.slug }} · $whenText", color = Theme.ink, style = ui(15f, FontWeight.Medium),
-                maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
-            )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                // The title gives way, the time does not: when it goes
+                // out is what the card is for.
+                Row {
+                    Text(
+                        next.title.ifEmpty { next.slug }, color = Theme.ink, style = ui(15f, FontWeight.Medium),
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (whenText.isNotEmpty()) Text(" · $whenText", color = Theme.ink, style = ui(15f, FontWeight.Medium), maxLines = 1, softWrap = false)
+                }
+                // Said where the time is read: here the time is a note,
+                // and nothing acts on it.
+                if (glance.unattended) Text(stringResource(R.string.it_will_not_go_out_by_itself), color = Theme.danger, style = ui(12f, FontWeight.Medium))
+            }
             CountBadge(glance.queue.size)
         } else {
             Text(stringResource(R.string.nothing_scheduled), color = Theme.muted, style = ui(15f))

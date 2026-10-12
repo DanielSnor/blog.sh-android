@@ -517,6 +517,20 @@ class PostTest {
     }
 
     /**
+     * A picture chosen and not put into the text is named before the
+     * post goes -- it would stay behind, and the form is emptied after a
+     * sending; one the text names is not.
+     */
+    @Test
+    fun picturesTheTextDoesNotNameAreSaidBeforeSending() {
+        val shots = listOf(shot("a.jpg"), shot("b.jpg"))
+        assertEquals(listOf("b.jpg"), Kept.left(shots, "Úvod\n\n![popis](a.jpg)\n"))
+        assertEquals(emptyList<String>(), Kept.left(shots, "![](a.jpg)\n\n![](b.jpg)"))
+        assertEquals(listOf("a.jpg", "b.jpg"), Kept.left(shots, ""))
+        assertEquals(emptyList<String>(), Kept.left(emptyList(), "text"))
+    }
+
+    /**
      * What comes from the device's files is whatever its keeper says it
      * is -- and a volume plugged in, or a cloud, may say nothing, or only
      * "a file". Then the name decides; a video taken for a picture would

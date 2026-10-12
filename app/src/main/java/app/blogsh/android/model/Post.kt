@@ -305,6 +305,9 @@ object Kept {
      */
     fun sent(shots: List<Shot>, text: String): List<Shot> = shots.filter { named(it.name, text) }
 
+    /** The shots that stay behind: chosen, and not named by the text. */
+    fun left(shots: List<Shot>, text: String): List<String> = shots.filter { !named(it.name, text) }.map { it.name }
+
     /** The post's own media the text has stopped naming. */
     fun dropped(media: List<String>, text: String): List<String> = media.filter { !named(it, text) }
 

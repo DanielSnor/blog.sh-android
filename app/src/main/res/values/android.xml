@@ -4,12 +4,12 @@
     <string name="android_back">Back</string>
     <string name="android_close">Close</string>
     <string name="android_more">More</string>
-    <string name="android_queue_hold">A row opens its post. Held, it shows its keys -- and a row held can be carried to another place in the queue.</string>
+    <string name="android_queue_hold">A row opens its post. Held, it shows its keys — and a row held can be carried to another place in the queue.</string>
     <string name="android_hue">Hue</string>
     <string name="android_saturation">Saturation</string>
     <string name="android_brightness">Brightness</string>
     <string name="android_colour_number">The colour as a number</string>
     <string name="android_paste">Paste</string>
-    <string name="android_queue_unattended">Nothing on this blog sends the queue out by itself: no scheduled run has ever gone through it. A post whose time has come waits until it is published by hand -- hold its row.</string>
-    <string name="android_picture_needs_network">The picture could not be read: it is most likely kept only in the cloud, and without a network it cannot be fetched. One that is on this device whole -- taken just now, say -- can be added.</string>
+    <string name="android_queue_unattended">Nothing on this blog sends the queue out by itself: no scheduled run has ever gone through it. A post whose time has come waits until it is published by hand — hold its row.</string>
+    <string name="android_picture_needs_network">The picture could not be read: it is most likely kept only in the cloud, and without a network it cannot be fetched. One that is on this device whole — taken just now, say — can be added.</string>
 </resources>

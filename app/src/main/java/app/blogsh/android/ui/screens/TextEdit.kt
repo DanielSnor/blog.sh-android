@@ -307,7 +307,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                     // then would be neither in what was saved nor kept.
                     row { PaperEditor(state, minHeight = 320.dp, enabled = post.editable && !saving) }
                 }
-                Hint(stringResource(R.string.the_header_and_the_text_as_the))
+                Hint(stringResource(R.string.the_post_as_the_blog_keeps_it))
                 Plate(Modifier.gap(10)) {
                     row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }
                 }

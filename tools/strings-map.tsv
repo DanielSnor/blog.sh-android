@@ -12,15 +12,16 @@ its_time_has_come_publish_it_by	(its time has come -- publish it by hand)
 the_post_has_no_text	(the post has no text)
 the_site_s_own	(the site's own)
 waiting_for_the_cron	(waiting for the cron)
-a_deploy_uploads_what_changed_and_stops	A deploy uploads what changed, and stops by itself when the site has suddenly lost or gained a lot: that is what a broken build looks like. Turn this on only when it stopped and the change is right (many posts deleted, a large import). The whole site is then uploaded without that check.
+a_deploy_stops_by_itself_when_the	A deploy stops by itself when the site has suddenly lost or gained a lot, as after a broken build. Turn this on only when it stopped and the change is right (many posts deleted, a large import).
 a_draft_has_no_public_address_yet	A draft has no public address yet; only its preview address changes.
 a_draft_is_scheduled_from_its_properties	A draft is scheduled from its properties, or with ./blog.sh schedule.
 a_new_blog	A new blog
 a_new_code_moves_this_blog_to	A new code moves this blog to where the code points: another address or another computer. What is written for it on the device stays.
-a_picture_is_shrunk_to_px_on	A picture is shrunk to %@ px on its long edge before it goes; a video is converted to H.264 at 720p. The whole post -- text, pictures, video -- has to stay under %lld MB, the server's limit, and the limit is measured on the encoded transfer, a third larger than the files: the files themselves get about %lld MB.
+a_picture_is_shrunk_to_px_on	A picture is shrunk to %@ px on its long edge before it goes, a video is converted to H.264 at 720p. Together they have to fit into about %lld MB.
 a_post	A post
 a_post_without_words	A post without words
-a_row_opens_its_post_swiped_to	A row opens its post. Swiped to a side it shows its keys; held, all of them -- and a row held can be carried to another place in the queue.
+a_row_opens_its_post_swiped_to	A row opens its post. Swiped to a side it is moved, published or taken off the plan; held, it offers all of that -- and can be carried to another place in the queue.
+a_row_restores_its_post_tap_it	A row restores its post: tap it, and it asks first.
 a_text_from_a_file_goes_in	A text from a file goes in where the caret is, and the file stays as it is. In it, an empty line ends a paragraph.
 accent	Accent
 actions	Actions
@@ -29,6 +30,7 @@ add_a_picture_or_video	Add a picture or video
 add_a_text_from_a_file	Add a text from a file
 add_as_another_blog	Add as another blog
 add_from_files	Add from files
+an_unlisted_post_keeps_its_address_and	An unlisted post keeps its address and leaves the listings, the feeds, the sitemap and the search. The two under it have a third state: whatever the site does.
 announce	Announce
 announce_2	Announce '%@'?
 announce_anyway	Announce anyway
@@ -99,11 +101,14 @@ drop	Drop
 drop_it_no_longer_redirects_anywhere	Drop %@? It no longer redirects anywhere.
 each_goes_to_the_blog_as_a	Each goes to the blog as a draft; publishing is a decision of its own, made there.
 earlier_versions	Earlier versions
+edit_its_text	Edit its text
 edit_what	Edit what?
 empty_the_trash	Empty the trash
 empty_the_trash_item_s	Empty the trash — %lld item(s), %@
 fine	Fine
 for_a_blog_that_lives_in_a	For a blog that lives in a container, or to write the line into authorized_keys yourself.
+forget_the_key	Forget the key
+forget_the_key_this_server_was_known	Forget the key this server was known by? Do it only when the server was moved or reinstalled: the next connection takes whatever key answers, and a connection to the wrong machine would not be noticed.
 forget_the_server_s_key	Forget the server's key
 four_steps_larger	Four steps larger
 heading	Heading
@@ -112,6 +117,7 @@ host	Host
 s_in	In %@
 insert_into_text	Insert into text
 installation_check	Installation check
+it_will_not_go_out_by_itself	It will not go out by itself here: publish it by hand.
 italic	Italic
 its_announcement_is_deleted_too_the_post	Its announcement is deleted too; the post keeps its text as a draft.
 its_pictures_were_not_kept_add_them	Its pictures were not kept; add them again.
@@ -124,6 +130,7 @@ light	Light
 link	Link
 list	List
 load_the_post_as_the_blog_has	Load the post as the blog has it now
+look	Look
 look_at_the_picture	Look at the picture
 make_a_new_key	Make a new key
 make_a_new_key_the_server_will	Make a new key? The server will not know it until its line is put into authorized_keys again.
@@ -144,8 +151,10 @@ no_posts	No posts
 no_posts_to_choose_from	No posts to choose from.
 no_problems	No problems.
 not_in_the_text_it_will_not	Not in the text — it will not be sent with the post.
+not_in_the_text_so_they_stay	Not in the text, so they stay behind and are gone from the form: %@. Send without them?
 nothing_matches	Nothing matches
-nothing_on_this_blog_sends_the_queue	Nothing on this blog sends the queue out by itself: no scheduled run has ever gone through it. A post whose time has come waits until it is published by hand -- hold its row, or swipe it to a side.
+nothing_on_this_blog_sends_the_queue	Nothing on this blog sends the queue out by itself, so the post will wait past its time. Publish it by hand then -- or set the scheduled run up on the server; Site, Check the installation says how.
+nothing_on_this_blog_sends_the_queue_2	Nothing on this blog sends the queue out by itself: no scheduled run has ever gone through it. A post whose time has come waits until it is published by hand; its row then has the key for it.
 nothing_scheduled	Nothing scheduled
 nothing_to_connect_to_yet_the_name	Nothing to connect to yet — the name above leads to the blogs and their settings.
 nothing_waits_on_this_device	Nothing waits on this device.
@@ -161,8 +170,8 @@ one_step_larger	One step larger
 only_media_are_in_the_trash_for	Only media are in the trash for this post; the terminal restores those.
 only_the_words_are_translated_the_date	Only the words are translated. The date, the tags, the series and the state belong to the post itself and hold in every language.
 open	Open
+open_now	Open now: %@
 open_the_blog_in_the_browser	Open the blog in the browser
-open_the_preview	Open the preview
 pair_again	Pair again
 paired_devices	Paired devices
 picture_no_preview_on_this_device	Picture %@ -- no preview on this device
@@ -179,7 +188,6 @@ preview	Preview
 problem	Problem
 problems_worth_a_look	Problems: %lld, worth a look: %lld
 properties	Properties
-properties_are_what_the_post_is_not	Properties are what the post IS, not what it says. The flags have a third state: whatever the site does.
 publish	Publish
 publish_now	Publish '%@' now?
 publish_2	Publish '%@'?
@@ -194,6 +202,7 @@ reading	Reading…
 really_delete	Really delete '%@'?
 really_move_back_to_draft	Really move '%@' back to draft?
 rebuild_and_deploy	Rebuild and deploy
+rebuild_and_upload_unchecked	Rebuild and upload unchecked
 rebuilding	Rebuilding…
 rebuilt_and_deployed	Rebuilt and deployed.
 rebuilt_the_deploy_is_owed_to_the	Rebuilt; the deploy is owed to the next scheduled run.
@@ -226,10 +235,12 @@ scan_the_code	Scan the code
 schedule	Schedule
 schedule_anyway	Schedule anyway
 scheduled	Scheduled
+scheduled_for	Scheduled for %@
 scheduled_goes_out	Scheduled: goes out %@.
 search_the_archive	Search the archive
 search_the_archive_2	Search the archive.
 send_to_the_blog_as_a_draft	Send to the blog as a draft
+send_without_them	Send without them
 sending	Sending…
 sent_to_the_blog_as_drafts_2	Sent to the blog as drafts
 sent_to_the_blog_as_drafts	Sent to the blog as drafts: %lld
@@ -281,13 +292,13 @@ the_file_could_not_be_read	The file could not be read.
 the_file_is_too_large_to_be	The file is too large to be the text of a post.
 the_first_is_the_size_the_system	The first is the size the system has; the others are steps above it. It holds on this device, for every blog.
 the_form_holds_a_post_that_is	The form holds a post that is being written: send it or clear it before another is taken back into it.
-the_header_and_the_text_as_the	The header and the text, as the editor opens them. A picture is named by its file name.
 the_key_is_made_on_this_device	The key is made on this device and never leaves it. Put the line above into the server's ~/.ssh/authorized_keys; the forced command in front of it is what the key may run, and nothing else.
 the_last_posts_of_as_blog_sh	The last %@ posts of %@, as ./blog.sh offers them. Looking for an older one?
 the_line_for_the_server_s_ssh	The line for the server's ~/.ssh/authorized_keys is made from where the blog is. A blog inside a container is reached through the command that enters it, for example sudo docker exec -i blog; one that is not in a container leaves that field empty.
 the_old_address_keeps_answering_it_redirects	The old address keeps answering: it redirects to the new one.
 the_original	The original
 the_picture_could_not_be_read_it	The picture could not be read: it is most likely kept in iCloud, and without a network it cannot be fetched. One that is on this device whole -- taken just now, say -- can be added.
+the_post_as_the_blog_keeps_it	The post as the blog keeps it: its header between the two --- lines, the text under it. A picture is named by its file name.
 the_post_could_not_be_kept_on	The post could not be kept on the device: %@
 the_post_goes_to_the_trash_and	The post goes to the trash and can be restored.
 the_post_goes_to_the_trash_and_2	The post goes to the trash and can be restored; its announcement goes with it and cannot.
@@ -315,6 +326,7 @@ the_site_does_not_show_this_change	The site does not show this change yet.
 the_site_has_no_address_set_so	The site has no address set, so there is nothing to open.
 the_site_will_be_built_in_a	The site will be built in a moment.
 the_text_did_not_come_with_the	The text did not come with the answer.
+the_text_is_missing_the_blog_takes	The text is missing: the blog takes no post of a title alone.
 the_time_offered_is_the_next_free	The time offered is the next free publishing slot.
 there_is_no_text_in_the_file	There is no text in the file.
 this_blog_does_not_show_its_devices	This blog does not show its devices to the app yet; a newer ./blog.sh will. On the server, ./blog.sh pair --list shows them.
@@ -351,14 +363,16 @@ unsent_new_post	Unsent new post
 up	Up
 up_a_slot_earlier	Up — a slot earlier
 upload_the_whole_site_unchecked	Upload the whole site unchecked
+upload_the_whole_site_without_the_check	Upload the whole site without the check that stops a broken build? What is on the web now is replaced by what was just built.
 used_in_the_text	Used in the text
 user	User
 usually_only_the_pages_that_changed_are	Usually only the pages that changed are built. With this on the whole site is built again, which takes longer.
 waiting_to_be_sent	Waiting to be sent
 what_do_you_want_to_do	What do you want to do?
+what_is_cleared_out_is_gone_for_2	What is cleared out is gone for good.
 what_is_cleared_out_is_gone_for	What is cleared out is gone for good. Older versions are what a post said before its recent saves; each post keeps its newest.
 what_is_written_here_is_replaced_by	What is written here is replaced by the blog's text.
-where_the_blog_lies_on_the_server	Where the blog lies on the server and what this device may run there is in the line ./blog.sh pair wrote on the server; nothing of it is set here. The device is taken off there with ./blog.sh pair --revoke. In what ./blog.sh pair --list shows, it is the line with this key.
+where_the_blog_lies_on_the_server	Where the blog lies on the server and what this device may run there was set by the pairing on the server; nothing of it is set here. In Paired devices this device is the line with this key, and can be taken off the blog there.
 with_a_code	With a code
 with_a_network_configured_it_announces_too	With a network configured it announces too, which nothing takes back.
 worth_a_look	Worth a look

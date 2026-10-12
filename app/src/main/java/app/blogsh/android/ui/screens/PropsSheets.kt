@@ -401,7 +401,7 @@ fun PropertiesForm(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
                 ChoiceRow(stringResource(R.string.chapter_list), flagWord(toc), toc, threeStates.map { it to flagWord(it) }) { toc = it }
             }
         }
-        Hint(stringResource(R.string.properties_are_what_the_post_is_not))
+        Hint(stringResource(R.string.an_unlisted_post_keeps_its_address_and))
         PrimaryButton(stringResource(R.string.save), Modifier.gap(22), enabled = sets().isNotEmpty(), busy = busy) {
             scope.launch { save() }
         }

@@ -32,6 +32,7 @@ import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.PostAction
 import app.blogsh.android.model.PostState
 import app.blogsh.android.model.PropsAnswer
+import app.blogsh.android.model.QueueAnswer
 import app.blogsh.android.model.RebuildAnswer
 import app.blogsh.android.model.Spoken
 import app.blogsh.android.model.Unsaved
@@ -399,7 +400,20 @@ private class PropsState(
         load()
         val now = props ?: return
         val date = engineInstant(now.date) ?: return
-        if (now.scheduled) Herald.shared.say(say(R.string.scheduled_goes_out, RowDate.spoken(date)))
+        if (!now.scheduled) return
+        // "Goes out" is true only of a blog that something sends its
+        // queue out on: asked, because the plan's own answer does not say.
+        val unattended = try {
+            Engine.call<QueueAnswer>("queue").unattended
+        } catch (e: Throwable) {
+            if (e.isCalledOff) throw e
+            false
+        }
+        if (unattended) {
+            said = Said(title = say(R.string.scheduled_for, RowDate.spoken(date)), text = say(R.string.nothing_on_this_blog_sends_the_queue))
+        } else {
+            Herald.shared.say(say(R.string.scheduled_goes_out, RowDate.spoken(date)))
+        }
     }
 
     private suspend fun announce(force: Boolean) {

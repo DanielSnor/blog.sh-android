@@ -70,6 +70,8 @@ import app.blogsh.android.model.WaitingRoom
 import app.blogsh.android.model.isCalledOff
 import app.blogsh.android.model.plain
 import app.blogsh.android.model.said
+import app.blogsh.android.ui.Asks
+import app.blogsh.android.ui.Choice
 import app.blogsh.android.ui.BroughtBack
 import app.blogsh.android.ui.Command
 import app.blogsh.android.ui.DeliveryNote
@@ -156,6 +158,8 @@ fun ComposeScreen() {
     var unread by remember { mutableStateOf<String?>(null) }
     // Why the file last chosen for its text is not in the form.
     var untaken by remember { mutableStateOf<String?>(null) }
+    // Asked before a sending that would leave pictures behind.
+    var confirmingLeft by remember { mutableStateOf(false) }
     var importing by remember { mutableStateOf(false) }
     var sending by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
@@ -266,6 +270,9 @@ fun ComposeScreen() {
         if (to in Desk.sending) return
         sending = true
         putBy = false
+        // What the last sending answered is not this one's answer: left
+        // standing under a sending that failed, it read as a success.
+        made = null
         Desk.began(to)
         var came = false
         val going = Unsent(title, tags, state.text)
@@ -372,6 +379,12 @@ fun ComposeScreen() {
         made = null
     }
 
+    // Neither ends with the form: a post on its way arrives, and is
+    // forgotten here, whether or not anybody is still looking.
+    fun go() {
+        Desk.outliving.launch { if (offline) keepOnDevice() else send() }
+    }
+
     PaperScreen(name = stringResource(R.string.new_post), answered = answered, symbol = MenuEntry.Add.symbol) {
         broughtBack?.let { back ->
             // Said, because it was not asked for: the form opens with
@@ -452,10 +465,14 @@ fun ComposeScreen() {
             enabled = !(busy || importing || !Unsent(title, tags, text).canBeSent || overweight),
             busy = busy,
         ) {
-            // Neither ends with the form: a post on its way arrives, and is
-            // forgotten here, whether or not anybody is still looking.
-            Desk.outliving.launch { if (offline) keepOnDevice() else send() }
+            // A picture chosen and not put into the text stays behind,
+            // and the form is emptied once the post has gone: asked
+            // here, where it can still be put in.
+            if (Kept.left(shots, text).isNotEmpty()) confirmingLeft = true else go()
         }
+        // A key that cannot be pressed says why, where the form looks
+        // as if it had something to send.
+        if (!Unsent(title, tags, text).canBeSent && (title + tags).isNotBlank()) Hint(stringResource(R.string.the_text_is_missing_the_blog_takes))
         if (offline) Hint(stringResource(R.string.the_blog_s_server_cannot_be_reached))
         problem?.let { ProblemLine(it) }
 
@@ -475,7 +492,7 @@ fun ComposeScreen() {
                 }
                 val url = made.url
                 if (!url.isNullOrEmpty()) {
-                    row { Command(stringResource(R.string.open_the_preview), Symbols.safari) { runCatching { links.openUri(url) } } }
+                    row { Command(stringResource(R.string.show_the_preview_on_the_web), Symbols.safari) { runCatching { links.openUri(url) } } }
                 }
                 row {
                     // Deleted from there, the post is not this form's to point at any more.
@@ -488,6 +505,13 @@ fun ComposeScreen() {
         }
     }
 
+    if (confirmingLeft) {
+        Asks(
+            stringResource(R.string.not_in_the_text_so_they_stay, Kept.left(shots, text).joinToString(", ")),
+            choices = listOf(Choice(stringResource(R.string.send_without_them)) { go() }),
+            onDismiss = { confirmingLeft = false },
+        )
+    }
     if (previewing) {
         val marked = remember { state.text }
         val shown = remember { Preview.shown(shots) }

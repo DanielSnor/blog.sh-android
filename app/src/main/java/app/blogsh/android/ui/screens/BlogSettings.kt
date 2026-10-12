@@ -89,6 +89,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
     // A new code is being read for this blog.
     var pairing by remember { mutableStateOf(false) }
     var showingDevices by remember { mutableStateOf(false) }
+    var confirmingForget by remember { mutableStateOf(false) }
     // The server's remembered key is read again after it is forgotten or first seen.
     var keyTick by remember { mutableStateOf(0) }
     val blog = Blogs.current
@@ -266,12 +267,10 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
                     }
                 }
                 row {
-                    Command(stringResource(R.string.forget_the_server_s_key), Symbols.xmarkCircle, danger = true) {
-                        TrustOnFirstUse.forget(reachedHost, reachedPort)
-                        // The kept connection was opened to the key just forgotten.
-                        Engine.hangUp()
-                        keyTick += 1
-                    }
+                    // Asked, as a new key of the app's own is: with the
+                    // server's key forgotten the next machine to answer is
+                    // believed, whichever it is.
+                    Command(stringResource(R.string.forget_the_server_s_key), Symbols.xmarkCircle, danger = true) { confirmingForget = true }
                 }
             }
         }
@@ -294,6 +293,19 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
             probe = Probe.Idle
             keyTick += 1
         })
+    }
+    if (confirmingForget && blog != null) {
+        Asks(
+            stringResource(R.string.forget_the_key_this_server_was_known),
+            choices = listOf(Choice(stringResource(R.string.forget_the_key), danger = true) {
+                val (host, port) = blog.reached
+                TrustOnFirstUse.forget(host, port)
+                // The kept connection was opened to the key just forgotten.
+                Engine.hangUp()
+                keyTick += 1
+            }),
+            onDismiss = { confirmingForget = false },
+        )
     }
     if (confirmingNewKey) {
         Asks(

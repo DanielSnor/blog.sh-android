@@ -294,7 +294,7 @@ fun ArchiveScreen(languages: List<String> = emptyList(), baseUrl: String = "", i
                     ) {
                         PostRowView(post)
                         Menu(pressed == post.id, { pressed = null }) {
-                            MenuKey(stringResource(R.string.preview), Symbols.docTextMagnifyingglass) {
+                            MenuKey(stringResource(R.string.look), Symbols.docTextMagnifyingglass) {
                                 pressed = null
                                 previewing = post
                             }

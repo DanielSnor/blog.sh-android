@@ -422,6 +422,26 @@ class ShotsTest(private val look: Look) {
         shot("blog-settings-paired", over = { BlogSettingsSheet(onBack = {}, onDone = {}) })
     }
 
+    /**
+     * A blog nothing sends the queue out on: the card that says when the
+     * next post goes out says under the time that here it will not.
+     */
+    @Test
+    fun homeOfABlogWhoseQueueNothingSendsOut() {
+        Engine.stand = { args ->
+            if (args == listOf("queue")) String(answer(args)).replaceFirst("{", "{\"scheduler\":{\"last_run\":null},").toByteArray() else answer(args)
+        }
+        shot("home-unattended")
+    }
+
+    /** The app with no blog yet: the way to a first one, and everything that needs a blog out of reach. */
+    @Test
+    fun homeWithNoBlog() {
+        for (blog in Blogs.all) Blogs.remove(blog.id)
+        Engine.stand = { throw EngineError.NotConfigured }
+        shot("home-no-blog")
+    }
+
     /** What the blog says of the devices a code let in; the first is the one `paired()` gave a key. */
     private fun devices(knowsWhoAsks: Boolean) {
         paired()

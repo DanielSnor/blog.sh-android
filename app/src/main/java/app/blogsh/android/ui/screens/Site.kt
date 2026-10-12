@@ -26,6 +26,8 @@ import app.blogsh.android.ui.MenuEntry
 import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.Pressable
+import app.blogsh.android.ui.Asks
+import app.blogsh.android.ui.Choice
 import app.blogsh.android.ui.PrimaryButton
 import app.blogsh.android.ui.ProblemLine
 import app.blogsh.android.ui.SectionLabel
@@ -49,6 +51,7 @@ fun SiteScreen() {
     val scope = rememberCoroutineScope()
     var full by remember { mutableStateOf(false) }
     var force by remember { mutableStateOf(false) }
+    var confirmingForce by remember { mutableStateOf(false) }
     var running by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<RebuildAnswer?>(null) }
     var problem by remember { mutableStateOf<String?>(null) }
@@ -85,11 +88,20 @@ fun SiteScreen() {
         Plate(Modifier.gap(14)) {
             row { SwitchRow(stringResource(R.string.upload_the_whole_site_unchecked), force, { force = it }) }
         }
-        Hint(stringResource(R.string.a_deploy_uploads_what_changed_and_stops))
+        Hint(stringResource(R.string.a_deploy_stops_by_itself_when_the))
         PrimaryButton(
             stringResource(if (running) R.string.rebuilding else R.string.rebuild_and_deploy),
             modifier = Modifier.gap(22), busy = running,
-        ) { scope.launch { rebuild() } }
+            // With the check off, the key is asked about: the switch and
+            // the key stand a thumb apart.
+        ) { if (force) confirmingForce = true else scope.launch { rebuild() } }
+        if (confirmingForce) {
+            Asks(
+                stringResource(R.string.upload_the_whole_site_without_the_check),
+                choices = listOf(Choice(stringResource(R.string.rebuild_and_upload_unchecked), danger = true) { scope.launch { rebuild() } }),
+                onDismiss = { confirmingForce = false },
+            )
+        }
         problem?.let { ProblemLine(it) }
         result?.let { answer ->
             SectionLabel(stringResource(R.string.result))

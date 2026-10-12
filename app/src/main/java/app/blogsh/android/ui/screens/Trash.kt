@@ -262,7 +262,9 @@ fun TrashScreen() {
         Asks(
             stringResource(R.string.restore_2, row.slug),
             stringResource(if (row.mediaOnly) R.string.only_media_are_in_the_trash_for else R.string.the_post_its_media_and_its_history),
-            listOf(Choice(stringResource(R.string.restore)) { scope.launch { restore(row) } }),
+            // Media alone are the terminal's to restore, and the sentence
+            // under the question says so: no key for it.
+            if (row.mediaOnly) emptyList() else listOf(Choice(stringResource(R.string.restore)) { scope.launch { restore(row) } }),
             onDismiss = { restoring = null },
         )
     }

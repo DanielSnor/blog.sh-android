@@ -300,6 +300,21 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
                         }
                     }
                     Hint(stringResource(R.string.for_a_blog_that_lives_in_a))
+                    // No server at hand: the blog that lives in the app.
+                    if (Blogs.all.none { it.isPractice }) {
+                        val practice = stringResource(R.string.practice_blog)
+                        val tryIt = stringResource(R.string.try_the_practice_blog)
+                        SectionLabel(stringResource(R.string.without_a_server))
+                        Plate {
+                            row {
+                                Command(tryIt, Symbols.book, leads = true, enabled = !connecting) {
+                                    Blogs.openPractice(practice)
+                                    onDone()
+                                }
+                            }
+                        }
+                        Hint(stringResource(R.string.the_practice_blog_lives_in_the_app_2))
+                    }
                 }
             }
             }

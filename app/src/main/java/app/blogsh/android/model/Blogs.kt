@@ -50,7 +50,11 @@ data class Blog(
     val maxMb: Int = 24,
     /** What it counted last: `stats`, the trash, the versions. */
     val facts: Facts? = null,
+    /** The practice blog: it lives in the app and has no server (`Practice`). */
+    val practice: Boolean? = null,
 ) {
+    val isPractice: Boolean get() = practice == true
+
     /** What to call it in a list: its own name, or where it is, before it has said one. */
     val label: String
         get() {
@@ -227,6 +231,15 @@ class BlogList(
         all = all + blog
         currentId = blog.id
         save()
+    }
+
+    /**
+     * The practice blog, open: the one the app has, or a new one. It
+     * has no server to set and no key to make.
+     */
+    fun openPractice(name: String) {
+        val has = all.firstOrNull { it.isPractice }
+        if (has != null) select(has.id) else adopt(Blog(practice = true, name = name))
     }
 
     /**

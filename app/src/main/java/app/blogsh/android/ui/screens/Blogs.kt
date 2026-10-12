@@ -33,6 +33,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import app.blogsh.android.R
 import app.blogsh.android.model.Belongings
 import app.blogsh.android.model.Blog
@@ -42,13 +44,20 @@ import app.blogsh.android.ui.Asks
 import app.blogsh.android.ui.Choice
 import app.blogsh.android.ui.Command
 import app.blogsh.android.ui.DialogKey
+import app.blogsh.android.ui.Hint
 import app.blogsh.android.ui.Mark
 import app.blogsh.android.ui.PaperRow
+import app.blogsh.android.ui.PaperScreen
 import app.blogsh.android.ui.PaperSheet
+import app.blogsh.android.ui.Plate
 import app.blogsh.android.ui.Pressable
+import app.blogsh.android.ui.SheetBars
+import app.blogsh.android.ui.SheetFrame
 import app.blogsh.android.ui.SiteIcon
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
+import app.blogsh.android.ui.Typed
+import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.ui
 import java.text.NumberFormat
@@ -61,6 +70,47 @@ import java.text.NumberFormat
  * offers to carry it a place up or down the list, or to remove its blog.
  */
 @OptIn(ExperimentalFoundationApi::class)
+/**
+ * What there is to say of the practice blog where another blog has its
+ * settings: what it is, and the way out of the app for it.
+ */
+@Composable
+fun PracticeBlogSheet(onBack: () -> Unit, onDone: () -> Unit) {
+    val blog = Blogs.current?.takeIf { it.isPractice }
+    var confirmingRemoval by remember { mutableStateOf(false) }
+    Dialog(onDismissRequest = onBack, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        SheetBars()
+        Typed {
+            SheetFrame {
+                PaperScreen(
+                    onBack = onBack, name = stringResource(R.string.practice_blog),
+                    actions = { DialogKey(stringResource(R.string.done), onClick = onDone) },
+                ) {
+                    Plate(Modifier.gap(14)) {
+                        row { Text(stringResource(R.string.the_practice_blog_lives_in_the_app), color = Theme.ink, style = ui(15f)) }
+                    }
+                    Hint(stringResource(R.string.a_blog_of_your_own_is_connected))
+                    if (blog != null) {
+                        Plate(Modifier.gap(28)) {
+                            row { Command(stringResource(R.string.remove_this_blog), Symbols.minusCircle, danger = true) { confirmingRemoval = true } }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (confirmingRemoval && blog != null) {
+        Asks(
+            leavingWords(blog),
+            choices = listOf(Choice(stringResource(R.string.remove), danger = true) {
+                Blogs.remove(blog.id)
+                onBack()
+            }),
+            onDismiss = { confirmingRemoval = false },
+        )
+    }
+}
+
 /**
  * The blog that became the open one through the key to its settings,
  * until whoever closes the list has said so.
@@ -127,7 +177,13 @@ fun BlogsSheet(onDismiss: () -> Unit) {
             }
         }
     }
-    if (settingUp) BlogSettingsSheet(onBack = { settingUp = false }, onDone = { settingUp = false; onDismiss() })
+    if (settingUp) {
+        if (Blogs.current?.isPractice == true) {
+            PracticeBlogSheet(onBack = { settingUp = false }, onDone = { settingUp = false; onDismiss() })
+        } else {
+            BlogSettingsSheet(onBack = { settingUp = false }, onDone = { settingUp = false; onDismiss() })
+        }
+    }
     if (adding) AddBlogSheet(onBack = { adding = false }, onDone = { adding = false; onDismiss() })
     // The order is the reader's own: a row held offers the way up and
     // down, as a row of the queue does.
@@ -171,7 +227,11 @@ fun BlogRow(blog: Blog, open: Boolean) {
                 Text(blog.label, color = Theme.ink, style = ui(15f, FontWeight.Bold), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             val place = blog.place
-            if (place.isNotEmpty()) Text(place, color = Theme.muted, style = mono(12f, bold = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (blog.isPractice) {
+                Text(stringResource(R.string.in_the_app_nothing_is_sent_anywhere), color = Theme.muted, style = ui(12f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            } else if (place.isNotEmpty()) {
+                Text(place, color = Theme.muted, style = mono(12f, bold = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
         if (open) {
             val label = stringResource(R.string.open)

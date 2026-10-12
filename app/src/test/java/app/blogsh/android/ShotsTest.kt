@@ -46,6 +46,7 @@ import app.blogsh.android.ui.screens.ComposeScreen
 import app.blogsh.android.ui.screens.Diagnosis
 import app.blogsh.android.ui.screens.DiagnosisScreen
 import app.blogsh.android.ui.screens.PostPickerScreen
+import app.blogsh.android.ui.screens.PracticeBlogSheet
 import app.blogsh.android.ui.screens.PropsScreen
 import app.blogsh.android.ui.screens.QueueScreen
 import app.blogsh.android.ui.screens.SettingsSheet
@@ -492,6 +493,34 @@ class ShotsTest(private val look: Look) {
             """{"slug":"jen-fotky","year":"2025","date":"2025-08-14T18:30:00+02:00","tags":[],"media_only":true}]}"""
         Engine.stand = { args -> if (args == listOf("restore")) held.toByteArray() else answer(args) }
         shot("trash-rows", MenuEntry.Restore) { TrashScreen() }
+    }
+
+    /** The practice blog, open: it answers for itself, with no server asked. */
+    private fun practice() {
+        for (blog in Blogs.all) Blogs.remove(blog.id)
+        Engine.stand = null
+        Blogs.openPractice("Practice blog")
+    }
+
+    /** The first screen of the practice blog: its drafts, its tiles, what it counts. */
+    @Test
+    fun homeOfThePracticeBlog() {
+        practice()
+        shot("practice-home")
+    }
+
+    /** Its archive: the seven posts a real engine once listed. */
+    @Test
+    fun archiveOfThePracticeBlog() {
+        practice()
+        shot("practice-archive", MenuEntry.Browse) { ArchiveScreen() }
+    }
+
+    /** What stands where another blog has its settings: what it is, and the way out of the app for it. */
+    @Test
+    fun whatIsSaidOfThePracticeBlog() {
+        practice()
+        shot("practice-blog", over = { PracticeBlogSheet(onBack = {}, onDone = {}) })
     }
 
     /** The app with no blog yet: the way to a first one, and everything that needs a blog out of reach. */

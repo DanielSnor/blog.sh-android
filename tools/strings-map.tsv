@@ -12,6 +12,7 @@ its_time_has_come_publish_it_by	(its time has come -- publish it by hand)
 the_post_has_no_text	(the post has no text)
 the_site_s_own	(the site's own)
 waiting_for_the_cron	(waiting for the cron)
+a_blog_of_your_own_is_connected	A blog of your own is connected by a code: on its server, run ./blog.sh pair, and add the blog here with what it shows.
 a_deploy_stops_by_itself_when_the	A deploy stops by itself when the site has suddenly lost or gained a lot, as after a broken build. Turn this on only when it stopped and the change is right (many posts deleted, a large import).
 a_draft_has_no_public_address_yet	A draft has no public address yet; only its preview address changes.
 a_draft_is_scheduled_from_its_properties	A draft is scheduled from its properties, or with ./blog.sh schedule.
@@ -184,6 +185,7 @@ pinned	Pinned
 point_the_camera_at_the_code_on	Point the camera at the code on the server's screen.
 port	Port
 position_1_to	Position, 1 to %lld
+practice_blog	Practice blog
 preview	Preview
 problem	Problem
 problems_worth_a_look	Problems: %lld, worth a look: %lld
@@ -309,6 +311,8 @@ the_post_keeps_its_text_and_loses	The post keeps its text and loses only the pla
 the_post_stays_a_draft_with_the	The post stays a draft, with the date it had before the plan.
 the_post_its_media_and_its_history	The post, its media and its history come back where they were.
 the_posts_in_between_step_back_one	The posts in between step back one slot each; the same times stay occupied.
+the_practice_blog_lives_in_the_app	The practice blog lives in the app. It has a few posts to look around in; nothing is written to it and nothing is sent anywhere.
+the_practice_blog_lives_in_the_app_2	The practice blog lives in the app: a few posts to look around in. Nothing is sent anywhere.
 the_queue_is_empty	The queue is empty
 the_same_as_publishing_a_draft_by	The same as publishing a draft by hand, announcement included.
 the_schedule_is_cancelled_the_post_is	The schedule is cancelled; the post is a draft again.
@@ -339,6 +343,7 @@ this_device_was_taken_off_the_blog_2	This device was taken off the blog. A new c
 this_device_s_key	This device's key
 this_file_is_not_plain_text_a	This file is not plain text. A document of a word processor (.docx, .rtf) has to be saved as plain text or Markdown first.
 this_is_not_a_code_from_blog	This is not a code from ./blog.sh pair.
+this_is_the_practice_blog_it_lives	This is the practice blog: it lives in the app, and nothing is written to it or sent anywhere. Add a blog of your own to do this.
 this_post_cannot_be_edited_here	This post cannot be edited here.
 this_post_cannot_be_edited_here_at	This post cannot be edited here: %@. At the desk, edit asks before losing it; here nobody could answer.
 this_post_has_no_old_addresses	This post has no old addresses.
@@ -352,6 +357,7 @@ trash	Trash
 trash_emptied_item_s_freed	Trash emptied: %lld item(s), %@ freed.
 trash_is_empty	Trash is empty
 try_again	Try again
+try_the_practice_blog	Try the practice blog
 two_posts_in_different_years_share_this	Two posts in different years share this slug, and the app cannot say which of them is meant. At the desk, ./blog.sh props asks which.
 two_steps_larger	Two steps larger
 unpublish	Unpublish
@@ -375,6 +381,7 @@ what_is_written_here_is_replaced_by	What is written here is replaced by the blog
 where_the_blog_lies_on_the_server	Where the blog lies on the server and what this device may run there was set by the pairing on the server; nothing of it is set here. In Paired devices this device is the line with this key, and can be taken off the blog there.
 with_a_code	With a code
 with_a_network_configured_it_announces_too	With a network configured it announces too, which nothing takes back.
+without_a_server	Without a server
 worth_a_look	Worth a look
 written_here_and_never_saved_the_post	Written here %@ and never saved; the post itself could not be opened. The words are below, to copy.
 your_own	Your own
@@ -414,6 +421,7 @@ facts_versions	facts.versions
 facts_words	facts.words
 flag_no	flag.no
 flag_yes	flag.yes
+in_the_app_nothing_is_sent_anywhere	in the app -- nothing is sent anywhere
 in_the_text	in the text
 language_2	language: %@
 languages	languages

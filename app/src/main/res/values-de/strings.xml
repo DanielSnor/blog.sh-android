@@ -15,6 +15,7 @@
     <string name="the_post_has_no_text">(der Beitrag hat keinen Text)</string>
     <string name="the_site_s_own">(wie die Website)</string>
     <string name="waiting_for_the_cron">(wartet auf den Cron)</string>
+    <string name="a_blog_of_your_own_is_connected">Einen eigenen Blog verbindest du per Code: Führe auf seinem Server ./blog.sh pair aus und füge den Blog hier mit dem hinzu, was es zeigt.</string>
     <string name="a_deploy_stops_by_itself_when_the">Ein Deploy hält von selbst an, wenn der Website plötzlich viel fehlt oder viel dazukommt, wie nach einem kaputten Build. Schalte das nur ein, wenn er angehalten hat und die Änderung stimmt (viele gelöschte Beiträge, ein großer Import).</string>
     <string name="a_draft_has_no_public_address_yet">Ein Entwurf hat noch keine öffentliche Adresse; es ändert sich nur die Adresse seiner Vorschau.</string>
     <string name="a_draft_is_scheduled_from_its_properties">Ein Entwurf wird in seinen Eigenschaften geplant, oder mit ./blog.sh schedule.</string>
@@ -187,6 +188,7 @@
     <string name="point_the_camera_at_the_code_on">Richte die Kamera auf den Code auf dem Bildschirm des Servers.</string>
     <string name="port">Port</string>
     <string name="position_1_to">Stelle, 1 bis %1$d</string>
+    <string name="practice_blog">Übungsblog</string>
     <string name="preview">Vorschau</string>
     <string name="problem">Problem</string>
     <string name="problems_worth_a_look">Probleme: %1$d, zum Nachsehen: %2$d</string>
@@ -312,6 +314,8 @@
     <string name="the_post_stays_a_draft_with_the">Der Beitrag bleibt Entwurf, mit dem Datum, das er vor dem Plan hatte.</string>
     <string name="the_post_its_media_and_its_history">Der Beitrag, seine Medien und seine Geschichte kommen dorthin zurück, wo sie waren.</string>
     <string name="the_posts_in_between_step_back_one">Die Beiträge dazwischen rücken je einen Slot zurück; belegt bleiben dieselben Zeiten.</string>
+    <string name="the_practice_blog_lives_in_the_app">Der Übungsblog lebt in der App. Er hat ein paar Beiträge zum Umsehen; nichts wird in ihn geschrieben und nichts irgendwohin gesendet.</string>
+    <string name="the_practice_blog_lives_in_the_app_2">Der Übungsblog lebt in der App: ein paar Beiträge zum Umsehen. Nichts wird irgendwohin gesendet.</string>
     <string name="the_queue_is_empty">Die Warteschlange ist leer</string>
     <string name="the_same_as_publishing_a_draft_by">Dasselbe wie einen Entwurf von Hand zu veröffentlichen, samt Ankündigung.</string>
     <string name="the_schedule_is_cancelled_the_post_is">Der Plan ist aufgehoben, der Beitrag ist wieder ein Entwurf.</string>
@@ -342,6 +346,7 @@
     <string name="this_device_s_key">Schlüssel dieses Geräts</string>
     <string name="this_file_is_not_plain_text_a">Diese Datei ist kein reiner Text. Ein Dokument aus einer Textverarbeitung (.docx, .rtf) muss zuerst als reiner Text oder Markdown gespeichert werden.</string>
     <string name="this_is_not_a_code_from_blog">Das ist kein Code von ./blog.sh pair.</string>
+    <string name="this_is_the_practice_blog_it_lives">Das ist der Übungsblog: Er lebt in der App, nichts wird in ihn geschrieben oder irgendwohin gesendet. Füge dafür einen eigenen Blog hinzu.</string>
     <string name="this_post_cannot_be_edited_here">Dieser Beitrag lässt sich hier nicht bearbeiten.</string>
     <string name="this_post_cannot_be_edited_here_at">Dieser Beitrag lässt sich hier nicht bearbeiten: %1$s. Am Schreibtisch fragt edit, bevor etwas verloren geht; hier könnte niemand antworten.</string>
     <string name="this_post_has_no_old_addresses">Dieser Beitrag hat keine alten Adressen.</string>
@@ -355,6 +360,7 @@
     <string name="trash_emptied_item_s_freed">Papierkorb geleert: %1$d Element(e), %2$s freigegeben.</string>
     <string name="trash_is_empty">Der Papierkorb ist leer</string>
     <string name="try_again">Erneut versuchen</string>
+    <string name="try_the_practice_blog">Den Übungsblog ausprobieren</string>
     <string name="two_posts_in_different_years_share_this">Diesen Slug tragen zwei Beiträge aus verschiedenen Jahren, und die App kann nicht sagen, welcher gemeint ist. Am Schreibtisch fragt ./blog.sh props danach.</string>
     <string name="two_steps_larger">Zwei Stufen größer</string>
     <string name="unpublish">Zurück auf Entwurf</string>
@@ -378,6 +384,7 @@
     <string name="where_the_blog_lies_on_the_server">Wo der Blog auf dem Server liegt und was dieses Gerät dort ausführen darf, hat die Kopplung auf dem Server festgelegt; hier wird davon nichts eingestellt. Unter Gekoppelte Geräte ist dieses Gerät die Zeile mit diesem Schlüssel und lässt sich dort vom Blog entfernen.</string>
     <string name="with_a_code">Mit einem Code</string>
     <string name="with_a_network_configured_it_announces_too">Mit einem eingerichteten Netzwerk wird auch angekündigt — und eine Ankündigung lässt sich nicht zurücknehmen.</string>
+    <string name="without_a_server">Ohne Server</string>
     <string name="worth_a_look">Zum Nachsehen</string>
     <string name="written_here_and_never_saved_the_post">Hier geschrieben %1$s und nie gesichert; der Beitrag selbst ließ sich nicht öffnen. Der Text steht unten, zum Kopieren.</string>
     <string name="your_own">Eigene</string>
@@ -417,6 +424,7 @@
     <string name="facts_words">Wörter</string>
     <string name="flag_no">nein</string>
     <string name="flag_yes">ja</string>
+    <string name="in_the_app_nothing_is_sent_anywhere">in der App — nichts wird irgendwohin gesendet</string>
     <string name="in_the_text">im Text</string>
     <string name="language_2">Sprache: %1$s</string>
     <string name="languages">Sprachen</string>

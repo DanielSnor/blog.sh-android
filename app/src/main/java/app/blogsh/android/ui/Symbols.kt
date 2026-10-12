@@ -149,4 +149,6 @@ object Symbols {
     val folder = R.drawable.ic_folder
     /** ipad.and.iphone */
     val ipadAndIphone = R.drawable.ic_devices
+    /** book */
+    val book = R.drawable.ic_book
 }

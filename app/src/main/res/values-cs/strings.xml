@@ -15,6 +15,7 @@
     <string name="the_post_has_no_text">(příspěvek nemá text)</string>
     <string name="the_site_s_own">(jak má web)</string>
     <string name="waiting_for_the_cron">(čeká na cron)</string>
+    <string name="a_blog_of_your_own_is_connected">Vlastní blog připojíš kódem: na jeho serveru spusť ./blog.sh pair a blog tady přidej tím, co ukáže.</string>
     <string name="a_deploy_stops_by_itself_when_the">Nasazení se samo zastaví, když webu naráz hodně ubude nebo přibude, jako po rozbitém sestavení. Zapni to, jen když se zastavilo a změna je v pořádku (hodně smazaných příspěvků, velký import).</string>
     <string name="a_draft_has_no_public_address_yet">Koncept ještě nemá veřejnou adresu, změní se jen adresa náhledu.</string>
     <string name="a_draft_is_scheduled_from_its_properties">Koncept naplánuješ z jeho vlastností, nebo přes ./blog.sh schedule.</string>
@@ -187,6 +188,7 @@
     <string name="point_the_camera_at_the_code_on">Namiř kameru na kód na obrazovce serveru.</string>
     <string name="port">Port</string>
     <string name="position_1_to">Pozice, 1 až %1$d</string>
+    <string name="practice_blog">Cvičný blog</string>
     <string name="preview">Náhled</string>
     <string name="problem">Problém</string>
     <string name="problems_worth_a_look">Problémů: %1$d, ke zvážení: %2$d</string>
@@ -312,6 +314,8 @@
     <string name="the_post_stays_a_draft_with_the">Příspěvek zůstane konceptem, s datem, které měl před naplánováním.</string>
     <string name="the_post_its_media_and_its_history">Příspěvek, jeho média i historie se vrátí, kde byly.</string>
     <string name="the_posts_in_between_step_back_one">Příspěvky mezi tím ustoupí každý o slot; obsazené časy zůstanou tytéž.</string>
+    <string name="the_practice_blog_lives_in_the_app">Cvičný blog žije v appce. Má pár příspěvků, na kterých si všechno prohlédneš; nic se do něj nezapisuje a nic se nikam neposílá.</string>
+    <string name="the_practice_blog_lives_in_the_app_2">Cvičný blog žije v appce: pár příspěvků, na kterých si všechno prohlédneš. Nic se nikam neposílá.</string>
     <string name="the_queue_is_empty">Fronta je prázdná</string>
     <string name="the_same_as_publishing_a_draft_by">Totéž jako ruční publikace konceptu, včetně oznámení.</string>
     <string name="the_schedule_is_cancelled_the_post_is">Plán je zrušený, příspěvek je zase koncept.</string>
@@ -342,6 +346,7 @@
     <string name="this_device_s_key">Klíč tohohle zařízení</string>
     <string name="this_file_is_not_plain_text_a">Tenhle soubor není prostý text. Dokument z textového editoru (.docx, .rtf) je potřeba nejdřív uložit jako prostý text nebo Markdown.</string>
     <string name="this_is_not_a_code_from_blog">Tohle není kód z ./blog.sh pair.</string>
+    <string name="this_is_the_practice_blog_it_lives">Tohle je cvičný blog: žije v appce, nic se do něj nezapisuje a nic se nikam neposílá. Na tohle si přidej vlastní blog.</string>
     <string name="this_post_cannot_be_edited_here">Tenhle příspěvek tady upravit nejde.</string>
     <string name="this_post_cannot_be_edited_here_at">Tenhle příspěvek tady upravit nejde: %1$s. U počítače se edit zeptá, než to ztratí; tady by neměl kdo odpovědět.</string>
     <string name="this_post_has_no_old_addresses">Tenhle příspěvek nemá staré adresy.</string>
@@ -355,6 +360,7 @@
     <string name="trash_emptied_item_s_freed">Koš vysypán: položek %1$d, uvolněno %2$s.</string>
     <string name="trash_is_empty">Koš je prázdný</string>
     <string name="try_again">Zkusit znovu</string>
+    <string name="try_the_practice_blog">Vyzkoušet cvičný blog</string>
     <string name="two_posts_in_different_years_share_this">Tenhle slug mají dva příspěvky v různých letech a appka neumí říct, který z nich myslíš. U stolu se na to zeptá ./blog.sh props.</string>
     <string name="two_steps_larger">O dva stupně větší</string>
     <string name="unpublish">Stáhnout z webu</string>
@@ -378,6 +384,7 @@
     <string name="where_the_blog_lies_on_the_server">Kde blog na serveru leží a co tohle zařízení smí spustit, určilo párování na serveru; tady se z toho nic nenastavuje. Ve Spárovaných zařízeních je tohle zařízení řádek s tímhle klíčem a dá se tam z blogu odebrat.</string>
     <string name="with_a_code">Kódem</string>
     <string name="with_a_network_configured_it_announces_too">Zároveň se oznámí na síti — a oznámení nejde vzít zpět.</string>
+    <string name="without_a_server">Bez serveru</string>
     <string name="worth_a_look">Ke zvážení</string>
     <string name="written_here_and_never_saved_the_post">Napsáno tady %1$s a nikdy neuloženo; samotný příspěvek se nepodařilo otevřít. Text je níže, dá se zkopírovat.</string>
     <string name="your_own">Vlastní</string>
@@ -417,6 +424,7 @@
     <string name="facts_words">slov</string>
     <string name="flag_no">ne</string>
     <string name="flag_yes">ano</string>
+    <string name="in_the_app_nothing_is_sent_anywhere">v appce — nic se nikam neposílá</string>
     <string name="in_the_text">v textu</string>
     <string name="language_2">jazyk: %1$s</string>
     <string name="languages">jazyky</string>

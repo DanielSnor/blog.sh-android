@@ -550,7 +550,17 @@ fun HomeScreen(state: HomeState) {
                     if (problem != null) {
                         Text(problem, color = Theme.muted, style = ui(14f), modifier = Modifier.padding(top = 14.dp))
                         // The way to a first blog, while the app has none.
-                        if (noBlog) PrimaryButton(stringResource(R.string.add_a_blog), Modifier.padding(top = 14.dp)) { Incoming.code = "" }
+                        if (noBlog) {
+                            PrimaryButton(stringResource(R.string.add_a_blog), Modifier.padding(top = 14.dp)) { Incoming.code = "" }
+                            // Without a server of one's own there is still
+                            // something to look at.
+                            val practice = stringResource(R.string.practice_blog)
+                            val tryIt = stringResource(R.string.try_the_practice_blog)
+                            Plate(Modifier.padding(top = 12.dp)) {
+                                row { Command(tryIt, Symbols.book, leads = true) { Blogs.openPractice(practice) } }
+                            }
+                            Text(stringResource(R.string.the_practice_blog_lives_in_the_app_2), color = Theme.muted, style = ui(13f), modifier = Modifier.padding(top = 8.dp))
+                        }
                     } else {
                         Busy(modifier = Modifier.padding(top = 14.dp))
                     }

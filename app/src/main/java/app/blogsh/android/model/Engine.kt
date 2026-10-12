@@ -189,7 +189,9 @@ object Engine {
     internal var stand: ((List<String>) -> ByteArray)? = null
 
     suspend fun batch(commands: List<List<String>>): List<ByteArray> {
-        val answers = stand?.let { answer -> commands.map(answer) } ?: asked(commands)
+        val answers = stand?.let { answer -> commands.map(answer) }
+            // The practice blog answers for itself: it has no server.
+            ?: if (Blogs.current?.isPractice == true) commands.map { Practice.answer(it) } else asked(commands)
         // The first screen reads its cards again where a command changed the blog.
         if (commands.any { changesTheBlog(it) }) Desk.wrote()
         return answers
@@ -216,6 +218,12 @@ object Engine {
      * goes, it does not go.
      */
     suspend fun deliver(files: List<DeliveryFile>, to: String? = null): List<ByteArray> {
+        val open = Blogs.current
+        if (open != null && open.isPractice) {
+            // Another blog's delivery does not go to this one either.
+            if (to != null && to != open.id) throw CancellationException()
+            return Practice.delivered
+        }
         val answers = onTheLine(only = to) { ssh, wary -> send(files, ssh, wary) }
         Desk.wrote()
         return answers

@@ -1,0 +1,762 @@
+{
+ "check": {
+  "errors": 0,
+  "findings": [
+   {
+    "data": {
+     "posts": 7
+    },
+    "kind": "all_clear",
+    "level": "ok",
+    "text": "Nothing wrong inside the archive: 7 post(s), with media, links and redirects all checking out."
+   }
+  ],
+  "warnings": 0
+ },
+ "doctor": {
+  "errors": 0,
+  "findings": [
+   {
+    "kind": "practice",
+    "level": "ok",
+    "text": "The practice blog lives in the app: there is no installation behind it to check."
+   }
+  ],
+  "oks": 1,
+  "warnings": 0
+ },
+ "edit a-draft-about-autumn": {
+  "ok": true,
+  "post": {
+   "base": "51cd686bb309b0056fa288391823bc1a27cb31d05e4ceb231b4a28cc4e0d17a1",
+   "date": "2026-10-12T11:51:06+02:00",
+   "editable": true,
+   "media": [],
+   "preview": "/draft/4e790e5e54b042d9/a-draft-about-autumn/",
+   "problem": null,
+   "scheduled": false,
+   "slug": "a-draft-about-autumn",
+   "text": "---\ntitle: A draft about autumn\ntags: draft\n---\n\nOnly the first sentence so far.",
+   "title": "A draft about autumn"
+  }
+ },
+ "edit a-list-for-the-weekend": {
+  "ok": true,
+  "post": {
+   "base": "a080e141a967fca34ce70a01db4c4038ce26be77db8bd39bcf76e42801c2ab77",
+   "date": "2026-10-12T11:51:07+02:00",
+   "editable": true,
+   "media": [],
+   "preview": "/draft/2079418a6c70428a/a-list-for-the-weekend/",
+   "problem": null,
+   "scheduled": false,
+   "slug": "a-list-for-the-weekend",
+   "text": "---\ntitle: A list for the weekend\ntags: \n---\n\n- buy bread\n- fix the bicycle",
+   "title": "A list for the weekend"
+  }
+ },
+ "edit nothing-is-lost-at-once": {
+  "ok": true,
+  "post": {
+   "base": "54153e90c3a633ec9dfd7c273eca9a36d5ea634cb68e31318e32c1741a11f39a",
+   "date": "2026-10-06T19:00:00+02:00",
+   "editable": true,
+   "media": [],
+   "preview": "/posts/2026/nothing-is-lost-at-once/",
+   "problem": null,
+   "scheduled": false,
+   "slug": "nothing-is-lost-at-once",
+   "text": "---\ntitle: Nothing is lost at once\ntags: trash\npinned: false\nunlisted: false\n---\n\nA deleted post goes to the trash and can be restored; a post keeps its older versions.\n\nOnly emptying the trash is for good, and it asks first.",
+   "title": "Nothing is lost at once"
+  }
+ },
+ "edit pictures-and-video": {
+  "ok": true,
+  "post": {
+   "base": "516241b9281c2f43d635e2b5e7f83238654b86e011462ae584fc1dec27a0a6e8",
+   "date": "2026-10-03T16:45:00+02:00",
+   "editable": true,
+   "media": [],
+   "preview": "/posts/2026/pictures-and-video/",
+   "problem": null,
+   "scheduled": false,
+   "slug": "pictures-and-video",
+   "text": "---\ntitle: Pictures and video\ntags: pictures\npinned: false\nunlisted: false\n---\n\nA picture is chosen from the library or from a file, described, and put into the text where it belongs.\n\nIt is shrunk before it travels; a video is converted. What the text does not name is not sent.",
+   "title": "Pictures and video"
+  }
+ },
+ "edit publishing-now-or-later": {
+  "ok": true,
+  "post": {
+   "base": "4dcf988b12036157537281a016819ae1d26330ce554d99726e0b1e77cb52d143",
+   "date": "2026-10-05T08:15:00+02:00",
+   "editable": true,
+   "media": [],
+   "preview": "/posts/2026/publishing-now-or-later/",
+   "problem": null,
+   "scheduled": false,
+   "slug": "publishing-now-or-later",
+   "text": "---\ntitle: Publishing, now or later\ntags: publishing, queue\npinned: false\nunlisted: false\n---\n\nA post arrives on the blog as a draft, with a preview only its writer sees.\n\nPublishing is a step of its own: now, or at a time -- then it waits in the queue.",
+   "title": "Publishing, now or later"
+  }
+ },
+ "edit welcome-to-the-practice-blog": {
+  "ok": true,
+  "post": {
+   "base": "21fda6204f3d2ecdcdb1bd9d2d4264bb8e35e1dd2ad44de4e915d8d37eef819b",
+   "date": "2026-10-01T09:00:00+02:00",
+   "editable": true,
+   "media": [],
+   "preview": "/posts/2026/welcome-to-the-practice-blog/",
+   "problem": null,
+   "scheduled": false,
+   "slug": "welcome-to-the-practice-blog",
+   "text": "---\ntitle: Welcome to the practice blog\ntags: start, app\npinned: false\nunlisted: false\n---\n\nThis blog lives in the app. Nothing you do here is sent anywhere, and nothing is written: it is a place to look around before a blog of your own is connected.\n\n## What to try\n\n- open a post and look at its text and its properties\n- start a new post, add a picture, look at the preview\n- look into the archive, the queue and the trash\n\nTo connect a real blog, run `./blog.sh pair` on its server and scan the code.",
+   "title": "Welcome to the practice blog"
+  }
+ },
+ "edit writing-a-post": {
+  "ok": true,
+  "post": {
+   "base": "fe4ef38d1dac2d5e4c03007b51a56621cdb32336138c506e813faa0d7835711e",
+   "date": "2026-10-02T10:30:00+02:00",
+   "editable": true,
+   "media": [],
+   "preview": "/posts/2026/writing-a-post/",
+   "problem": null,
+   "scheduled": false,
+   "slug": "writing-a-post",
+   "text": "---\ntitle: Writing a post\ntags: writing, markdown\npinned: false\nunlisted: false\n---\n\nA post is **Markdown**: a title, the text, a few tags.\n\n> The keys over the text put the marks in for you.\n\nA finished text can be taken from a file -- one dictated on a walk, say -- and goes in where the caret is.\n\n```sh\n./blog.sh add post.md\n```",
+   "title": "Writing a post"
+  }
+ },
+ "empty trash": {
+  "bytes": 363,
+  "count": 1,
+  "emptied": false,
+  "ok": true,
+  "size": "363 B",
+  "what": "trash"
+ },
+ "empty versions": {
+  "bytes": 0,
+  "count": 0,
+  "emptied": false,
+  "ok": true,
+  "size": "0 B",
+  "what": "versions"
+ },
+ "list": {
+  "count": 7,
+  "drafts": 2,
+  "ok": true,
+  "posts": [
+   {
+    "date": "2026-10-12T11:51:07+02:00",
+    "match": null,
+    "pinned": false,
+    "scheduled": false,
+    "series": null,
+    "slug": "a-list-for-the-weekend",
+    "state": "draft",
+    "tags": [],
+    "title": "A list for the weekend",
+    "type": "text",
+    "year": "2026"
+   },
+   {
+    "date": "2026-10-12T11:51:06+02:00",
+    "match": null,
+    "pinned": false,
+    "scheduled": false,
+    "series": null,
+    "slug": "a-draft-about-autumn",
+    "state": "draft",
+    "tags": [
+     "draft"
+    ],
+    "title": "A draft about autumn",
+    "type": "text",
+    "year": "2026"
+   },
+   {
+    "date": "2026-10-06T19:00:00+02:00",
+    "match": null,
+    "pinned": false,
+    "scheduled": false,
+    "series": null,
+    "slug": "nothing-is-lost-at-once",
+    "state": "published",
+    "tags": [
+     "trash"
+    ],
+    "title": "Nothing is lost at once",
+    "type": "text",
+    "year": "2026"
+   },
+   {
+    "date": "2026-10-05T08:15:00+02:00",
+    "match": null,
+    "pinned": false,
+    "scheduled": false,
+    "series": null,
+    "slug": "publishing-now-or-later",
+    "state": "published",
+    "tags": [
+     "publishing",
+     "queue"
+    ],
+    "title": "Publishing, now or later",
+    "type": "text",
+    "year": "2026"
+   },
+   {
+    "date": "2026-10-03T16:45:00+02:00",
+    "match": null,
+    "pinned": false,
+    "scheduled": false,
+    "series": null,
+    "slug": "pictures-and-video",
+    "state": "published",
+    "tags": [
+     "pictures"
+    ],
+    "title": "Pictures and video",
+    "type": "text",
+    "year": "2026"
+   },
+   {
+    "date": "2026-10-02T10:30:00+02:00",
+    "match": null,
+    "pinned": false,
+    "scheduled": false,
+    "series": null,
+    "slug": "writing-a-post",
+    "state": "published",
+    "tags": [
+     "writing",
+     "markdown"
+    ],
+    "title": "Writing a post",
+    "type": "text",
+    "year": "2026"
+   },
+   {
+    "date": "2026-10-01T09:00:00+02:00",
+    "match": null,
+    "pinned": false,
+    "scheduled": false,
+    "series": null,
+    "slug": "welcome-to-the-practice-blog",
+    "state": "published",
+    "tags": [
+     "start",
+     "app"
+    ],
+    "title": "Welcome to the practice blog",
+    "type": "text",
+    "year": "2026"
+   }
+  ],
+  "search": null
+ },
+ "list --drafts": {
+  "count": 2,
+  "drafts": 2,
+  "ok": true,
+  "posts": [
+   {
+    "date": "2026-10-12T11:51:07+02:00",
+    "match": null,
+    "pinned": false,
+    "scheduled": false,
+    "series": null,
+    "slug": "a-list-for-the-weekend",
+    "state": "draft",
+    "tags": [],
+    "title": "A list for the weekend",
+    "type": "text",
+    "year": "2026"
+   },
+   {
+    "date": "2026-10-12T11:51:06+02:00",
+    "match": null,
+    "pinned": false,
+    "scheduled": false,
+    "series": null,
+    "slug": "a-draft-about-autumn",
+    "state": "draft",
+    "tags": [
+     "draft"
+    ],
+    "title": "A draft about autumn",
+    "type": "text",
+    "year": "2026"
+   }
+  ],
+  "search": null
+ },
+ "props a-draft-about-autumn": {
+  "actions": [
+   "publish",
+   "schedule",
+   "properties",
+   "rename",
+   "delete"
+  ],
+  "address": "/draft/4e790e5e54b042d9/a-draft-about-autumn/",
+  "addresses": [],
+  "announced": null,
+  "announces": "nowhere",
+  "date": null,
+  "hero": "default",
+  "languages": {
+   "allow_partial": false,
+   "others": {},
+   "own": "en"
+  },
+  "network": null,
+  "ok": true,
+  "path": "content.nosync/posts/2026/a-draft-about-autumn.json",
+  "pinned": false,
+  "scheduled": false,
+  "series": null,
+  "series_part": null,
+  "slot": null,
+  "slug": "a-draft-about-autumn",
+  "state": "draft",
+  "tags": [
+   "draft"
+  ],
+  "title": "A draft about autumn",
+  "toc": "default",
+  "type": "text",
+  "type_set": null,
+  "unlisted": false,
+  "url": "",
+  "year": "2026"
+ },
+ "props a-draft-about-autumn --versions": {
+  "ok": true,
+  "slug": "a-draft-about-autumn",
+  "versions": [],
+  "year": "2026"
+ },
+ "props a-list-for-the-weekend": {
+  "actions": [
+   "publish",
+   "schedule",
+   "properties",
+   "rename",
+   "delete"
+  ],
+  "address": "/draft/2079418a6c70428a/a-list-for-the-weekend/",
+  "addresses": [],
+  "announced": null,
+  "announces": "nowhere",
+  "date": null,
+  "hero": "default",
+  "languages": {
+   "allow_partial": false,
+   "others": {},
+   "own": "en"
+  },
+  "network": null,
+  "ok": true,
+  "path": "content.nosync/posts/2026/a-list-for-the-weekend.json",
+  "pinned": false,
+  "scheduled": false,
+  "series": null,
+  "series_part": null,
+  "slot": null,
+  "slug": "a-list-for-the-weekend",
+  "state": "draft",
+  "tags": [],
+  "title": "A list for the weekend",
+  "toc": "default",
+  "type": "text",
+  "type_set": null,
+  "unlisted": false,
+  "url": "",
+  "year": "2026"
+ },
+ "props a-list-for-the-weekend --versions": {
+  "ok": true,
+  "slug": "a-list-for-the-weekend",
+  "versions": [],
+  "year": "2026"
+ },
+ "props nothing-is-lost-at-once": {
+  "actions": [
+   "unpublish",
+   "pin",
+   "properties",
+   "rename",
+   "addresses",
+   "delete"
+  ],
+  "address": "/posts/2026/nothing-is-lost-at-once/",
+  "addresses": [],
+  "announced": null,
+  "announces": "nowhere",
+  "date": "2026-10-06T19:00:00+02:00",
+  "hero": "default",
+  "languages": {
+   "allow_partial": false,
+   "others": {},
+   "own": "en"
+  },
+  "network": null,
+  "ok": true,
+  "path": "content.nosync/posts/2026/nothing-is-lost-at-once.json",
+  "pinned": false,
+  "scheduled": false,
+  "series": null,
+  "series_part": null,
+  "slot": null,
+  "slug": "nothing-is-lost-at-once",
+  "state": "published",
+  "tags": [
+   "trash"
+  ],
+  "title": "Nothing is lost at once",
+  "toc": "default",
+  "type": "text",
+  "type_set": null,
+  "unlisted": false,
+  "url": "",
+  "year": "2026"
+ },
+ "props nothing-is-lost-at-once --versions": {
+  "ok": true,
+  "slug": "nothing-is-lost-at-once",
+  "versions": [],
+  "year": "2026"
+ },
+ "props pictures-and-video": {
+  "actions": [
+   "unpublish",
+   "pin",
+   "properties",
+   "rename",
+   "addresses",
+   "delete"
+  ],
+  "address": "/posts/2026/pictures-and-video/",
+  "addresses": [],
+  "announced": null,
+  "announces": "nowhere",
+  "date": "2026-10-03T16:45:00+02:00",
+  "hero": "default",
+  "languages": {
+   "allow_partial": false,
+   "others": {},
+   "own": "en"
+  },
+  "network": null,
+  "ok": true,
+  "path": "content.nosync/posts/2026/pictures-and-video.json",
+  "pinned": false,
+  "scheduled": false,
+  "series": null,
+  "series_part": null,
+  "slot": null,
+  "slug": "pictures-and-video",
+  "state": "published",
+  "tags": [
+   "pictures"
+  ],
+  "title": "Pictures and video",
+  "toc": "default",
+  "type": "text",
+  "type_set": null,
+  "unlisted": false,
+  "url": "",
+  "year": "2026"
+ },
+ "props pictures-and-video --versions": {
+  "ok": true,
+  "slug": "pictures-and-video",
+  "versions": [],
+  "year": "2026"
+ },
+ "props publishing-now-or-later": {
+  "actions": [
+   "unpublish",
+   "pin",
+   "properties",
+   "rename",
+   "addresses",
+   "delete"
+  ],
+  "address": "/posts/2026/publishing-now-or-later/",
+  "addresses": [],
+  "announced": null,
+  "announces": "nowhere",
+  "date": "2026-10-05T08:15:00+02:00",
+  "hero": "default",
+  "languages": {
+   "allow_partial": false,
+   "others": {},
+   "own": "en"
+  },
+  "network": null,
+  "ok": true,
+  "path": "content.nosync/posts/2026/publishing-now-or-later.json",
+  "pinned": false,
+  "scheduled": false,
+  "series": null,
+  "series_part": null,
+  "slot": null,
+  "slug": "publishing-now-or-later",
+  "state": "published",
+  "tags": [
+   "publishing",
+   "queue"
+  ],
+  "title": "Publishing, now or later",
+  "toc": "default",
+  "type": "text",
+  "type_set": null,
+  "unlisted": false,
+  "url": "",
+  "year": "2026"
+ },
+ "props publishing-now-or-later --versions": {
+  "ok": true,
+  "slug": "publishing-now-or-later",
+  "versions": [],
+  "year": "2026"
+ },
+ "props welcome-to-the-practice-blog": {
+  "actions": [
+   "unpublish",
+   "pin",
+   "properties",
+   "rename",
+   "addresses",
+   "delete"
+  ],
+  "address": "/posts/2026/welcome-to-the-practice-blog/",
+  "addresses": [],
+  "announced": null,
+  "announces": "nowhere",
+  "date": "2026-10-01T09:00:00+02:00",
+  "hero": "default",
+  "languages": {
+   "allow_partial": false,
+   "others": {},
+   "own": "en"
+  },
+  "network": null,
+  "ok": true,
+  "path": "content.nosync/posts/2026/welcome-to-the-practice-blog.json",
+  "pinned": false,
+  "scheduled": false,
+  "series": null,
+  "series_part": null,
+  "slot": null,
+  "slug": "welcome-to-the-practice-blog",
+  "state": "published",
+  "tags": [
+   "start",
+   "app"
+  ],
+  "title": "Welcome to the practice blog",
+  "toc": "default",
+  "type": "text",
+  "type_set": null,
+  "unlisted": false,
+  "url": "",
+  "year": "2026"
+ },
+ "props welcome-to-the-practice-blog --versions": {
+  "ok": true,
+  "slug": "welcome-to-the-practice-blog",
+  "versions": [],
+  "year": "2026"
+ },
+ "props writing-a-post": {
+  "actions": [
+   "unpublish",
+   "pin",
+   "properties",
+   "rename",
+   "addresses",
+   "delete"
+  ],
+  "address": "/posts/2026/writing-a-post/",
+  "addresses": [],
+  "announced": null,
+  "announces": "nowhere",
+  "date": "2026-10-02T10:30:00+02:00",
+  "hero": "default",
+  "languages": {
+   "allow_partial": false,
+   "others": {},
+   "own": "en"
+  },
+  "network": null,
+  "ok": true,
+  "path": "content.nosync/posts/2026/writing-a-post.json",
+  "pinned": false,
+  "scheduled": false,
+  "series": null,
+  "series_part": null,
+  "slot": null,
+  "slug": "writing-a-post",
+  "state": "published",
+  "tags": [
+   "writing",
+   "markdown"
+  ],
+  "title": "Writing a post",
+  "toc": "default",
+  "type": "text",
+  "type_set": null,
+  "unlisted": false,
+  "url": "",
+  "year": "2026"
+ },
+ "props writing-a-post --versions": {
+  "ok": true,
+  "slug": "writing-a-post",
+  "versions": [],
+  "year": "2026"
+ },
+ "queue": {
+  "ok": true,
+  "queue": [],
+  "scheduler": {
+   "last_run": null
+  }
+ },
+ "restore": {
+  "ok": true,
+  "trash": [
+   {
+    "date": "2026-10-12T11:51:07+02:00",
+    "media_only": false,
+    "slug": "thrown-away",
+    "state": "draft",
+    "tags": [
+     "trash"
+    ],
+    "title": "Thrown away",
+    "type": "text",
+    "year": "2026"
+   }
+  ]
+ },
+ "stats": {
+  "media": {
+   "bytes": 0,
+   "files": 0,
+   "posts_with_media": 0,
+   "referenced": 0
+  },
+  "posts": {
+   "drafts": 2,
+   "pages": 0,
+   "published": 5,
+   "scheduled": 0,
+   "total": 7
+  },
+  "sources": {
+   "manual": 7
+  },
+  "span": {
+   "busiest_year": {
+    "posts": 7,
+    "year": "2026"
+   },
+   "days": 11,
+   "first": "2026-10-01",
+   "last": "2026-10-12"
+  },
+  "tags": {
+   "per_post": 1.3,
+   "top": [
+    [
+     "app",
+     1
+    ],
+    [
+     "draft",
+     1
+    ],
+    [
+     "markdown",
+     1
+    ],
+    [
+     "pictures",
+     1
+    ],
+    [
+     "publishing",
+     1
+    ],
+    [
+     "queue",
+     1
+    ],
+    [
+     "start",
+     1
+    ],
+    [
+     "trash",
+     1
+    ]
+   ],
+   "unique": 9
+  },
+  "types": {
+   "text": 7
+  },
+  "words": {
+   "longest": {
+    "slug": "welcome-to-the-practice-blog",
+    "words": 81
+   },
+   "mean": 34.3,
+   "median": 35,
+   "reading_hours": 0.0,
+   "total": 240
+  },
+  "years": {
+   "2026": 7
+  }
+ },
+ "version": {
+  "engine": "1.10.pre",
+  "max_mb": 24,
+  "ok": true,
+  "site": {
+   "accent": {
+    "dark": "#4ab3f4",
+    "light": "#1da1f2"
+   },
+   "claim": "Nothing here is sent anywhere",
+   "lang": "en",
+   "locales": [],
+   "name": "Practice blog",
+   "palette": {
+    "dark": {
+     "bg": "#111111",
+     "border": "#263340",
+     "meta_text": "#6a7f8c",
+     "text": "#ffffff"
+    },
+    "light": {
+     "bg": "#f5f8fa",
+     "border": "#e1e8ed",
+     "meta_text": "#657784",
+     "text": "#444a5a"
+    }
+   },
+   "url": ""
+  }
+ }
+}

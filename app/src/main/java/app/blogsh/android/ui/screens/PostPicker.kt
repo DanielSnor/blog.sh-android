@@ -337,8 +337,11 @@ fun PostCrossroadsScreen(picked: PostRow, languages: List<String> = emptyList(),
         // away, on a phone the page is only this far. A published post
         // opens at its address, a draft at the hidden page the build keeps.
         val web = stringResource(if (post.state == PostState.Published) R.string.show_on_the_web else R.string.show_the_preview_on_the_web)
-        Plate(Modifier.gap(10)) {
-            row { Command(web, Symbols.safari, busy = looking) { scope.launch { show() } } }
+        // The practice blog is on no web: no key for a page it has not.
+        if (Blogs.current?.isPractice != true) {
+            Plate(Modifier.gap(10)) {
+                row { Command(web, Symbols.safari, busy = looking) { scope.launch { show() } } }
+            }
         }
         problem?.let { ProblemLine(it) }
     }

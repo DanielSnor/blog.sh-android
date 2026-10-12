@@ -398,12 +398,13 @@ fun PostRowView(post: PostRow) {
         Column(Modifier.padding(top = 3.dp), verticalArrangement = Arrangement.spacedBy(5.dp), horizontalAlignment = Alignment.End) {
             val day = post.day
             if (day != null) {
-                // A date is in the accent, as on the blog's own pages; one
-                // still to come is told by its weight, and by saying a day
-                // and an hour.
+                // A date that has been is a fact, said in the grey facts
+                // are said in; one still to come is in the accent, and
+                // says a day and an hour. Both bold: the light face of
+                // this size is a hairline.
                 Text(
-                    if (post.scheduled) RowDate.soon(day) else RowDate.short(day), color = Theme.accent,
-                    style = mono(11f, bold = post.scheduled), maxLines = 1,
+                    if (post.scheduled) RowDate.soon(day) else RowDate.short(day), color = if (post.scheduled) Theme.accent else Theme.muted,
+                    style = mono(11f), maxLines = 1,
                 )
             } else {
                 StateBadge(post)

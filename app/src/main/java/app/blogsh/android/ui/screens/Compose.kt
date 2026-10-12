@@ -454,7 +454,7 @@ fun ComposeScreen() {
             }
         }
         unread?.let { ProblemLine(it) }
-        DeliveryNote(sent, textBytes, maxMb)
+        DeliveryNote(sent, textBytes, maxMb, media = shots.isNotEmpty())
 
         // With the server silent the same key keeps the post on the
         // device instead, whole, to go when the server answers.

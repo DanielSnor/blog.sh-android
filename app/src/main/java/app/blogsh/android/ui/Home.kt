@@ -118,6 +118,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.text.NumberFormat
 import java.util.Locale
+import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 /**
@@ -561,11 +562,19 @@ fun HomeScreen(state: HomeState) {
                 // opening the form it waits in -- and last the queue, which
                 // goes out by itself.
                 val glance = state.glance
+                // The two gaps of this screen, and no third: between things
+                // of one group -- card and card, tile and tile, key and key
+                // -- and between the groups. They grow with the type, as the
+                // gaps of every other screen do; a gap that tells two groups
+                // apart at the usual size is lost between tiles twice as tall.
+                val grown = LocalDensity.current.fontScale.coerceAtLeast(1f)
+                val within = (8 * grown).roundToInt().dp
+                val between = (14 * grown).roundToInt().dp
                 // What needs the server is shown out of reach while the
                 // server is silent; writing a new post -- which does not --
                 // stays as it is.
                 if (glance != null || begun.isNotEmpty() || waiting.isNotEmpty() || arrived.isNotEmpty()) {
-                    Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(within)) {
                         if (glance != null) OutOfReach(offline) { Pressable({ open(MenuEntry.Browse, StateFilter.Draft) }) { DraftsCard(glance) } }
                         // What went to the blog by itself, under the drafts it
                         // now is among: it stands until it was looked at, and
@@ -593,11 +602,11 @@ fun HomeScreen(state: HomeState) {
                 }
 
                 Column(
-                    Modifier.padding(top = if (glance == null && begun.isEmpty() && waiting.isEmpty() && arrived.isEmpty()) 22.dp else 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    Modifier.padding(top = if (glance == null && begun.isEmpty() && waiting.isEmpty() && arrived.isEmpty()) 22.dp else between),
+                    verticalArrangement = Arrangement.spacedBy(within),
                 ) {
                     for (row in MenuEntry.entries.chunked(3)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(within)) {
                             for (entry in row) {
                                 val label = stringResource(entry.nameId)
                                 Box(Modifier.weight(1f)) {
@@ -614,7 +623,7 @@ fun HomeScreen(state: HomeState) {
                 }
 
                 OutOfReach(offline || noBlog) {
-                    Pressable({ open(MenuEntry.Browse, searching = true) }, modifier = Modifier.padding(top = 14.dp)) {
+                    Pressable({ open(MenuEntry.Browse, searching = true) }, modifier = Modifier.padding(top = between)) {
                         Card(capsule = true) {
                             // A glass, not the terminal's own key for it: a slash says
                             // "search" only to somebody who knows the terminal.
@@ -629,7 +638,7 @@ fun HomeScreen(state: HomeState) {
                     runCatching { URI(url) }.getOrNull()?.takeIf { it.scheme?.lowercase() in listOf("http", "https") && !it.host.isNullOrEmpty() }
                 }
                 if (site != null) {
-                    Pressable({ runCatching { links.openUri(url) } }, modifier = Modifier.padding(top = 8.dp)) {
+                    Pressable({ runCatching { links.openUri(url) } }, modifier = Modifier.padding(top = within)) {
                         Card(capsule = true) {
                             Mark(Symbols.safari, 17.dp)
                             EngineLabel(stringResource(R.string.open_the_blog_in_the_browser), color = wordUnderPointer(Theme.muted))

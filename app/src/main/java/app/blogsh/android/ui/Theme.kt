@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
@@ -449,6 +450,9 @@ fun FilterPill(label: String, selected: Boolean = false, modifier: Modifier = Mo
         voiced(label), maxLines = 1, color = if (selected) Color.White else wordUnderPointer(Theme.muted),
         style = mono(11f, bold = selected).copy(letterSpacing = 0.6.sp),
         modifier = modifier
+            // Which one holds is in the fill alone, and a reader of the
+            // screen does not see a fill.
+            .semantics { this.selected = selected }
             .clip(CircleShape)
             .background(if (selected) Theme.accent else Color.Transparent)
             .border(1.dp, if (selected) Theme.accent else Theme.keyLine, CircleShape)

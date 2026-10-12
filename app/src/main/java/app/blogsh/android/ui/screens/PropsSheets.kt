@@ -374,10 +374,12 @@ fun PropertiesForm(props: PropsAnswer, onDismiss: () -> Unit, done: suspend () -
 
     PaperSheet(onDismiss, name = stringResource(R.string.properties)) {
         Plate {
-            row { FieldRow(stringResource(R.string.series), series, { series = it }, labelWidth = 84.dp) }
+            // An empty field says it is one: without a word in it the row
+            // read as a fact with nothing to say.
+            row { FieldRow(stringResource(R.string.series), series, { series = it }, prompt = "—", labelWidth = 84.dp) }
             row {
                 FieldRow(
-                    stringResource(R.string.part_of_series), seriesPart, { seriesPart = it }, labelWidth = 84.dp,
+                    stringResource(R.string.part_of_series), seriesPart, { seriesPart = it }, prompt = "—", labelWidth = 84.dp,
                     keyboard = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
             }

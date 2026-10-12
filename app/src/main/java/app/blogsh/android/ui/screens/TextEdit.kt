@@ -357,7 +357,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                     }
                 }
                 unread?.let { ProblemLine(it) }
-                DeliveryNote(sent, textBytes, maxMb)
+                DeliveryNote(sent, textBytes, maxMb, media = shots.isNotEmpty() || media.isNotEmpty())
 
                 PrimaryButton(
                     stringResource(

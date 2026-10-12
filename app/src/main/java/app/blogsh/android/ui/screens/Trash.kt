@@ -311,7 +311,7 @@ fun TrashRowView(row: TrashRow) {
         }
         Spacer(Modifier.width(8.dp))
         engineInstant(row.date)?.let { day ->
-            Text(RowDate.short(day), color = Theme.accent, style = mono(11f, bold = false), modifier = Modifier.padding(top = 3.dp))
+            Text(RowDate.short(day), color = Theme.muted, style = mono(11f), modifier = Modifier.padding(top = 3.dp))
         }
         // What a tap on the row does, as a version's row says it: a row
         // in the archive looks the same and opens its post.

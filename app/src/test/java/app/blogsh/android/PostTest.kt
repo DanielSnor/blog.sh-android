@@ -517,6 +517,21 @@ class PostTest {
     }
 
     /**
+     * The sentence about what becomes of a picture on its way has two
+     * numbers, the long edge and how much fits: when the catalogue's
+     * sentence had three and lost one, the app went on handing it three,
+     * and said the server's limit where it meant what fits under it.
+     */
+    @Test
+    fun theSentenceAboutPicturesOnTheirWaySaysWhatFits() {
+        val said = English.say(R.string.a_picture_is_shrunk_to_px_on, arrayOf<Any>(Pictures.MAX_EDGE.toString(), (24 * 0.73).toInt()))
+        assertTrue(said, said.contains("${Pictures.MAX_EDGE} px") && said.contains("about 17 MB"))
+        assertFalse(said, said.contains("%") || said.contains("24"))
+        val template = java.io.File("src/main/res/values/strings.xml").readText().substringAfter("name=\"a_picture_is_shrunk_to_px_on\">").substringBefore("</string>")
+        assertEquals(listOf("%1\$s", "%2\$d"), Regex("""%\d\$[sd]""").findAll(template).map { it.value }.toList())
+    }
+
+    /**
      * A picture chosen and not put into the text is named before the
      * post goes -- it would stay behind, and the form is emptied after a
      * sending; one the text names is not.

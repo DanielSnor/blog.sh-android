@@ -199,11 +199,22 @@ fun EditorKeys(state: EditorState, symbol: Int, label: String, turn: () -> Unit)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.weight(1f)) { MarkBar { state.mark(it, words) } }
         Pressable(turn, modifier = Modifier.semantics { contentDescription = label }) {
-            Box(Modifier.size(34.dp, 30.dp).border(1.dp, Theme.keyLine, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+            Box(Modifier.keyFace().border(1.dp, Theme.keyLine, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
                 Mark(symbol, 16.dp)
             }
         }
     }
+}
+
+/**
+ * The face of a key over the text: as large as a finger needs among its
+ * neighbours, and larger with the type -- the marks on the keys grow,
+ * and a key that did not cut its own mark short.
+ */
+@Composable
+fun Modifier.keyFace(): Modifier {
+    val k = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    return size((40 * k).dp, (38 * k).dp)
 }
 
 /**
@@ -229,19 +240,19 @@ fun MarkBar(apply: (Marks.Kind) -> Unit) {
                 }
             )
             Pressable({ apply(kind) }, modifier = Modifier.semantics { contentDescription = name }) {
-                Box(Modifier.size(34.dp, 30.dp).border(1.dp, Theme.keyLine, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                Box(Modifier.keyFace().border(1.dp, Theme.keyLine, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
                     // Keys, so in the accent like every other key.
                     when (kind) {
                         Marks.Kind.Bold -> Text("B", color = Theme.accent, style = ui(14f, FontWeight.Bold))
                         Marks.Kind.Italic -> Text("I", color = Theme.accent, style = ui(15f).copy(fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic))
                         Marks.Kind.Strike -> Text("S", color = Theme.accent, style = ui(14f).copy(textDecoration = TextDecoration.LineThrough))
-                        Marks.Kind.Code -> Text("</>", color = Theme.accent, style = mono(11f))
+                        Marks.Kind.Code -> Text("</>", color = Theme.accent, style = mono(11f), softWrap = false)
                         Marks.Kind.Link -> Mark(Symbols.link, 16.dp, Theme.accent)
                         Marks.Kind.H2 -> Text("H", color = Theme.accent, style = ui(14f, FontWeight.Bold))
                         Marks.Kind.Quote -> Text("❝", color = Theme.accent, style = ui(14f))
                         Marks.Kind.Ul -> Text("•", color = Theme.accent, style = ui(16f, FontWeight.Bold))
                         Marks.Kind.Ol -> Text("1.", color = Theme.accent, style = mono(12f))
-                        Marks.Kind.Fence -> Text("```", color = Theme.accent, style = mono(11f))
+                        Marks.Kind.Fence -> Text("```", color = Theme.accent, style = mono(11f), softWrap = false)
                     }
                 }
             }
@@ -266,7 +277,14 @@ fun deliveryWords(): Delivery.Words = Delivery.Words(
  * /write/ page keeps under its pictures, in its words, and its legend.
  */
 @Composable
-fun DeliveryNote(shots: List<Shot>, textBytes: Int, maxMb: Int) {
+fun DeliveryNote(
+    shots: List<Shot>, textBytes: Int, maxMb: Int,
+    /**
+     * The form holds a picture or a video: what becomes of one on the
+     * way is said then, and not under a post of words alone.
+     */
+    media: Boolean = true,
+) {
     val over = Delivery.over(shots, textBytes, maxMb)
     if (shots.isNotEmpty() || textBytes > 0) {
         val line = stringResource(R.string.on_the_way, Delivery.describe(shots, textBytes, deliveryWords()))
@@ -276,7 +294,7 @@ fun DeliveryNote(shots: List<Shot>, textBytes: Int, maxMb: Int) {
             style = ui(13f, if (over) FontWeight.Medium else FontWeight.Normal), modifier = Modifier.gap(8),
         )
     }
-    Hint(stringResource(R.string.a_picture_is_shrunk_to_px_on, Pictures.MAX_EDGE.toString(), maxMb, (maxMb * 0.73).toInt()))
+    if (media) Hint(stringResource(R.string.a_picture_is_shrunk_to_px_on, Pictures.MAX_EDGE.toString(), (maxMb * 0.73).toInt()))
 }
 
 /**

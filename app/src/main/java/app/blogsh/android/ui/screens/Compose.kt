@@ -63,6 +63,7 @@ import app.blogsh.android.model.Reach
 import app.blogsh.android.model.Receipt
 import app.blogsh.android.model.Shot
 import app.blogsh.android.model.TagStore
+import app.blogsh.android.model.TextFile
 import app.blogsh.android.model.Unsent
 import app.blogsh.android.model.Waiting
 import app.blogsh.android.model.WaitingRoom
@@ -153,6 +154,8 @@ fun ComposeScreen() {
     var putBy by remember { mutableStateOf(false) }
     // Why the last picture chosen is not among the shots.
     var unread by remember { mutableStateOf<String?>(null) }
+    // Why the file last chosen for its text is not in the form.
+    var untaken by remember { mutableStateOf<String?>(null) }
     var importing by remember { mutableStateOf(false) }
     var sending by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<String?>(null) }
@@ -193,6 +196,22 @@ fun ComposeScreen() {
             }
         } finally {
             importing = false
+        }
+    }
+
+    // A text from a file: all of it into the text, where the caret is
+    // and as paragraphs of its own -- what is written already stays. A
+    // header the file opens with fills the title and the tags where the
+    // form has none; a field that is written in is left as it is.
+    suspend fun take(file: Uri) {
+        untaken = null
+        try {
+            val read = TextFile.read(context, file)
+            title = read.filling(title, read.title)
+            tags = read.filling(tags, read.tags)
+            if (read.body.isNotEmpty()) state.insertParagraph(read.body)
+        } catch (e: TextFile.NotTaken) {
+            untaken = e.why.words
         }
     }
 
@@ -340,6 +359,9 @@ fun ComposeScreen() {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { items ->
         scope.launch { load(items) }
     }
+    val textFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { file ->
+        if (file != null) scope.launch { take(file) }
+    }
     // The photo library is one place a picture can be; the device's
     // folders and whatever is plugged into it are others.
     val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { items ->
@@ -388,7 +410,11 @@ fun ComposeScreen() {
         Hint(stringResource(R.string.markdown_a_picture_goes_in_as_description))
         Plate(Modifier.gap(10)) {
             row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }
+            // A text finished elsewhere comes in whole, where the caret is.
+            row { Command(stringResource(R.string.add_a_text_from_a_file), Symbols.docText, enabled = !busy) { textFile.launch(TextFile.KINDS) } }
         }
+        untaken?.let { ProblemLine(it) }
+        Hint(stringResource(R.string.a_text_from_a_file_goes_in))
 
         SectionLabel(stringResource(R.string.pictures_and_video))
         Plate {

@@ -21,10 +21,12 @@ a_picture_is_shrunk_to_px_on	A picture is shrunk to %@ px on its long edge befor
 a_post	A post
 a_post_without_words	A post without words
 a_row_opens_its_post_swiped_to	A row opens its post. Swiped to a side it shows its keys; held, all of them -- and a row held can be carried to another place in the queue.
+a_text_from_a_file_goes_in	A text from a file goes in where the caret is, and the file stays as it is. In it, an empty line ends a paragraph.
 accent	Accent
 actions	Actions
 add_a_blog	Add a blog
 add_a_picture_or_video	Add a picture or video
+add_a_text_from_a_file	Add a text from a file
 add_as_another_blog	Add as another blog
 add_from_files	Add from files
 announce	Announce
@@ -275,6 +277,8 @@ the_code_is_not_whole_copy_the	The code is not whole. Copy the whole line under 
 the_default_scheme	The default scheme
 the_devices_a_code_let_in_to	The devices a code let in to this blog, as ./blog.sh pair --list shows them on the server. Another device is taken off there: ./blog.sh pair --revoke.
 the_engine_did_not_answer_as_data	The engine did not answer as data: %@
+the_file_could_not_be_read	The file could not be read.
+the_file_is_too_large_to_be	The file is too large to be the text of a post.
 the_first_is_the_size_the_system	The first is the size the system has; the others are steps above it. It holds on this device, for every blog.
 the_form_holds_a_post_that_is	The form holds a post that is being written: send it or clear it before another is taken back into it.
 the_header_and_the_text_as_the	The header and the text, as the editor opens them. A picture is named by its file name.
@@ -312,6 +316,7 @@ the_site_has_no_address_set_so	The site has no address set, so there is nothing 
 the_site_will_be_built_in_a	The site will be built in a moment.
 the_text_did_not_come_with_the	The text did not come with the answer.
 the_time_offered_is_the_next_free	The time offered is the next free publishing slot.
+there_is_no_text_in_the_file	There is no text in the file.
 this_blog_does_not_show_its_devices	This blog does not show its devices to the app yet; a newer ./blog.sh will. On the server, ./blog.sh pair --list shows them.
 this_blog_s_engine_does_not_offer	This blog's engine does not offer this check to the app yet. It comes with a newer ./blog.sh.
 this_code_is_of_a_newer_kind	This code is of a newer kind than the app knows. Update the app.
@@ -320,6 +325,7 @@ this_device_was_let_in_to_the_2	This device was let in to the blog by a code.
 this_device_was_taken_off_the_blog	This device was taken off the blog.
 this_device_was_taken_off_the_blog_2	This device was taken off the blog. A new code lets it in again: Pair again, in the blog's settings.
 this_device_s_key	This device's key
+this_file_is_not_plain_text_a	This file is not plain text. A document of a word processor (.docx, .rtf) has to be saved as plain text or Markdown first.
 this_is_not_a_code_from_blog	This is not a code from ./blog.sh pair.
 this_post_cannot_be_edited_here	This post cannot be edited here.
 this_post_cannot_be_edited_here_at	This post cannot be edited here: %@. At the desk, edit asks before losing it; here nobody could answer.

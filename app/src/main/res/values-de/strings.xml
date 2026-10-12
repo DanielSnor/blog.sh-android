@@ -24,10 +24,12 @@
     <string name="a_post">Ein Beitrag</string>
     <string name="a_post_without_words">Ein Beitrag ohne Worte</string>
     <string name="a_row_opens_its_post_swiped_to">Eine Zeile öffnet ihren Beitrag. Zur Seite gewischt zeigt sie ihre Tasten, gehalten alle — und eine gehaltene Zeile lässt sich an eine andere Stelle der Warteschlange tragen.</string>
+    <string name="a_text_from_a_file_goes_in">Ein Text aus einer Datei kommt dorthin, wo die Einfügemarke steht, und die Datei bleibt, wie sie ist. Ein Absatz endet darin mit einer Leerzeile.</string>
     <string name="accent">Hervorhebung</string>
     <string name="actions">Aktionen</string>
     <string name="add_a_blog">Blog hinzufügen</string>
     <string name="add_a_picture_or_video">Bild oder Video hinzufügen</string>
+    <string name="add_a_text_from_a_file">Text aus einer Datei hinzufügen</string>
     <string name="add_as_another_blog">Als weiteren Blog hinzufügen</string>
     <string name="add_from_files">Aus Dateien hinzufügen</string>
     <string name="announce">Ankündigen</string>
@@ -278,6 +280,8 @@
     <string name="the_default_scheme">Standardschema</string>
     <string name="the_devices_a_code_let_in_to">Die Geräte, die ein Code zu diesem Blog gelassen hat, so wie ./blog.sh pair --list sie auf dem Server zeigt. Ein anderes Gerät wird dort entfernt: ./blog.sh pair --revoke.</string>
     <string name="the_engine_did_not_answer_as_data">Die Engine hat nicht mit Daten geantwortet: %1$s</string>
+    <string name="the_file_could_not_be_read">Die Datei konnte nicht gelesen werden.</string>
+    <string name="the_file_is_too_large_to_be">Die Datei ist zu groß, um der Text eines Beitrags zu sein.</string>
     <string name="the_first_is_the_size_the_system">Die erste ist die Größe, die das System hat; die anderen sind Stufen darüber. Sie gilt auf diesem Gerät, für jedes Blog.</string>
     <string name="the_form_holds_a_post_that_is">Im Formular steht ein Beitrag, an dem geschrieben wird: sende ihn oder leere das Formular, bevor ein anderer hineingeholt wird.</string>
     <string name="the_header_and_the_text_as_the">Kopf und Text, wie der Editor sie öffnet. Ein Bild heißt wie seine Datei.</string>
@@ -315,6 +319,7 @@
     <string name="the_site_will_be_built_in_a">Die Website wird gleich gebaut.</string>
     <string name="the_text_did_not_come_with_the">Der Text kam nicht mit der Antwort.</string>
     <string name="the_time_offered_is_the_next_free">Die angebotene Zeit ist der nächste freie Slot.</string>
+    <string name="there_is_no_text_in_the_file">In der Datei steht kein Text.</string>
     <string name="this_blog_does_not_show_its_devices">Dieser Blog zeigt der App seine Geräte noch nicht; ein neueres ./blog.sh kann es. Auf dem Server zeigt ./blog.sh pair --list sie.</string>
     <string name="this_blog_s_engine_does_not_offer">Die Engine dieses Blogs bietet der App diese Prüfung noch nicht an. Sie kommt mit einem neueren ./blog.sh.</string>
     <string name="this_code_is_of_a_newer_kind">Dieser Code ist neuer, als die App ihn kennt. Aktualisiere die App.</string>
@@ -323,6 +328,7 @@
     <string name="this_device_was_taken_off_the_blog">Dieses Gerät ist vom Blog entfernt.</string>
     <string name="this_device_was_taken_off_the_blog_2">Dieses Gerät ist vom Blog entfernt. Ein neuer Code lässt es wieder herein: „Erneut koppeln“ in den Einstellungen des Blogs.</string>
     <string name="this_device_s_key">Schlüssel dieses Geräts</string>
+    <string name="this_file_is_not_plain_text_a">Diese Datei ist kein reiner Text. Ein Dokument aus einer Textverarbeitung (.docx, .rtf) muss zuerst als reiner Text oder Markdown gespeichert werden.</string>
     <string name="this_is_not_a_code_from_blog">Das ist kein Code von ./blog.sh pair.</string>
     <string name="this_post_cannot_be_edited_here">Dieser Beitrag lässt sich hier nicht bearbeiten.</string>
     <string name="this_post_cannot_be_edited_here_at">Dieser Beitrag lässt sich hier nicht bearbeiten: %1$s. Am Schreibtisch fragt edit, bevor etwas verloren geht; hier könnte niemand antworten.</string>

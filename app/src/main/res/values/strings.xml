@@ -24,10 +24,12 @@
     <string name="a_post">A post</string>
     <string name="a_post_without_words">A post without words</string>
     <string name="a_row_opens_its_post_swiped_to">A row opens its post. Swiped to a side it shows its keys; held, all of them -- and a row held can be carried to another place in the queue.</string>
+    <string name="a_text_from_a_file_goes_in">A text from a file goes in where the caret is, and the file stays as it is. In it, an empty line ends a paragraph.</string>
     <string name="accent">Accent</string>
     <string name="actions">Actions</string>
     <string name="add_a_blog">Add a blog</string>
     <string name="add_a_picture_or_video">Add a picture or video</string>
+    <string name="add_a_text_from_a_file">Add a text from a file</string>
     <string name="add_as_another_blog">Add as another blog</string>
     <string name="add_from_files">Add from files</string>
     <string name="announce">Announce</string>
@@ -278,6 +280,8 @@
     <string name="the_default_scheme">The default scheme</string>
     <string name="the_devices_a_code_let_in_to">The devices a code let in to this blog, as ./blog.sh pair --list shows them on the server. Another device is taken off there: ./blog.sh pair --revoke.</string>
     <string name="the_engine_did_not_answer_as_data">The engine did not answer as data: %1$s</string>
+    <string name="the_file_could_not_be_read">The file could not be read.</string>
+    <string name="the_file_is_too_large_to_be">The file is too large to be the text of a post.</string>
     <string name="the_first_is_the_size_the_system">The first is the size the system has; the others are steps above it. It holds on this device, for every blog.</string>
     <string name="the_form_holds_a_post_that_is">The form holds a post that is being written: send it or clear it before another is taken back into it.</string>
     <string name="the_header_and_the_text_as_the">The header and the text, as the editor opens them. A picture is named by its file name.</string>
@@ -315,6 +319,7 @@
     <string name="the_site_will_be_built_in_a">The site will be built in a moment.</string>
     <string name="the_text_did_not_come_with_the">The text did not come with the answer.</string>
     <string name="the_time_offered_is_the_next_free">The time offered is the next free publishing slot.</string>
+    <string name="there_is_no_text_in_the_file">There is no text in the file.</string>
     <string name="this_blog_does_not_show_its_devices">This blog does not show its devices to the app yet; a newer ./blog.sh will. On the server, ./blog.sh pair --list shows them.</string>
     <string name="this_blog_s_engine_does_not_offer">This blog\'s engine does not offer this check to the app yet. It comes with a newer ./blog.sh.</string>
     <string name="this_code_is_of_a_newer_kind">This code is of a newer kind than the app knows. Update the app.</string>
@@ -323,6 +328,7 @@
     <string name="this_device_was_taken_off_the_blog">This device was taken off the blog.</string>
     <string name="this_device_was_taken_off_the_blog_2">This device was taken off the blog. A new code lets it in again: Pair again, in the blog\'s settings.</string>
     <string name="this_device_s_key">This device\'s key</string>
+    <string name="this_file_is_not_plain_text_a">This file is not plain text. A document of a word processor (.docx, .rtf) has to be saved as plain text or Markdown first.</string>
     <string name="this_is_not_a_code_from_blog">This is not a code from ./blog.sh pair.</string>
     <string name="this_post_cannot_be_edited_here">This post cannot be edited here.</string>
     <string name="this_post_cannot_be_edited_here_at">This post cannot be edited here: %1$s. At the desk, edit asks before losing it; here nobody could answer.</string>

@@ -24,10 +24,12 @@
     <string name="a_post">Příspěvek</string>
     <string name="a_post_without_words">Příspěvek beze slov</string>
     <string name="a_row_opens_its_post_swiped_to">Řádek otevře příspěvek. Tahem do strany ukáže své klávesy, podržením všechny — a podržený řádek jde přenést na jiné místo ve frontě.</string>
+    <string name="a_text_from_a_file_goes_in">Text ze souboru se vloží tam, kde je kurzor, a soubor zůstane, jak je. Odstavec v něm končí prázdný řádek.</string>
     <string name="accent">Zvýraznění</string>
     <string name="actions">Akce</string>
     <string name="add_a_blog">Přidat blog</string>
     <string name="add_a_picture_or_video">Přidat obrázek nebo video</string>
+    <string name="add_a_text_from_a_file">Přidat text ze souboru</string>
     <string name="add_as_another_blog">Přidat jako další blog</string>
     <string name="add_from_files">Přidat ze souborů</string>
     <string name="announce">Oznámit</string>
@@ -278,6 +280,8 @@
     <string name="the_default_scheme">Výchozí schéma</string>
     <string name="the_devices_a_code_let_in_to">Zařízení, která k tomuhle blogu pustil kód, tak jak je na serveru ukazuje ./blog.sh pair --list. Jiné zařízení se odebírá tam: ./blog.sh pair --revoke.</string>
     <string name="the_engine_did_not_answer_as_data">Engine neodpověděl daty: %1$s</string>
+    <string name="the_file_could_not_be_read">Soubor se nepodařilo načíst.</string>
+    <string name="the_file_is_too_large_to_be">Soubor je moc velký na to, aby to byl text příspěvku.</string>
     <string name="the_first_is_the_size_the_system">První je velikost, jakou má systém; další jsou stupně nad ní. Platí na tomto zařízení a pro všechny blogy.</string>
     <string name="the_form_holds_a_post_that_is">Ve formuláři je rozepsaný příspěvek: odešli ho nebo formulář vyprázdni, než do něj vrátíš jiný.</string>
     <string name="the_header_and_the_text_as_the">Hlavička a text, jak je otevírá editor. Obrázek je pojmenovaný svým souborem.</string>
@@ -315,6 +319,7 @@
     <string name="the_site_will_be_built_in_a">Za okamžik web sestavím.</string>
     <string name="the_text_did_not_come_with_the">Text v odpovědi nepřišel.</string>
     <string name="the_time_offered_is_the_next_free">Nabídnutý čas je nejbližší volný slot.</string>
+    <string name="there_is_no_text_in_the_file">V souboru žádný text není.</string>
     <string name="this_blog_does_not_show_its_devices">Tenhle blog zatím appce svá zařízení neukáže; novější ./blog.sh to umí. Na serveru je ukáže ./blog.sh pair --list.</string>
     <string name="this_blog_s_engine_does_not_offer">Engine tohohle blogu tuhle kontrolu appce zatím nenabízí. Přijde s novějším ./blog.sh.</string>
     <string name="this_code_is_of_a_newer_kind">Tenhle kód je novějšího druhu, než appka zná. Aktualizuj appku.</string>
@@ -323,6 +328,7 @@
     <string name="this_device_was_taken_off_the_blog">Tohle zařízení je z blogu odebráno.</string>
     <string name="this_device_was_taken_off_the_blog_2">Tohle zařízení je z blogu odebráno. Znovu ho pustí nový kód: „Spárovat znovu“ v nastavení blogu.</string>
     <string name="this_device_s_key">Klíč tohoto zařízení</string>
+    <string name="this_file_is_not_plain_text_a">Tenhle soubor není prostý text. Dokument z textového editoru (.docx, .rtf) je potřeba nejdřív uložit jako prostý text nebo Markdown.</string>
     <string name="this_is_not_a_code_from_blog">Tohle není kód z ./blog.sh pair.</string>
     <string name="this_post_cannot_be_edited_here">Tenhle příspěvek tady upravit nejde.</string>
     <string name="this_post_cannot_be_edited_here_at">Tenhle příspěvek tady upravit nejde: %1$s. U počítače se edit zeptá, než to ztratí; tady by neměl kdo odpovědět.</string>

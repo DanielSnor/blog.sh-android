@@ -11,4 +11,5 @@
     <string name="android_colour_number">The colour as a number</string>
     <string name="android_paste">Paste</string>
     <string name="android_picture_needs_network">The picture could not be read: it is most likely kept only in the cloud, and without a network it cannot be fetched. One that is on this device whole — taken just now, say — can be added.</string>
+    <string name="android_taken_off_on_the_server">Taken off on the server with:</string>
 </resources>

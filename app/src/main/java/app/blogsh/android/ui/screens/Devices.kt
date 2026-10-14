@@ -148,21 +148,25 @@ fun DevicesSheet(onBack: () -> Unit) {
                         if (listed.devices.isEmpty()) {
                             Hint(stringResource(R.string.no_device_was_let_in_to_this), Modifier.gap(10))
                         } else {
+                            // Each row says what is done about it: this device can take
+                            // itself off, here, in its own row; another is taken off at
+                            // the server, and its row says by what. A key for it set
+                            // apart under the list left it to be guessed which row it was.
                             Plate(Modifier.gap(14)) {
-                                for (device in listed.devices) {
-                                    row { DeviceRow(device, listed.isThis(device, key)) }
+                                listed.devices.forEachIndexed { index, device ->
+                                    val own = listed.isThis(device, key)
+                                    row {
+                                        DeviceRow(
+                                            index + 1, device, own,
+                                            leave = if (own && listed.mayLeave) ({ confirming = true }) else null,
+                                            leaving = leaving,
+                                        )
+                                    }
                                 }
                             }
                             Hint(stringResource(R.string.the_devices_a_code_let_in_to))
                         }
-                        if (listed.mayLeave) {
-                            // What cannot be taken back, set apart and last.
-                            Plate(Modifier.gap(28)) {
-                                row {
-                                    Command(stringResource(R.string.take_this_device_off_the_blog), Symbols.minusCircle, danger = true, busy = leaving) { confirming = true }
-                                }
-                            }
-                        } else if (listed.holdsThis(key)) {
+                        if (!listed.mayLeave && listed.holdsThis(key)) {
                             Hint(stringResource(R.string.the_blog_cannot_tell_yet_which_of))
                         }
                     }
@@ -180,16 +184,32 @@ fun DevicesSheet(onBack: () -> Unit) {
     }
 }
 
-/** One device: its name, the mark on this one, and the key the server knows it by. */
+/**
+ * One device: its number as `./blog.sh pair --list` counts it, its name,
+ * the mark on this one, the key the server knows it by -- and what is
+ * done about it: this one is taken off by the key under it, another on
+ * the server, by the command under it.
+ */
 @Composable
-private fun DeviceRow(device: PairedDevices.Device, own: Boolean) {
+private fun DeviceRow(number: Int, device: PairedDevices.Device, own: Boolean, leave: (() -> Unit)?, leaving: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("$number", color = Theme.muted, style = mono(13f), modifier = Modifier.alignByBaseline())
             Text(device.name.ifEmpty { "—" }, color = Theme.ink, style = ui(15f, FontWeight.Medium), modifier = Modifier.alignByBaseline().weight(1f, fill = false))
             if (own) EngineLabel(stringResource(R.string.this_device), Modifier.alignByBaseline(), color = Theme.accent)
         }
         if (device.fingerprint.isNotEmpty()) {
             SelectionContainer { Text(device.fingerprint, color = Theme.muted, style = mono(12f, bold = false)) }
+        }
+        if (leave != null) {
+            Box(Modifier.padding(top = 6.dp)) {
+                Command(stringResource(R.string.take_this_device_off_the_blog), Symbols.minusCircle, danger = true, busy = leaving, onClick = leave)
+            }
+        } else if (!own && device.fingerprint.isNotEmpty()) {
+            Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.android_taken_off_on_the_server), color = Theme.muted, style = ui(12f))
+                SelectionContainer { Text("./blog.sh pair --revoke ${device.fingerprint}", color = Theme.ink, style = mono(12f, bold = false)) }
+            }
         }
     }
 }

@@ -383,6 +383,9 @@ fun BuildMark(modifier: Modifier = Modifier, stamp: BuildStamp = BuildStamp.own)
         verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(painterResource(R.drawable.engine_mark), contentDescription = null, modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
+        // The version first: it is what a person asks about. The time and
+        // the commit under it tell one copy from another.
+        stamp.version?.let { Text(it, color = Theme.ink, style = mono(13f)) }
         stamp.built?.let { Text(RowDate.numeric(Instant.ofEpochMilli(it)), color = Theme.muted, style = mono(12f)) }
         stamp.commit?.let { SelectionContainer { Text(it, color = Theme.muted, style = mono(12f)) } }
     }

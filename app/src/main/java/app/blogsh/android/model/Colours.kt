@@ -150,22 +150,26 @@ data class Colours(val light: Shades, val dark: Shades) {
 }
 
 /**
- * Which build this is: the commit it was made from and when it was made.
- * Written into the app by the build itself (two lines: the commit, the
- * time), so one copy of the app can be told from another without asking
- * the machine that built it.
+ * Which build this is: its version, the commit it was made from and when
+ * it was made. The commit and the time are written into the app by the
+ * build itself (two lines), so one copy of the app can be told from
+ * another without asking the machine that built it; the version is the
+ * one a person asks about.
  */
 data class BuildStamp(
     /** The short commit; a plus after it for a tree that had changes not committed. */
     val commit: String?,
     /** When it was built, in milliseconds since 1970. */
     val built: Long?,
+    /** The version, as the app is named by it: 0.7.4. */
+    val version: String? = null,
 ) {
     companion object {
         /** This build's own, as its build wrote it into the app. */
         var own: BuildStamp
             get() = said ?: runCatching { of(app.blogsh.android.BlogshApp.context.assets.open("BuildStamp.txt").bufferedReader().use { it.readText() }) }
-                .getOrDefault(BuildStamp(null, null)).also { said = it }
+                .getOrDefault(BuildStamp(null, null))
+                .copy(version = app.blogsh.android.BuildConfig.VERSION_NAME.ifEmpty { null }).also { said = it }
             /** Only a test says another: a picture of the settings is not to change with every build. */
             internal set(value) {
                 said = value

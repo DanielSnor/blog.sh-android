@@ -10,4 +10,5 @@
     <string name="android_colour_number">Barva číslem</string>
     <string name="android_paste">Vložit</string>
     <string name="android_picture_needs_network">Fotku se nepodařilo načíst: nejspíš je uložená jen v cloudu a bez sítě ji nejde stáhnout. Přidat jde fotka, která je v zařízení celá — třeba právě vyfocená.</string>
+    <string name="android_taken_off_on_the_server">Na serveru se odebere příkazem:</string>
 </resources>

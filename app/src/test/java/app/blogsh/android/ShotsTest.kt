@@ -161,7 +161,7 @@ class ShotsTest(private val look: Look) {
         Locale.setDefault(Locale.forLanguageTag(look.lang))
         TimeZone.setDefault(TimeZone.getTimeZone("Europe/Prague"))
         Now.clock = { noon }
-        BuildStamp.own = BuildStamp("9e1de85", Instant.parse("2026-10-08T13:31:11Z").toEpochMilli())
+        BuildStamp.own = BuildStamp("9e1de85", Instant.parse("2026-10-08T13:31:11Z").toEpochMilli(), "0.7.4")
         Engine.stand = ::answer
         // One blog, the same for every picture, with nothing kept for it.
         for (blog in Blogs.all) Blogs.remove(blog.id)

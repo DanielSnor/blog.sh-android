@@ -432,6 +432,15 @@ data class TranslationEntry(
     val media: List<String>,
     val preview: String,
     val base: String,
+    /**
+     * False where the text cannot say all the translation holds -- a
+     * second link card, a player from a source the text has no word
+     * for: saved from here, that would be lost, and the engine says no.
+     * An older engine says nothing, and its translations are text.
+     */
+    val editable: Boolean = true,
+    /** What it holds that the text cannot say, where it is not editable. */
+    val problem: String? = null,
 )
 
 /** `restore --json`: what the trash holds. */

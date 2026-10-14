@@ -382,6 +382,30 @@ class OldAddressTest {
 }
 
 /**
+ * A translation as `translate --json` gives it. A mistake here is a
+ * translation opened for writing that no save of it can keep.
+ */
+class TranslationAnswerTest {
+    private val base = """"slug":"jaro","lang":"en","title":"Spring","written":true,"text":"---\ntitle: Spring\n---\n\nWords.","original":"Slova.","media":[],"preview":"/draft/x/jaro/","base":"abc""""
+
+    /** One the text cannot say whole says so, and why. */
+    @Test
+    fun aTranslationTheTextCannotSayIsNotEditable() {
+        val post = Engine.decode<app.blogsh.android.model.TranslationAnswer>("""{"ok":true,"post":{$base,"editable":false,"problem":"a second link card"}}""".toByteArray()).post
+        assertFalse(post.editable)
+        assertEquals("a second link card", post.problem)
+    }
+
+    /** An older engine says nothing of it: its translations are text, and editable. */
+    @Test
+    fun anOlderEnginesTranslationIsEditable() {
+        val post = Engine.decode<app.blogsh.android.model.TranslationAnswer>("""{"ok":true,"post":{$base}}""".toByteArray()).post
+        assertTrue(post.editable)
+        assertNull(post.problem)
+    }
+}
+
+/**
  * A no from the blog, and a blog that is held by another run. A mistake
  * here is a refusal shown as the bytes it came in, or a write given up
  * on that only had to wait its turn.

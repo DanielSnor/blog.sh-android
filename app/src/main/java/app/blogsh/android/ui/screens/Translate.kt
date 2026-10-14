@@ -102,7 +102,8 @@ fun TranslateScreen(slug: String, lang: String) {
             val answer = Engine.call<TranslationAnswer>("translate", slug, "--lang", lang)
             entry = answer.post
             // The blog's words, or the ones written here and never saved.
-            val kept = blog?.let { Unsaved.kept(it, slug, what, BlogShelf.notes) }
+            // What was written here is brought back only where it can be saved.
+            val kept = if (answer.post.editable) blog?.let { Unsaved.kept(it, slug, what, BlogShelf.notes) } else null
             if (kept != null && kept.text != answer.post.text) {
                 broughtBack = kept
                 state.set(kept.text)
@@ -205,9 +206,18 @@ fun TranslateScreen(slug: String, lang: String) {
                 Hint(stringResource(R.string.only_the_words_are_translated_the_date))
 
                 SectionLabel(stringResource(R.string.s_in, languageName))
+                // What the text cannot say is not written over from here:
+                // the translation is read, and changed at the desk.
+                if (!post.editable) {
+                    Hint(
+                        post.problem?.let { stringResource(R.string.this_post_cannot_be_edited_here_at, it) }
+                            ?: stringResource(R.string.this_post_cannot_be_edited_here),
+                        Modifier.padding(bottom = 10.dp),
+                    )
+                }
                 Plate {
                     // Left alone while a save is on its way.
-                    row { PaperEditor(state, minHeight = 280.dp, enabled = !saving, original = post.text) }
+                    row { PaperEditor(state, minHeight = 280.dp, enabled = post.editable && !saving, original = post.text) }
                 }
                 Plate(Modifier.gap(10)) {
                     row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }
@@ -216,7 +226,7 @@ fun TranslateScreen(slug: String, lang: String) {
                 PrimaryButton(
                     if (saving) stringResource(R.string.saving) else stringResource(R.string.save_the_text, languageName),
                     modifier = Modifier.gap(22),
-                    enabled = !(saving || text == post.text),
+                    enabled = !(saving || !post.editable || text == post.text),
                     busy = saving,
                 ) { Desk.outliving.launch { save(state.text) } }
                 problem?.let { ProblemLine(it) }

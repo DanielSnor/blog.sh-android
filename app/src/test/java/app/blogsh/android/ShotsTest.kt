@@ -52,6 +52,7 @@ import app.blogsh.android.ui.screens.QueueScreen
 import app.blogsh.android.ui.screens.SettingsSheet
 import app.blogsh.android.ui.screens.SiteScreen
 import app.blogsh.android.ui.screens.TextEditScreen
+import app.blogsh.android.ui.screens.TranslateScreen
 import app.blogsh.android.ui.screens.TrashScreen
 import app.blogsh.android.ui.screens.WaitingSheet
 import app.blogsh.android.ui.worn
@@ -493,6 +494,20 @@ class ShotsTest(private val look: Look) {
             """{"slug":"jen-fotky","year":"2025","date":"2025-08-14T18:30:00+02:00","tags":[],"media_only":true}]}"""
         Engine.stand = { args -> if (args == listOf("restore")) held.toByteArray() else answer(args) }
         shot("trash-rows", MenuEntry.Restore) { TrashScreen() }
+    }
+
+    /**
+     * A translation the text cannot say whole: it is read, the editor
+     * stands locked under a sentence that says why, and nothing offers
+     * to save it.
+     */
+    @Test
+    fun aTranslationThatCannotBeEditedHere() {
+        val held = """{"ok":true,"post":{"slug":"dobehnuto","lang":"en","title":"Finished","written":true,""" +
+            """"text":"---\ntitle: Finished\n---\n\nTen kilometres in the rain.","original":"---\ntitle: Doběhnuto\n---\n\nDeset kilometrů v dešti.",""" +
+            """"media":[],"preview":"/draft/5dddc3f0aa0a4195/dobehnuto/","base":"abc","editable":false,"problem":"a second link card"}}"""
+        Engine.stand = { args -> if (args.firstOrNull() == "translate") held.toByteArray() else answer(args) }
+        shot("translate-not-editable", MenuEntry.Post) { TranslateScreen("dobehnuto", "en") }
     }
 
     /** The practice blog, open: it answers for itself, with no server asked. */

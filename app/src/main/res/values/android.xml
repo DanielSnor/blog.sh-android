@@ -12,4 +12,10 @@
     <string name="android_paste">Paste</string>
     <string name="android_picture_needs_network">The picture could not be read: it is most likely kept only in the cloud, and without a network it cannot be fetched. One that is on this device whole — taken just now, say — can be added.</string>
     <string name="android_taken_off_on_the_server">Taken off on the server with:</string>
+    <string name="android_check_for_a_newer_version">Check for a newer version</string>
+    <string name="android_newer_version">Version %1$s is out — this is %2$s.</string>
+    <string name="android_open_the_release">Open the release</string>
+    <string name="android_newest_version">This is the newest version.</string>
+    <string name="android_no_release_yet">No version has been released yet.</string>
+    <string name="android_could_not_ask_github">GitHub could not be asked. Is this device on a network?</string>
 </resources>

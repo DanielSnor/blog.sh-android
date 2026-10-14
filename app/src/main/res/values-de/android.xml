@@ -11,4 +11,10 @@
     <string name="android_paste">Einfügen</string>
     <string name="android_picture_needs_network">Das Bild konnte nicht gelesen werden: Es liegt wohl nur in der Cloud und lässt sich ohne Netz nicht laden. Hinzufügen lässt sich eines, das ganz auf diesem Gerät liegt — etwa ein eben aufgenommenes.</string>
     <string name="android_taken_off_on_the_server">Auf dem Server wird es so entfernt:</string>
+    <string name="android_check_for_a_newer_version">Nach einer neueren Version suchen</string>
+    <string name="android_newer_version">Version %1$s ist erschienen — hier läuft %2$s.</string>
+    <string name="android_open_the_release">Veröffentlichung öffnen</string>
+    <string name="android_newest_version">Das ist die neueste Version.</string>
+    <string name="android_no_release_yet">Bisher ist keine Version erschienen.</string>
+    <string name="android_could_not_ask_github">GitHub war nicht zu erreichen. Ist das Gerät mit einem Netz verbunden?</string>
 </resources>

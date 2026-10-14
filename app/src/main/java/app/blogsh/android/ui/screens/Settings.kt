@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -61,6 +63,7 @@ import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
 import app.blogsh.android.model.AppLanguage
@@ -72,6 +75,8 @@ import app.blogsh.android.model.Reading
 import app.blogsh.android.model.Shades
 import app.blogsh.android.model.TextSize
 import app.blogsh.android.model.Tones
+import app.blogsh.android.model.Updates
+import app.blogsh.android.ui.Busy
 import app.blogsh.android.ui.DialogKey
 import app.blogsh.android.ui.EngineLabel
 import app.blogsh.android.ui.Faces
@@ -96,6 +101,7 @@ import app.blogsh.android.ui.ui
 import app.blogsh.android.ui.wordUnderPointer
 import app.blogsh.android.ui.worn
 import java.time.Instant
+import kotlinx.coroutines.launch
 
 /**
  * What is the app's own and no blog's: how it is read on this device.
@@ -378,16 +384,51 @@ private fun Track(name: String, at: Float, colours: List<Color>, onMove: (Float)
  */
 @Composable
 fun BuildMark(modifier: Modifier = Modifier, stamp: BuildStamp = BuildStamp.own) {
+    val scope = rememberCoroutineScope()
+    val links = LocalUriHandler.current
+    // Whether a newer version is out: asked when the mark is tapped, and
+    // only then -- GitHub hears nothing of this device until somebody asks.
+    var asking by remember { mutableStateOf(false) }
+    var said by remember { mutableStateOf<Updates.Said?>(null) }
+    val current = stamp.version ?: app.blogsh.android.BuildConfig.VERSION_NAME
     Column(
         modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
         verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Image(painterResource(R.drawable.engine_mark), contentDescription = null, modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
+        Pressable(
+            {
+                if (!asking) scope.launch {
+                    asking = true
+                    said = null
+                    try {
+                        said = Updates.ask(current)
+                    } finally {
+                        asking = false
+                    }
+                }
+            },
+            label = stringResource(R.string.android_check_for_a_newer_version),
+        ) {
+            Image(painterResource(R.drawable.engine_mark), contentDescription = stringResource(R.string.android_check_for_a_newer_version), modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)))
+        }
         // The version first: it is what a person asks about. The time and
         // the commit under it tell one copy from another.
         stamp.version?.let { Text(it, color = Theme.ink, style = mono(13f)) }
         stamp.built?.let { Text(RowDate.numeric(Instant.ofEpochMilli(it)), color = Theme.muted, style = mono(12f)) }
         stamp.commit?.let { SelectionContainer { Text(it, color = Theme.muted, style = mono(12f)) } }
+        if (asking) Busy(16.dp, modifier = Modifier.padding(top = 4.dp))
+        when (val now = said) {
+            null -> {}
+            is Updates.Said.Newer -> {
+                Text(stringResource(R.string.android_newer_version, now.version, current), color = Theme.ink, style = ui(14f), textAlign = TextAlign.Center)
+                Pressable({ runCatching { links.openUri(now.page) } }) {
+                    Text(stringResource(R.string.android_open_the_release), color = Theme.accent, style = ui(15f, FontWeight.Medium))
+                }
+            }
+            Updates.Said.Newest -> Text(stringResource(R.string.android_newest_version), color = Theme.muted, style = ui(13f), textAlign = TextAlign.Center)
+            Updates.Said.NoneYet -> Text(stringResource(R.string.android_no_release_yet), color = Theme.muted, style = ui(13f), textAlign = TextAlign.Center)
+            Updates.Said.Unknown -> Text(stringResource(R.string.android_could_not_ask_github), color = Theme.danger, style = ui(13f), textAlign = TextAlign.Center)
+        }
     }
 }
 

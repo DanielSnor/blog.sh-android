@@ -16,8 +16,24 @@ android {
         applicationId = "app.blogsh.android"
         minSdk = 29
         targetSdk = 36
-        versionCode = 13
-        versionName = "0.7.5"
+        versionCode = 14
+        versionName = "0.8.0"
+    }
+
+    // The key a release is signed with: kept on the machine that builds
+    // it, never in the repository -- the key in one file, its password in
+    // another. Without them the release is built unsigned, and nothing
+    // that is handed out is signed with anything else by mistake.
+    val signing = File(System.getProperty("user.home"), ".blogsh-signing")
+    val releaseKey = File(signing, "blogsh-release.jks")
+    val releasePassword = File(signing, "password")
+    if (releaseKey.isFile && releasePassword.isFile) {
+        signingConfigs.create("release") {
+            storeFile = releaseKey
+            storePassword = releasePassword.readText().trimEnd('\n', '\r')
+            keyAlias = "blogsh"
+            keyPassword = releasePassword.readText().trimEnd('\n', '\r')
+        }
     }
 
     buildTypes {
@@ -25,6 +41,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
         // The release as it will ship -- shrunk -- signed with the debug key,
         // to try on a device before there is a release key.

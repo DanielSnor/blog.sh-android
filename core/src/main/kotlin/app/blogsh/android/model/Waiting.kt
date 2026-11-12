@@ -1,6 +1,5 @@
 package app.blogsh.android.model
 
-import app.blogsh.android.BlogshApp
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.util.UUID
@@ -89,7 +88,7 @@ data class Belongings(
  * Files, not preferences: a delivery is megabytes.
  */
 object WaitingRoom {
-    val home: File get() = File(BlogshApp.context.filesDir, "waiting")
+    val home: File get() = File(Device.files, "waiting")
 
     private fun room(blog: String, home: File) = File(home, File(blog).name)
 
@@ -203,7 +202,7 @@ object WaitingRoom {
                 kind = if (piece.video) Shot.Kind.Video else Shot.Kind.Picture,
                 poster = runCatching { file(piece.name, "posters", place).readBytes() }.getOrNull(),
                 converted = piece.converted,
-                thumb = if (piece.video) null else Media.thumbnail(data),
+                thumb = if (piece.video) null else Device.thumbnail(data),
             )
         }
     }

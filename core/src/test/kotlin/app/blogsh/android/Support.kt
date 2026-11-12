@@ -8,13 +8,14 @@ object Fixture {
 }
 
 /**
- * The app's English, read from the resources as they are written: a test
- * has no device, and what an error says is part of what is tested.
+ * The app's English, read from the Android app's resources as they are
+ * written: a test has no device, and what an error says is part of what
+ * is tested.
  */
 object English {
     private val texts: Map<String, String> by lazy {
-        // The words carried over from the iOS app, and the ones only this app has.
-        val xml = java.io.File("src/main/res/values/strings.xml").readText() + java.io.File("src/main/res/values/android.xml").readText()
+        // The words carried over from the iOS app, and the ones only the Android app has.
+        val xml = java.io.File("../app/src/main/res/values/strings.xml").readText() + java.io.File("../app/src/main/res/values/android.xml").readText()
         Regex("""<string name="([^"]+)">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL).findAll(xml).associate { m ->
             var text = m.groupValues[2]
             if (text.length >= 2 && text.startsWith("\"") && text.endsWith("\"")) text = text.substring(1, text.length - 1)
@@ -23,12 +24,13 @@ object English {
             m.groupValues[1] to text
         }
     }
-    private val names: Map<Int, String> by lazy { R.string::class.java.fields.associate { it.getInt(null) to it.name } }
-
-    fun say(id: Int, args: Array<out Any>): String {
-        val text = texts.getValue(names.getValue(id))
+    /** The words under this name, with what they say filled in. */
+    fun say(name: String, args: Array<out Any>): String {
+        val text = texts.getValue(name)
         return if (args.isEmpty()) text.replace("%%", "%") else String.format(text, *args)
     }
+
+    fun say(word: app.blogsh.android.model.Word, args: Array<out Any>): String = say(word.name, args)
 
     /** Called by a test whose subject speaks. */
     fun speak() {

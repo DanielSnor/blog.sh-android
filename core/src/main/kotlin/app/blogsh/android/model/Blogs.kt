@@ -1,10 +1,8 @@
 package app.blogsh.android.model
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import app.blogsh.android.BlogshApp
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
@@ -118,16 +116,6 @@ interface Notes {
     fun keys(): Set<String>
 }
 
-/** The app's own preferences. */
-class PreferenceNotes(context: Context, name: String = "blogsh") : Notes {
-    private val prefs = context.getSharedPreferences(name, Context.MODE_PRIVATE)
-    override fun read(key: String): String? = runCatching { prefs.getString(key, null) }.getOrNull()
-    override fun keys(): Set<String> = prefs.all.keys
-    override fun write(key: String, value: String?) {
-        prefs.edit().apply { if (value == null) remove(key) else putString(key, value) }.apply()
-    }
-}
-
 /**
  * Where the blogs are written down. Plain preferences, read and written
  * from wherever the app happens to be running -- the engine's calls read
@@ -137,7 +125,7 @@ object BlogShelf {
     const val LIST_KEY = "blogs"
     const val CURRENT_KEY = "blogs.current"
 
-    val notes: Notes by lazy { PreferenceNotes(BlogshApp.context) }
+    val notes: Notes get() = Device.notes
 
     fun read(from: Notes = notes): Pair<List<Blog>, String?> {
         val blogs = from.read(LIST_KEY)?.let { runCatching { EngineJson.decodeFromString<List<Blog>>(it) }.getOrNull() } ?: emptyList()

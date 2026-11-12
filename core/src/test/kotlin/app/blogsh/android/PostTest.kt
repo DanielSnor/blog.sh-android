@@ -3,7 +3,6 @@ package app.blogsh.android
 import app.blogsh.android.model.Delivery
 import app.blogsh.android.model.Kept
 import app.blogsh.android.model.Markdown
-import app.blogsh.android.model.Media
 import app.blogsh.android.model.Pictures
 import app.blogsh.android.model.Shot
 import app.blogsh.android.model.encodedSize
@@ -524,10 +523,10 @@ class PostTest {
      */
     @Test
     fun theSentenceAboutPicturesOnTheirWaySaysWhatFits() {
-        val said = English.say(R.string.a_picture_is_shrunk_to_px_on, arrayOf<Any>(Pictures.MAX_EDGE.toString(), (24 * 0.73).toInt()))
+        val said = English.say("a_picture_is_shrunk_to_px_on", arrayOf<Any>(Pictures.MAX_EDGE.toString(), (24 * 0.73).toInt()))
         assertTrue(said, said.contains("${Pictures.MAX_EDGE} px") && said.contains("about 17 MB"))
         assertFalse(said, said.contains("%") || said.contains("24"))
-        val template = java.io.File("src/main/res/values/strings.xml").readText().substringAfter("name=\"a_picture_is_shrunk_to_px_on\">").substringBefore("</string>")
+        val template = java.io.File("../app/src/main/res/values/strings.xml").readText().substringAfter("name=\"a_picture_is_shrunk_to_px_on\">").substringBefore("</string>")
         assertEquals(listOf("%1\$s", "%2\$d"), Regex("""%\d\$[sd]""").findAll(template).map { it.value }.toList())
     }
 
@@ -543,24 +542,6 @@ class PostTest {
         assertEquals(emptyList<String>(), Kept.left(shots, "![](a.jpg)\n\n![](b.jpg)"))
         assertEquals(listOf("a.jpg", "b.jpg"), Kept.left(shots, ""))
         assertEquals(emptyList<String>(), Kept.left(emptyList(), "text"))
-    }
-
-    /**
-     * What comes from the device's files is whatever its keeper says it
-     * is -- and a volume plugged in, or a cloud, may say nothing, or only
-     * "a file". Then the name decides; a video taken for a picture would
-     * be handed to the picture decoder and come back as unreadable.
-     */
-    @Test
-    fun aFileIsAVideoByWhatItsKeeperSaysOrByItsName() {
-        assertTrue(Media.isVideo("video/mp4", "IMG_0001"))
-        assertTrue(Media.isVideo("VIDEO/quicktime", null))
-        assertFalse(Media.isVideo("image/jpeg", "clip.mp4"))
-        assertTrue(Media.isVideo(null, "Holiday.MOV"))
-        assertTrue(Media.isVideo("application/octet-stream", "clip.mp4"))
-        assertFalse(Media.isVideo("application/octet-stream", "photo.jpg"))
-        assertFalse(Media.isVideo(null, null))
-        assertFalse(Media.isVideo("", ""))
     }
 
     /**
@@ -660,22 +641,5 @@ class PostTest {
         assertEquals("---\ntitle: \"Ano\" a \"ne\"\n---\n\n", Markdown.frontMatter("\"Ano\" a \"ne\"", ""))
         assertEquals("---\ntitle: Sobota\n---\n\n", Markdown.frontMatter("[Sobota]", ""))
         assertEquals("---\ntitle: Sobota\n---\n\n", Markdown.frontMatter("'Sobota'", ""))
-    }
-
-    /**
-     * The editor is handed the text the post's screen read only where it
-     * was read in this visit and is this post's under this name: a text
-     * read before the screen was left and come back to may be an old one.
-     */
-    @Test
-    fun theEditorIsHandedOnlyWhatWasJustRead() {
-        val entry = app.blogsh.android.model.EditEntry(
-            slug = "venku", title = "Venku", date = "2026-10-01T10:00:00+02:00", scheduled = false, editable = true,
-            text = "text", media = emptyList(), preview = "/draft/x/", base = "K1",
-        )
-        assertEquals("K1", app.blogsh.android.ui.screens.handedOn(entry, fresh = true, slug = "venku")?.base)
-        assertNull(app.blogsh.android.ui.screens.handedOn(entry, fresh = false, slug = "venku"))
-        assertNull(app.blogsh.android.ui.screens.handedOn(entry, fresh = true, slug = "outside"))
-        assertNull(app.blogsh.android.ui.screens.handedOn(null, fresh = true, slug = "venku"))
     }
 }

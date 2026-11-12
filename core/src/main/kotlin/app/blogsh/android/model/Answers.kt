@@ -1,6 +1,5 @@
 package app.blogsh.android.model
 
-import app.blogsh.android.R
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -46,7 +45,7 @@ data class Refusal(
         get() = when {
             error == "busy" -> held
             !message.isNullOrBlank() -> message
-            else -> Spoken.say(R.string.the_blog_said_no_2, error)
+            else -> Spoken.say(Word.the_blog_said_no_2, error)
         }
 
     companion object {
@@ -55,7 +54,7 @@ data class Refusal(
          * whatever the engine says: it says it in the blog's language,
          * and this is the one no a person meets by doing nothing wrong.
          */
-        val held: String get() = Spoken.say(R.string.something_else_holds_the_blog_just_now)
+        val held: String get() = Spoken.say(Word.something_else_holds_the_blog_just_now)
     }
 }
 

@@ -1,6 +1,5 @@
 package app.blogsh.android.model
 
-import app.blogsh.android.BlogshApp
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import java.io.File
@@ -32,7 +31,7 @@ object UnsentShots {
         val converted: Boolean = true,
     )
 
-    val home: File get() = File(BlogshApp.context.filesDir, "unsent")
+    val home: File get() = File(Device.files, "unsent")
 
     /** The new post's room, or that of the post whose text is being changed. */
     private fun room(blog: String, slug: String?, home: File): File {
@@ -99,7 +98,7 @@ object UnsentShots {
         } catch (e: Exception) {
             // Not kept, then: the form still has them, and says so itself
             // when it comes back without. Kept where a device's log can be read.
-            runCatching { android.util.Log.w("blogsh", "shots not kept", e) }
+            runCatching { Device.log("shots not kept", e) }
         }
     }
 
@@ -117,7 +116,7 @@ object UnsentShots {
                 kind = if (piece.video) Shot.Kind.Video else Shot.Kind.Picture,
                 poster = runCatching { file(piece.name, "posters", room).readBytes() }.getOrNull(),
                 converted = piece.converted,
-                thumb = if (piece.video) null else Media.thumbnail(data),
+                thumb = if (piece.video) null else Device.thumbnail(data),
             )
         }
     }

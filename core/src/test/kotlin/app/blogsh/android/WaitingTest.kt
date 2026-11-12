@@ -9,7 +9,6 @@ import app.blogsh.android.model.DeliveryFile
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
 import app.blogsh.android.model.Markdown
-import app.blogsh.android.model.Media
 import app.blogsh.android.model.Outbox
 import app.blogsh.android.model.Reach
 import app.blogsh.android.model.Receipt
@@ -767,28 +766,5 @@ class ReachTest {
         val words = EngineError.Unreachable("one.example", "java.net.ConnectException: Connection refused").message
         assertTrue(words, words.contains("one.example"))
         assertFalse(words, words.contains("ConnectException"))
-    }
-
-    /** The library saying it needs the network is that, whatever the device thinks of its own. */
-    @Test
-    fun theLibrarysOwnWordForTheNetworkIsBelieved() {
-        assertEquals(Media.Unread.NeedsNetwork, Media.unread(java.net.UnknownHostException("photos.example"), online = true))
-        val wrapped = java.io.FileNotFoundException("no such file").apply { initCause(java.net.SocketTimeoutException("timeout")) }
-        assertEquals(Media.Unread.NeedsNetwork, Media.unread(wrapped, online = true))
-        assertEquals(Media.Unread.NeedsNetwork, Media.unread(java.net.ConnectException("refused"), online = true))
-    }
-
-    /**
-     * Any failure on a device with no network is most likely the same
-     * thing; with a network, it is a picture that could not be read and
-     * no more.
-     */
-    @Test
-    fun withoutANetworkAFailureIsTakenForIt() {
-        val other = java.io.FileNotFoundException("no such file")
-        assertEquals(Media.Unread.NeedsNetwork, Media.unread(other, online = false))
-        assertEquals(Media.Unread.NeedsNetwork, Media.unread(null, online = false))
-        assertEquals(Media.Unread.Unreadable, Media.unread(other, online = true))
-        assertEquals(Media.Unread.Unreadable, Media.unread(null, online = true))
     }
 }

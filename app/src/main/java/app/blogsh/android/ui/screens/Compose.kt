@@ -66,6 +66,7 @@ import app.blogsh.android.model.Receipt
 import app.blogsh.android.model.Shot
 import app.blogsh.android.model.TagStore
 import app.blogsh.android.model.TextFile
+import app.blogsh.android.model.read
 import app.blogsh.android.model.Unsent
 import app.blogsh.android.model.UnsentShots
 import app.blogsh.android.model.Waiting

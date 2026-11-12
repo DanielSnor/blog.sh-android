@@ -3,7 +3,6 @@ package app.blogsh.android.model
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import app.blogsh.android.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
@@ -31,7 +30,7 @@ class Herald(
     private val rebuild: suspend () -> Unit = { Engine.call<RebuildAnswer>("rebuild") },
     private val scope: CoroutineScope = MainScope(),
     /** The words for a change nobody put into words. */
-    private val plainly: () -> String = { Spoken.say(R.string.the_site_does_not_show_this_change) },
+    private val plainly: () -> String = { Spoken.say(Word.the_site_does_not_show_this_change) },
 ) {
     sealed class Build {
         data object None : Build()
@@ -200,20 +199,5 @@ class Herald(
     companion object {
         /** The one the app has. */
         val shared: Herald by lazy { Herald() }
-    }
-}
-
-/** The word for what an engine command is doing, by the command. */
-object Doing {
-    fun word(args: List<String>): Int = when (args.firstOrNull()) {
-        "publish" -> R.string.publishing
-        "unpublish" -> R.string.unpublishing
-        "delete" -> R.string.deleting
-        "restore" -> R.string.restoring
-        "toot", "bluesky" -> R.string.announcing
-        "empty" -> R.string.clearing_out_2
-        "rebuild" -> R.string.rebuilding
-        "check", "doctor" -> R.string.checking
-        else -> R.string.saving
     }
 }

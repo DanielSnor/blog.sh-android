@@ -1,8 +1,5 @@
 package app.blogsh.android.model
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.Network
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -65,38 +62,26 @@ class Reach {
 object NetworkWatch {
     @Volatile
     private var up = true
-    private var watching = false
     private val arrivals = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     /**
      * The device has a network that can carry a connection. Until the
-     * system has said anything, it is taken to have one.
+     * system has said anything, it is taken to have one -- and so is a
+     * device that will not say.
      */
     val hasNetwork: Boolean get() = up
 
     /** Said each time the device finds a network. */
     val comes: SharedFlow<Unit> get() = arrivals
 
-    /**
-     * Watched from the start, so that it is known by the time a picture
-     * is chosen. A device that will not say is taken to have a network.
-     */
-    @Synchronized
-    fun begin(context: Context) {
-        if (watching) return
-        watching = true
-        runCatching {
-            val system = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            system.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
-                override fun onAvailable(network: Network) {
-                    up = true
-                    arrivals.tryEmit(Unit)
-                }
+    /** The system says the device has a network again: what the app watches it by calls this. */
+    fun found() {
+        up = true
+        arrivals.tryEmit(Unit)
+    }
 
-                override fun onLost(network: Network) {
-                    up = false
-                }
-            })
-        }
+    /** The system says the network is gone. */
+    fun lost() {
+        up = false
     }
 }

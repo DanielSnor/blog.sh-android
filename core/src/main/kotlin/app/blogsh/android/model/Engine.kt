@@ -1,6 +1,5 @@
 package app.blogsh.android.model
 
-import app.blogsh.android.R
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,16 +62,16 @@ sealed class EngineError : Exception() {
     override val message: String
         get() {
             return when (this) {
-                NotConfigured -> Spoken.say(R.string.the_server_is_not_set_up_yet)
-                NoKey -> Spoken.say(R.string.the_app_has_no_key_yet)
+                NotConfigured -> Spoken.say(Word.the_server_is_not_set_up_yet)
+                NoKey -> Spoken.say(Word.the_app_has_no_key_yet)
                 // Said with what there is to do about it: a line to put on the server, or a new code.
-                is KeyNotKnown -> Spoken.say(if (paired) R.string.the_server_does_not_know_this_blog_2 else R.string.the_server_does_not_know_this_blog)
-                is HostKeyChanged -> Spoken.say(R.string.the_server_s_key_changed_if_the, fingerprint)
+                is KeyNotKnown -> Spoken.say(if (paired) Word.the_server_does_not_know_this_blog_2 else Word.the_server_does_not_know_this_blog)
+                is HostKeyChanged -> Spoken.say(Word.the_server_s_key_changed_if_the, fingerprint)
                 // The engine’s own sentence here speaks of --yes and of a screen the
                 // terminal has; on a phone neither is anything one can do.
-                is Refused -> if (refusal.error == "ambiguous_slug") Spoken.say(R.string.two_posts_in_different_years_share_this) else refusal.words
-                is Unreadable -> Spoken.say(R.string.the_engine_did_not_answer_as_data, text)
-                is Unreachable -> Spoken.say(R.string.the_server_did_not_answer_is_this, server)
+                is Refused -> if (refusal.error == "ambiguous_slug") Spoken.say(Word.two_posts_in_different_years_share_this) else refusal.words
+                is Unreadable -> Spoken.say(Word.the_engine_did_not_answer_as_data, text)
+                is Unreachable -> Spoken.say(Word.the_server_did_not_answer_is_this, server)
                 is Stage -> "$stage: ${error.message ?: error.javaClass.simpleName}"
             }
         }
@@ -155,7 +154,7 @@ object Engine {
     /** The answer as an object, or the refusal it is. */
     fun element(data: ByteArray): JsonElement {
         if (data.isEmpty()) {
-            throw EngineError.Unreadable(Spoken.say(R.string.the_server_closed_the_connection_without_an))
+            throw EngineError.Unreadable(Spoken.say(Word.the_server_closed_the_connection_without_an))
         }
         val text = String(data, Charsets.UTF_8)
         val element = try {
@@ -186,7 +185,7 @@ object Engine {
      * engine's answer out. Nothing sets it in the app.
      */
     @Volatile
-    internal var stand: ((List<String>) -> ByteArray)? = null
+    var stand: ((List<String>) -> ByteArray)? = null
 
     suspend fun batch(commands: List<List<String>>): List<ByteArray> {
         val answers = stand?.let { answer -> commands.map(answer) }
@@ -300,7 +299,7 @@ object Engine {
      * findings in it; one that has not, or an older one, which reads the
      * argv and nothing else, says them in the blog's own.
      */
-    fun request(args: List<String>, lang: String? = app.blogsh.android.BlogshApp.spoken.language): JsonObject = buildJsonObject {
+    fun request(args: List<String>, lang: String? = Device.language().language): JsonObject = buildJsonObject {
         put("args", JsonArray(args.map { JsonPrimitive(it) }))
         if (args.firstOrNull() in listOf("check", "doctor", "pair") && lang != null && Regex("^[a-z]{2,3}$").matches(lang)) put("lang", JsonPrimitive(lang))
     }

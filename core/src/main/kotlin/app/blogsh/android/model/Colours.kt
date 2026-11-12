@@ -165,13 +165,11 @@ data class BuildStamp(
     val version: String? = null,
 ) {
     companion object {
-        /** This build's own, as its build wrote it into the app. */
+        /** This build's own, as its build wrote it into the app -- the app reads it (`Device.stamp`). */
         var own: BuildStamp
-            get() = said ?: runCatching { of(app.blogsh.android.BlogshApp.context.assets.open("BuildStamp.txt").bufferedReader().use { it.readText() }) }
-                .getOrDefault(BuildStamp(null, null))
-                .copy(version = app.blogsh.android.BuildConfig.VERSION_NAME.ifEmpty { null }).also { said = it }
+            get() = said ?: Device.stamp().also { said = it }
             /** Only a test says another: a picture of the settings is not to change with every build. */
-            internal set(value) {
+            set(value) {
                 said = value
             }
 

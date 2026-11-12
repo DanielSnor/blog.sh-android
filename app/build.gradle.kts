@@ -16,8 +16,8 @@ android {
         applicationId = "app.blogsh.android"
         minSdk = 29
         targetSdk = 36
-        versionCode = 14
-        versionName = "0.8.0"
+        versionCode = 15
+        versionName = "0.8.1"
     }
 
     // The key a release is signed with: kept on the machine that builds
@@ -140,6 +140,11 @@ val fetchRobolectricAndroid = tasks.register<Copy>("fetchRobolectricAndroid") {
     into(robolectricAndroidDir)
 }
 
+// The model's tests live with it in core/; the app's own run of its tests runs them too.
+tasks.matching { it.name == "testDebugUnitTest" }.configureEach {
+    dependsOn(gradle.includedBuild("core").task(":test"))
+}
+
 tasks.withType<Test>().configureEach {
     dependsOn(fetchRobolectricAndroid)
     // The Android drawn on the desk reaches into the JVM where a JVM no longer lets it by itself.
@@ -169,6 +174,9 @@ tasks.withType<Test>().configureEach {
 dependencies {
   val composeBom = platform(libs.androidx.compose.bom)
   implementation(composeBom)
+
+  // The model: the engine's answers, the blogs, the connection (core/, a build of its own).
+  implementation("app.blogsh:core")
 
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)

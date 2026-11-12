@@ -1,11 +1,7 @@
 package app.blogsh.android.model
 
-import android.content.Context
-import android.net.Uri
-import app.blogsh.android.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
@@ -33,13 +29,13 @@ object TextFile {
         fun filling(field: String, said: String?): String = if (field.isBlank() && said != null) said else field
     }
 
-    enum class Failure(private val sentence: Int) {
-        Unreadable(R.string.the_file_could_not_be_read),
+    enum class Failure(private val sentence: Word) {
+        Unreadable(Word.the_file_could_not_be_read),
 
         /** Not plain text: a document of a word processor, or anything else. */
-        NotText(R.string.this_file_is_not_plain_text_a),
-        Empty(R.string.there_is_no_text_in_the_file),
-        TooLarge(R.string.the_file_is_too_large_to_be);
+        NotText(Word.this_file_is_not_plain_text_a),
+        Empty(Word.there_is_no_text_in_the_file),
+        TooLarge(Word.the_file_is_too_large_to_be);
 
         /** The sentence for it, in the reader's language. */
         val words: String get() = Spoken.say(sentence)
@@ -60,25 +56,20 @@ object TextFile {
     /** More than this is no post's text; a file that large was picked by mistake. */
     const val CEILING = 1_000_000
 
-    /** The file the picker lent, read whole -- and no further than a text can be long -- and taken apart. */
-    suspend fun read(context: Context, uri: Uri): Read = withContext(Dispatchers.IO) {
-        val data = try {
-            context.contentResolver.openInputStream(uri)?.use { stream ->
-                val held = ByteArrayOutputStream()
-                val buffer = ByteArray(64 * 1024)
-                while (held.size() <= CEILING) {
-                    val count = stream.read(buffer)
-                    if (count < 0) break
-                    held.write(buffer, 0, count)
-                }
-                held.toByteArray()
-            }
-        } catch (e: Exception) {
-            // Kept where a device's log can be read: the keeper's own reason.
-            android.util.Log.w("blogsh", "text file not read", e)
-            null
-        } ?: throw NotTaken(Failure.Unreadable)
-        read(data)
+    /**
+     * The file the picker lent, read whole -- and no further than a text
+     * can be long. Each app opens the file its own way; a file that
+     * would not open is `Failure.Unreadable`.
+     */
+    fun bytes(stream: InputStream): ByteArray {
+        val held = ByteArrayOutputStream()
+        val buffer = ByteArray(64 * 1024)
+        while (held.size() <= CEILING) {
+            val count = stream.read(buffer)
+            if (count < 0) break
+            held.write(buffer, 0, count)
+        }
+        return held.toByteArray()
     }
 
     fun read(data: ByteArray): Read {

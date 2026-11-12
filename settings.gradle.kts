@@ -27,3 +27,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "blogsh"
 include(":app")
+
+// The model, a build of its own: the desktop app includes it too.
+includeBuild("core")

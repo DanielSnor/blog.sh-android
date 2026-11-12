@@ -35,6 +35,7 @@ import app.blogsh.android.model.PropsAnswer
 import app.blogsh.android.model.QueueAnswer
 import app.blogsh.android.model.RebuildAnswer
 import app.blogsh.android.model.Spoken
+import app.blogsh.android.model.say
 import app.blogsh.android.model.Unsaved
 import app.blogsh.android.model.UnsentShots
 import app.blogsh.android.model.engineInstant
@@ -284,7 +285,7 @@ private fun Rows(props: PropsAnswer, modifier: Modifier = Modifier) {
         info(titleLabel, props.title)
         if (props.state == PostState.Draft) {
             info(preview, props.url, mono = true)
-            if (props.scheduled && props.date != null) info(scheduled, humanDate(props.date))
+            if (props.scheduled) props.date?.let { info(scheduled, humanDate(it)) }
         } else if (props.date != null) {
             info(state, published)
         }

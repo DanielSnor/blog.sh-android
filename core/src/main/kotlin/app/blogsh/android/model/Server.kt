@@ -1,18 +1,10 @@
 package app.blogsh.android.model
 
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
-import app.blogsh.android.BlogshApp
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.nio.ByteBuffer
 import java.security.SecureRandom
 import java.util.Base64
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
 
 /**
  * Where the open blog is: the machine, the account, the port, and which
@@ -44,52 +36,40 @@ data class ServerSettings(
 
 /**
  * A blog's SSH key: an ed25519 seed made on this device and never leaving
- * it. The seed lies in the app's own files, encrypted with a key that
- * lives in the Android Keystore -- the counterpart of the keychain item on
- * iOS -- and the app's files are kept out of every backup. The public
- * half is what goes into the server's authorized_keys, in front of the
- * forced command. One to a blog, each under its own name.
+ * it. Where the seed is kept is the device's own business
+ * (`Device.vault`): on a phone it lies in the app's own files, encrypted
+ * with a key that lives in the Android Keystore -- the counterpart of the
+ * keychain item on iOS. The public half is what goes into the server's
+ * authorized_keys, in front of the forced command. One to a blog, each
+ * under its own name.
  */
 object KeyStore {
     class NoKey : Exception()
 
-    private fun file(account: String) = File(File(BlogshApp.context.filesDir, "keys").apply { mkdirs() }, "$account.bin")
-    private fun alias(account: String) = "blogsh-wrap-$account"
-
-    fun hasKey(account: String): Boolean = file(account).exists()
+    fun hasKey(account: String): Boolean = Device.vault.has(account)
 
     /**
      * In a test, what stands in for the device's keystore: an account's
      * seed, or nothing where it has no key. Nothing sets it in the app.
      */
     @Volatile
-    internal var stand: ((String) -> ByteArray?)? = null
+    var stand: ((String) -> ByteArray?)? = null
 
     /** The 32 bytes the key is made from. */
     fun seed(account: String): ByteArray {
         stand?.let { held -> return held(account) ?: throw NoKey() }
-        val file = file(account)
-        if (!file.exists()) throw NoKey()
-        val all = file.readBytes()
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, wrappingKey(account), GCMParameterSpec(128, all, 0, 12))
-        return cipher.doFinal(all, 12, all.size - 12)
+        return Device.vault.read(account) ?: throw NoKey()
     }
 
     /** A new key, replacing the old one: the server has to be told again. */
     fun makeKey(account: String): ByteArray {
         deleteKey(account)
         val seed = ByteArray(32).also { SecureRandom().nextBytes(it) }
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, wrappingKey(account))
-        file(account).writeBytes(cipher.iv + cipher.doFinal(seed))
+        Device.vault.write(account, seed)
         return seed
     }
 
-    fun deleteKey(account: String) {
-        file(account).delete()
-        java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }.runCatching { deleteEntry(alias(account)) }
-    }
+    fun deleteKey(account: String) = Device.vault.delete(account)
 
     fun publicBytes(seed: ByteArray): ByteArray = Ed25519PrivateKeyParameters(seed, 0).generatePublicKey().encoded
 
@@ -120,20 +100,6 @@ object KeyStore {
         sshString("ssh-ed25519".toByteArray())
         sshString(public)
         return "ssh-ed25519 " + Base64.getEncoder().encodeToString(wire.toByteArray()) + " " + comment
-    }
-
-    private fun wrappingKey(account: String): SecretKey {
-        val store = java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        (store.getKey(alias(account), null) as? SecretKey)?.let { return it }
-        val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
-        generator.init(
-            KeyGenParameterSpec.Builder(alias(account), KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                .setKeySize(256)
-                .build()
-        )
-        return generator.generateKey()
     }
 }
 

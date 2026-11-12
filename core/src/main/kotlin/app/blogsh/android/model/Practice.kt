@@ -1,6 +1,5 @@
 package app.blogsh.android.model
 
-import app.blogsh.android.R
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -25,7 +24,7 @@ import java.util.Locale
  */
 object Practice {
     /** What the blog says to what cannot be done to it. */
-    val refusal: String get() = Spoken.say(R.string.this_is_the_practice_blog_it_lives)
+    val refusal: String get() = Spoken.say(Word.this_is_the_practice_blog_it_lives)
 
     /** Each answer as it would come over the wire, under the command it answers. */
     private val answers: Map<String, JsonElement> by lazy {

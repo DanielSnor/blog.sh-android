@@ -6,7 +6,9 @@ import android.content.res.Configuration
 import app.blogsh.android.model.AppLanguage
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.NetworkWatch
+import app.blogsh.android.model.Phone
 import app.blogsh.android.model.PreferenceNotes
+import app.blogsh.android.model.begin
 import java.util.Locale
 
 class BlogshApp : Application() {
@@ -23,6 +25,7 @@ class BlogshApp : Application() {
         speak(this)
         context = if (chosen == null) applicationContext
         else applicationContext.createConfigurationContext(Configuration(resources.configuration).apply { setLocale(chosen) })
+        Phone.install(this)
         Engine.installCrypto()
         NetworkWatch.begin(this)
     }

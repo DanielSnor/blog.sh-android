@@ -55,6 +55,7 @@ import app.blogsh.android.model.DeliveryFile
 import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
+import app.blogsh.android.model.Herald
 import app.blogsh.android.model.Kept
 import app.blogsh.android.model.Markdown
 import app.blogsh.android.model.Media
@@ -161,8 +162,6 @@ fun ComposeScreen() {
     // The name this post's delivery goes under, however often it is
     // tried: kept with the writing, and another for the next post.
     var receipt by remember { mutableStateOf((handed?.first?.receipt ?: kept?.receipt)?.takeIf { Receipt.isOne(it) } ?: Receipt.mint()) }
-    // The post was put by on the device: said where an answer would be.
-    var putBy by remember { mutableStateOf(false) }
     // Why the last picture chosen is not among the shots.
     var unread by remember { mutableStateOf<String?>(null) }
     // Why the file last chosen for its text is not in the form.
@@ -180,6 +179,7 @@ fun ComposeScreen() {
     val unreadable = stringResource(R.string.one_picture_could_not_be_read)
     val needsNetwork = stringResource(R.string.android_picture_needs_network)
     val couldNotKeep = stringResource(R.string.the_post_could_not_be_kept_on)
+    val keptWords = stringResource(R.string.kept_on_the_device_it_goes_to)
 
     // The open blog's server did not answer the last time it was asked.
     val offline = Reach.shared.isOffline(Blogs.current)
@@ -281,7 +281,6 @@ fun ComposeScreen() {
         val to = blog ?: return
         if (to in Desk.sending) return
         sending = true
-        putBy = false
         // What the last sending answered is not this one's answer: left
         // standing under a sending that failed, it read as a success.
         made = null
@@ -323,10 +322,15 @@ fun ComposeScreen() {
 
     /**
      * Put by on the device, whole: the text and the shots it names. The
-     * form is the next post's, as after a sending.
+     * form is the next post's, as after a sending -- but nothing is left
+     * to do in it, so the first screen is shown, where the post waits
+     * among the others, and what was done is said under it.
      */
     suspend fun keepOnDevice() {
         val to = blog ?: return
+        // The form is in front when its key is pressed; left by then, the
+        // screen somebody went to is not taken from under them.
+        val front = nav.stack.lastOrNull()
         sending = true
         problem = null
         made = null
@@ -336,8 +340,9 @@ fun ComposeScreen() {
             val going = Kept.sent(shots, state.text)
             withContext(Dispatchers.IO) { WaitingRoom.put(post, going, to) }
             startEmpty()
-            putBy = true
             Desk.changed()
+            Herald.shared.say(keptWords)
+            if (front != null && nav.stack.lastOrNull() === front) nav.home()
         } catch (e: Exception) {
             if (e.isCalledOff) throw e
             problem = couldNotKeep.format(e.said)
@@ -504,13 +509,6 @@ fun ComposeScreen() {
         if (!Unsent(title, tags, text).canBeSent && (title + tags).isNotBlank()) Hint(stringResource(R.string.the_text_is_missing_the_blog_takes))
         if (offline) Hint(stringResource(R.string.the_blog_s_server_cannot_be_reached))
         problem?.let { ProblemLine(it) }
-
-        if (putBy) {
-            SectionLabel(stringResource(R.string.done))
-            Plate {
-                row { Text(stringResource(R.string.kept_on_the_device_it_goes_to), color = Theme.ink, style = ui(15f)) }
-            }
-        }
 
         made?.let { made ->
             SectionLabel(stringResource(R.string.done))

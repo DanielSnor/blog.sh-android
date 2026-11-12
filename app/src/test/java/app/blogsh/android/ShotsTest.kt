@@ -8,6 +8,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import app.blogsh.android.model.Arrival
 import app.blogsh.android.model.Blog
@@ -19,6 +22,7 @@ import app.blogsh.android.model.DayNight
 import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.EngineError
+import app.blogsh.android.model.Herald
 import app.blogsh.android.model.KeyStore
 import app.blogsh.android.model.Now
 import app.blogsh.android.model.Reach
@@ -71,6 +75,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
+import java.time.Duration
 import java.time.Instant
 import java.util.Locale
 import java.util.TimeZone
@@ -195,12 +200,19 @@ class ShotsTest(private val look: Look) {
      * the whole display with its picture.
      */
     @OptIn(ExperimentalRoborazziApi::class)
-    private fun shot(name: String, tag: MenuEntry? = null, over: (@Composable () -> Unit)? = null, screen: (@Composable () -> Unit)? = null) {
+    private fun shot(
+        name: String,
+        tag: MenuEntry? = null,
+        over: (@Composable () -> Unit)? = null,
+        then: ((Nav) -> Unit)? = null,
+        screen: (@Composable () -> Unit)? = null,
+    ) {
+        var shown: Nav? = null
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 activity.setContent {
                     BlogshTheme {
-                        val nav = remember { Nav() }
+                        val nav = remember { Nav().also { shown = it } }
                         val home = remember { HomeState() }
                         CompositionLocalProvider(LocalNav provides nav) {
                             NavHost(nav) { HomeScreen(home) }
@@ -211,6 +223,10 @@ class ShotsTest(private val look: Look) {
                 }
             }
             settle()
+            then?.let { act ->
+                act(checkNotNull(shown))
+                settle()
+            }
             captureScreenRoboImage(
                 File(System.getProperty("blogsh.shots"), "${look.name}/$name.png").path,
                 // A screen that has changed is drawn beside its picture, each look in a folder of its own.
@@ -287,6 +303,30 @@ class ShotsTest(private val look: Look) {
     fun newPostWithASilentServer() {
         silence()
         shot("new-post-offline", MenuEntry.Add) { ComposeScreen() }
+    }
+
+    /**
+     * A post kept on the device for a silent server: nothing is left to do
+     * in the emptied form, so the first screen is shown, the post waiting
+     * among the others, and what was done is said under it.
+     */
+    @Test
+    fun aPostKeptOnTheDeviceGoesBackToTheFirstScreen() {
+        silence()
+        Unsent("Večer u rybníka", "", "Klid.\n", noon.minusSeconds(60).toEpochMilli()).keep(BLOG, BlogShelf.notes)
+        val app = RuntimeEnvironment.getApplication()
+        var nav: Nav? = null
+        shot("new-post-kept", MenuEntry.Add, then = {
+            nav = it
+            // The key is written as the terminal writes it, in its own case.
+        compose.onNodeWithText(app.getString(R.string.keep_on_the_device), ignoreCase = true).performScrollTo().performClick()
+        }) { ComposeScreen() }
+        assertEquals(0, checkNotNull(nav).depth)
+        assertEquals(3, WaitingRoom.all(BLOG).size)
+        assertEquals(app.getString(R.string.kept_on_the_device_it_goes_to), Herald.shared.note)
+        // What was said goes by itself, and is not left under the next picture.
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(7))
+        assertEquals(null, Herald.shared.note)
     }
 
     /**

@@ -1,5 +1,7 @@
 package app.blogsh.android.ui.screens
 
+import app.blogsh.android.ui.rememberHost
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,7 +36,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -70,7 +71,6 @@ import app.blogsh.android.ui.Room
 import app.blogsh.android.ui.RowDate
 import app.blogsh.android.ui.share
 import app.blogsh.android.ui.voiced
-import androidx.compose.ui.platform.LocalContext
 import app.blogsh.android.ui.Symbols
 import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.mono
@@ -119,7 +119,7 @@ private data class Found(val query: String, val rows: List<PostRow>)
 fun ArchiveScreen(languages: List<String> = emptyList(), baseUrl: String = "", initialState: StateFilter? = null, searching: Boolean = false) {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val context = rememberHost()
     val noAddress = stringResource(R.string.the_site_has_no_address_set_so)
     var posts by remember { mutableStateOf(emptyList<PostRow>()) }
     var problem by remember { mutableStateOf<String?>(null) }

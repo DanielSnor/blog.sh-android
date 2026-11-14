@@ -40,7 +40,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -55,8 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import app.blogsh.android.R
 import app.blogsh.android.model.CodeQuotes
 import app.blogsh.android.model.Delivery
@@ -214,7 +211,7 @@ fun PaperEditor(
  */
 @Composable
 fun WritingScreen(state: EditorState, onClose: () -> Unit) {
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    SheetDialog(onDismissRequest = onClose) {
         SheetBars()
         val focus = remember { FocusRequester() }
         Typed {

@@ -1,6 +1,9 @@
 package app.blogsh.android.ui.screens
 
-import androidx.activity.compose.BackHandler
+import app.blogsh.android.ui.appVersion
+import app.blogsh.android.ui.BackHandler
+import app.blogsh.android.ui.painterResource
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
@@ -51,8 +54,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -390,7 +391,7 @@ fun BuildMark(modifier: Modifier = Modifier, stamp: BuildStamp = BuildStamp.own)
     // only then -- GitHub hears nothing of this device until somebody asks.
     var asking by remember { mutableStateOf(false) }
     var said by remember { mutableStateOf<Updates.Said?>(null) }
-    val current = stamp.version ?: app.blogsh.android.BuildConfig.VERSION_NAME
+    val current = stamp.version ?: appVersion
     Column(
         modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
         verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally,

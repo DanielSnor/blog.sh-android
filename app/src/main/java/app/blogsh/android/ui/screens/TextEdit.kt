@@ -1,9 +1,11 @@
 package app.blogsh.android.ui.screens
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
+import app.blogsh.android.ui.rememberFilesPicker
+import app.blogsh.android.ui.rememberMediaPicker
+import app.blogsh.android.ui.shotOf
+import app.blogsh.android.ui.Picked
+import app.blogsh.android.ui.rememberHost
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -22,8 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
@@ -92,7 +92,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
     val nav = LocalNav.current
-    val context = LocalContext.current
+    val context = rememberHost()
     val scope = rememberCoroutineScope()
     var tookLoaded by remember { mutableStateOf(false) }
     // The receiver's ceiling on one delivery, as the blog last said it.
@@ -193,7 +193,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
         }
     }
 
-    suspend fun loadPictures(items: List<Uri>) {
+    suspend fun loadPictures(items: List<Picked>) {
         if (items.isEmpty()) return
         importing = true
         unread = null
@@ -201,7 +201,7 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
             for (item in items) {
                 val taken = (entry?.media ?: emptyList()) + shots.map { it.name }
                 try {
-                    shots = shots + Media.shot(context, item, taken.size + 1, taken)
+                    shots = shots + shotOf(context, item, taken.size + 1, taken)
                 } catch (e: Media.NotRead) {
                     // Said at the key that was pressed, not at the form's end.
                     unread = if (e.why == Media.Unread.NeedsNetwork) needsNetwork else unreadable
@@ -308,12 +308,8 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
         }
     }
 
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { items ->
-        scope.launch { loadPictures(items) }
-    }
-    val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { items ->
-        scope.launch { loadPictures(items) }
-    }
+    val picker = rememberMediaPicker { items -> scope.launch { loadPictures(items) } }
+    val files = rememberFilesPicker { items -> scope.launch { loadPictures(items) } }
 
     fun leave() = nav.pop()
 
@@ -381,10 +377,10 @@ fun TextEditScreen(slug: String, loaded: EditEntry? = null) {
                         Command(
                             stringResource(if (importing) R.string.reading else R.string.add_a_picture_or_video), Symbols.photoOnRectangle,
                             busy = importing, enabled = post.editable,
-                        ) { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
+                        ) { picker() }
                     }
                     row {
-                        Command(stringResource(R.string.add_from_files), Symbols.folder, enabled = post.editable && !importing) { files.launch(Media.FROM_FILES) }
+                        Command(stringResource(R.string.add_from_files), Symbols.folder, enabled = post.editable && !importing) { files() }
                     }
                 }
                 unread?.let { ProblemLine(it) }

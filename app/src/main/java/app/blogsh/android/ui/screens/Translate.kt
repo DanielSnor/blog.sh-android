@@ -1,5 +1,6 @@
 package app.blogsh.android.ui.screens
 
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,7 +16,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer

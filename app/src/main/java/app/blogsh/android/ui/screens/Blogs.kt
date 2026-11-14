@@ -1,5 +1,7 @@
 package app.blogsh.android.ui.screens
 
+import app.blogsh.android.ui.SheetDialog
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,14 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import app.blogsh.android.R
 import app.blogsh.android.model.Belongings
 import app.blogsh.android.model.Blog
@@ -78,7 +77,7 @@ import java.text.NumberFormat
 fun PracticeBlogSheet(onBack: () -> Unit, onDone: () -> Unit) {
     val blog = Blogs.current?.takeIf { it.isPractice }
     var confirmingRemoval by remember { mutableStateOf(false) }
-    Dialog(onDismissRequest = onBack, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    SheetDialog(onDismissRequest = onBack) {
         SheetBars()
         Typed {
             SheetFrame {

@@ -1,5 +1,7 @@
 package app.blogsh.android.ui.screens
 
+import app.blogsh.android.ui.rememberHost
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -12,8 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,7 +55,7 @@ import java.time.Instant
  */
 @Composable
 fun WaitingSheet(onDismiss: () -> Unit, write: () -> Unit) {
-    val context = LocalContext.current
+    val context = rememberHost()
     var discarding by remember { mutableStateOf<Waiting?>(null) }
     var said by remember { mutableStateOf<String?>(null) }
     val blog = Blogs.currentId

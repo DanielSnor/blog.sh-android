@@ -50,7 +50,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -62,9 +61,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
@@ -72,7 +68,6 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.core.view.WindowCompat
 import app.blogsh.android.R
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.Role
@@ -264,7 +259,7 @@ fun PaperSheet(
     over: @Composable BoxScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    SheetDialog(onDismissRequest = onDismiss) {
         SheetBars()
         Typed {
             SheetFrame {
@@ -297,23 +292,6 @@ private fun SheetCard(content: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
         Box(Modifier.widthIn(max = 640.dp).fillMaxWidth().fillMaxHeight().clip(RoundedCornerShape(20.dp)).border(1.dp, Theme.line, RoundedCornerShape(20.dp))) {
             content()
-        }
-    }
-}
-
-/**
- * A sheet is a window of its own, and the system draws its bars' marks
- * light unless told otherwise: on paper they have to be dark, by night light.
- */
-@Composable
-fun SheetBars() {
-    val view = LocalView.current
-    val dark = wearsNight()
-    SideEffect {
-        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-        WindowCompat.getInsetsController(window, view).apply {
-            isAppearanceLightStatusBars = !dark
-            isAppearanceLightNavigationBars = !dark
         }
     }
 }

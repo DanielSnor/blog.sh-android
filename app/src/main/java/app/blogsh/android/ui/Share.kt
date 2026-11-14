@@ -12,6 +12,8 @@ import app.blogsh.android.model.PostLink
  * A post's address handed to somebody: the system's own sheet, with the
  * address and the title to go with it.
  */
+fun share(host: Host, link: PostLink) = share(host.context, link)
+
 fun share(context: Context, link: PostLink) {
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"

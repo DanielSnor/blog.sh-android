@@ -1,5 +1,8 @@
 package app.blogsh.android.ui.screens
 
+import app.blogsh.android.ui.bestDatePattern
+import app.blogsh.android.ui.rememberHost
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -33,9 +36,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
@@ -121,7 +122,7 @@ private class RowKey(val label: String, val symbol: Int, val danger: Boolean = f
 @Composable
 fun QueueScreen(languages: List<String> = emptyList()) {
     val nav = LocalNav.current
-    val context = LocalContext.current
+    val context = rememberHost()
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
 
@@ -509,6 +510,6 @@ fun QueueRowView(
 /** A day, its hour and the zone the hour is told in, the way the reader's own language writes them. */
 private fun whole(date: Instant): String {
     val locale = Locale.getDefault()
-    val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "yMMMdjmz")
+    val pattern = bestDatePattern(locale, "yMMMdjmz")
     return DateTimeFormatter.ofPattern(pattern, locale).format(date.atZone(ZoneId.systemDefault()))
 }

@@ -2,6 +2,7 @@ package app.blogsh.android.ui.screens
 
 import android.content.Context
 import android.content.pm.PackageManager
+import app.blogsh.android.ui.Host
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -51,6 +52,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 object CodeScanner {
     /** There is a camera here to read a code with. */
+    fun isOffered(host: Host): Boolean = isOffered(host.context)
+
+    fun isAllowed(host: Host): Boolean = isAllowed(host.context)
+
     fun isOffered(context: Context): Boolean = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
 
     /** The app may use the camera already; when not, it has to ask. */

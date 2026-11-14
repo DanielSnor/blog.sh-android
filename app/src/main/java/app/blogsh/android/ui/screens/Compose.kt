@@ -1,9 +1,13 @@
 package app.blogsh.android.ui.screens
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
+import app.blogsh.android.ui.rememberFilesPicker
+import app.blogsh.android.ui.rememberMediaPicker
+import app.blogsh.android.ui.shotOf
+import app.blogsh.android.ui.Picked
+import app.blogsh.android.ui.rememberTextFilePicker
+import app.blogsh.android.ui.readTextFile
+import app.blogsh.android.ui.rememberHost
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,9 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -66,7 +68,6 @@ import app.blogsh.android.model.Receipt
 import app.blogsh.android.model.Shot
 import app.blogsh.android.model.TagStore
 import app.blogsh.android.model.TextFile
-import app.blogsh.android.model.read
 import app.blogsh.android.model.Unsent
 import app.blogsh.android.model.UnsentShots
 import app.blogsh.android.model.Waiting
@@ -120,7 +121,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ComposeScreen() {
     val nav = LocalNav.current
-    val context = LocalContext.current
+    val context = rememberHost()
     val scope = rememberCoroutineScope()
     val links = LocalUriHandler.current
     // The receiver's ceiling on one delivery, as the blog last said it.
@@ -195,14 +196,14 @@ fun ComposeScreen() {
 
     // ---- Pictures
 
-    suspend fun load(items: List<Uri>) {
+    suspend fun load(items: List<Picked>) {
         if (items.isEmpty()) return
         importing = true
         unread = null
         try {
             for (item in items) {
                 try {
-                    shots = shots + Media.shot(context, item, shots.size + 1, shots.map { it.name })
+                    shots = shots + shotOf(context, item, shots.size + 1, shots.map { it.name })
                 } catch (e: Media.NotRead) {
                     // Said at the key that was pressed, not at the form's end.
                     unread = if (e.why == Media.Unread.NeedsNetwork) needsNetwork else unreadable
@@ -217,10 +218,10 @@ fun ComposeScreen() {
     // and as paragraphs of its own -- what is written already stays. A
     // header the file opens with fills the title and the tags where the
     // form has none; a field that is written in is left as it is.
-    suspend fun take(file: Uri) {
+    suspend fun take(file: Picked) {
         untaken = null
         try {
-            val read = TextFile.read(context, file)
+            val read = readTextFile(context, file)
             title = read.filling(title, read.title)
             tags = read.filling(tags, read.tags)
             if (read.body.isNotEmpty()) state.insertParagraph(read.body)
@@ -398,17 +399,11 @@ fun ComposeScreen() {
         }
     }
 
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { items ->
-        scope.launch { load(items) }
-    }
-    val textFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { file ->
-        if (file != null) scope.launch { take(file) }
-    }
+    val picker = rememberMediaPicker { items -> scope.launch { load(items) } }
+    val textFile = rememberTextFilePicker { file -> scope.launch { take(file) } }
     // The photo library is one place a picture can be; the device's
     // folders and whatever is plugged into it are others.
-    val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { items ->
-        scope.launch { load(items) }
-    }
+    val files = rememberFilesPicker { items -> scope.launch { load(items) } }
 
     fun forget() {
         made = null
@@ -459,7 +454,7 @@ fun ComposeScreen() {
         Plate(Modifier.gap(10)) {
             row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }
             // A text finished elsewhere comes in whole, where the caret is.
-            row { Command(stringResource(R.string.add_a_text_from_a_file), Symbols.docText, enabled = !busy) { textFile.launch(TextFile.KINDS) } }
+            row { Command(stringResource(R.string.add_a_text_from_a_file), Symbols.docText, enabled = !busy) { textFile() } }
         }
         untaken?.let { ProblemLine(it) }
         Hint(stringResource(R.string.a_text_from_a_file_goes_in))
@@ -482,10 +477,10 @@ fun ComposeScreen() {
                 Command(
                     stringResource(if (importing) R.string.reading else R.string.add_a_picture_or_video), Symbols.photoOnRectangle,
                     busy = importing, enabled = !busy,
-                ) { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)) }
+                ) { picker() }
             }
             row {
-                Command(stringResource(R.string.add_from_files), Symbols.folder, enabled = !(importing || busy)) { files.launch(Media.FROM_FILES) }
+                Command(stringResource(R.string.add_from_files), Symbols.folder, enabled = !(importing || busy)) { files() }
             }
         }
         unread?.let { ProblemLine(it) }

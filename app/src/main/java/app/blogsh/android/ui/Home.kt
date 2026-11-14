@@ -1,10 +1,5 @@
 package app.blogsh.android.ui
 
-import android.graphics.BitmapFactory
-import android.icu.text.MeasureFormat
-import android.icu.util.Measure
-import android.icu.util.MeasureUnit
-import android.text.format.Formatter
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,12 +39,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -64,7 +56,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import app.blogsh.android.BlogshApp
 import app.blogsh.android.R
 import app.blogsh.android.model.Arrival
 import app.blogsh.android.model.Begun
@@ -211,7 +202,7 @@ class HomeState {
         } catch (e: EngineError.NotConfigured) {
             identity = null
             glance = null
-            problem = BlogshApp.context.getString(R.string.nothing_to_connect_to_yet_the_name)
+            problem = Spoken.say(R.string.nothing_to_connect_to_yet_the_name)
         } catch (e: Throwable) {
             // Called off, or another blog by now: the screen keeps what it shows.
             if (e.isCalledOff) throw e
@@ -848,11 +839,10 @@ private fun Tile(entry: MenuEntry, highlighted: Boolean = false) {
  */
 @Composable
 private fun FactLines(facts: Facts, toTrash: (() -> Unit)?) {
-    val context = LocalContext.current
+    val context = rememberHost()
     fun number(n: Int) = NumberFormat.getIntegerInstance().format(n)
-    fun size(bytes: Long) = Formatter.formatShortFileSize(context, bytes)
-    val hours = MeasureFormat.getInstance(Locale.getDefault(), MeasureFormat.FormatWidth.WIDE)
-        .format(Measure(facts.readingHours.roundToLong(), MeasureUnit.HOUR))
+    fun size(bytes: Long) = fileSize(context, bytes)
+    val hours = hoursInWords(facts.readingHours.roundToLong())
     class Line(val label: String, val value: String, val detail: String?, val action: (() -> Unit)? = null)
     // A line whose number is nought is not said at all, as on the blog's
     // own pages: there is nothing in it to read, and behind the last two
@@ -955,13 +945,13 @@ object SiteIcon {
     private fun file(site: String): File? {
         val host = runCatching { URL(site).host }.getOrNull()
         if (host.isNullOrEmpty()) return null
-        return File(BlogshApp.context.cacheDir, "site-mark-" + host.replace(Regex("[^A-Za-z0-9.-]"), "_") + ".png")
+        return File(cacheDir, "site-mark-" + host.replace(Regex("[^A-Za-z0-9.-]"), "_") + ".png")
     }
 
     suspend fun kept(site: String): ImageBitmap? = withContext(Dispatchers.IO) {
         val file = file(site) ?: return@withContext null
         if (!file.exists()) return@withContext null
-        runCatching { BitmapFactory.decodeFile(file.path)?.asImageBitmap() }.getOrNull()
+        runCatching { decodeImage(file.readBytes()) }.getOrNull()
     }
 
     suspend fun fetch(site: String): ImageBitmap? = withContext(Dispatchers.IO) {
@@ -973,9 +963,9 @@ object SiteIcon {
             try {
                 if (connection.responseCode != 200) return@runCatching null
                 val data = connection.inputStream.use { it.readBytes() }
-                val image = BitmapFactory.decodeByteArray(data, 0, data.size) ?: return@runCatching null
+                val image = decodeImage(data) ?: return@runCatching null
                 file(site)?.writeBytes(data)
-                image.asImageBitmap()
+                image
             } finally {
                 connection.disconnect()
             }

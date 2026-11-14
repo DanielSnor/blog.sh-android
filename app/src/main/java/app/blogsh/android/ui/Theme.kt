@@ -1,5 +1,6 @@
 package app.blogsh.android.ui
 
+import app.blogsh.android.model.Device
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,16 +37,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +52,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.blogsh.android.BlogshApp
 import app.blogsh.android.R
 import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.Colours
@@ -198,7 +195,7 @@ object Theme {
      * A screen with room for longer steps of type: a tablet, read from
      * further away than a phone.
      */
-    val wide: Boolean @Composable get() = LocalConfiguration.current.smallestScreenWidthDp >= 600
+    val wide: Boolean @Composable get() = wideDisplay()
 
     val corner = 14.dp
     val gutter = 20.dp
@@ -209,7 +206,7 @@ object Theme {
  * except in German, which reads its nouns by their capitals: there the
  * words stand as they are written.
  */
-fun voiced(text: String): String = BlogshApp.spoken.let { if (it.language == "de") text else text.lowercase(it) }
+fun voiced(text: String): String = Device.language().let { if (it.language == "de") text else text.lowercase(it) }
 
 /**
  * `#rrggbb` or `#rgb`, the way a palette writes a colour; anything
@@ -238,7 +235,7 @@ fun Modifier.gap(top: Int, bottom: Int = 0): Modifier {
 @Composable
 fun Typed(content: @Composable () -> Unit) {
     val density = LocalDensity.current
-    val system = LocalConfiguration.current.fontScale
+    val system = systemFontScale()
     val zoom = Reading.shared.textSize.zoom(Theme.wide)
     CompositionLocalProvider(LocalDensity provides Density(density.density, system * zoom), content = content)
 }
@@ -306,18 +303,18 @@ fun BlogshTheme(content: @Composable () -> Unit) {
  * Courier Prime, where the iOS app has the system's Courier New.
  */
 object Faces {
-    val display = FontFamily(Font(R.font.ibm_plex_mono_medium, FontWeight.Medium))
+    val display = FontFamily(appFont(R.font.ibm_plex_mono_medium, FontWeight.Medium))
 
     @OptIn(ExperimentalTextApi::class)
     val sans = FontFamily(
         listOf(400, 500, 600, 700).map { weight ->
-            Font(R.font.work_sans_variable, FontWeight(weight), variationSettings = FontVariation.Settings(FontVariation.weight(weight)))
+            appFont(R.font.work_sans_variable, FontWeight(weight), FontVariation.Settings(FontVariation.weight(weight)))
         }
     )
 
     val mono = FontFamily(
-        Font(R.font.courier_prime_regular, FontWeight.Normal),
-        Font(R.font.courier_prime_bold, FontWeight.Bold),
+        appFont(R.font.courier_prime_regular, FontWeight.Normal),
+        appFont(R.font.courier_prime_bold, FontWeight.Bold),
     )
 }
 
@@ -466,7 +463,7 @@ fun FilterPill(label: String, selected: Boolean = false, modifier: Modifier = Mo
  */
 object RowDate {
     private fun pattern(skeleton: String): DateTimeFormatter =
-        DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton), Locale.getDefault())
+        DateTimeFormatter.ofPattern(bestDatePattern(Locale.getDefault(), skeleton), Locale.getDefault())
 
     fun short(date: Instant, now: Instant = Now.instant()): String {
         val zone = ZoneId.systemDefault()

@@ -135,21 +135,6 @@ suspend fun TextFile.read(context: Context, uri: Uri): TextFile.Read = withConte
 /** A word of the screens', said where the model's are: by its id among the app's resources. */
 fun Spoken.say(id: Int, vararg args: Any): String = BlogshApp.context.getString(id, *args)
 
-/** The word for what an engine command is doing, by the command. */
-object Doing {
-    fun word(args: List<String>): Int = when (args.firstOrNull()) {
-        "publish" -> R.string.publishing
-        "unpublish" -> R.string.unpublishing
-        "delete" -> R.string.deleting
-        "restore" -> R.string.restoring
-        "toot", "bluesky" -> R.string.announcing
-        "empty" -> R.string.clearing_out_2
-        "rebuild" -> R.string.rebuilding
-        "check", "doctor" -> R.string.checking
-        else -> R.string.saving
-    }
-}
-
 /** Where the model's own words are among the app's resources: every one of them, or the build says which is missing. */
 val Word.id: Int
     get() = when (this) {

@@ -1,6 +1,8 @@
 package app.blogsh.android.ui.screens
 
-import android.text.format.Formatter
+import app.blogsh.android.ui.fileSize
+import app.blogsh.android.ui.rememberHost
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,8 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -90,7 +90,7 @@ private enum class Clearing(val word: String) { Trash("trash"), Versions("versio
 @Composable
 fun TrashScreen() {
     val nav = LocalNav.current
-    val context = LocalContext.current
+    val context = rememberHost()
     val scope = rememberCoroutineScope()
 
     var rows by remember { mutableStateOf(emptyList<TrashRow>()) }
@@ -112,7 +112,7 @@ fun TrashScreen() {
     /** The row whose menu is open. */
     var menuFor by remember { mutableStateOf<String?>(null) }
 
-    fun size(bytes: Long): String = Formatter.formatShortFileSize(context, bytes)
+    fun size(bytes: Long): String = fileSize(context, bytes)
 
     suspend fun load() {
         loading = true

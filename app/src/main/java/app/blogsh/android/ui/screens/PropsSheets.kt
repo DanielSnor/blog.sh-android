@@ -1,6 +1,10 @@
 package app.blogsh.android.ui.screens
 
-import android.text.format.DateFormat
+import app.blogsh.android.ui.is24Hour
+import app.blogsh.android.ui.timeOfDay
+import app.blogsh.android.ui.mediumDate
+import app.blogsh.android.ui.rememberHost
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -38,8 +42,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -109,7 +111,7 @@ import java.util.Date
 @Composable
 fun ScheduleSheet(slug: String, offered: String?, current: String? = null, scheduled: Boolean, onDismiss: () -> Unit, done: suspend () -> Unit) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val context = rememberHost()
     val zone = ZoneId.systemDefault()
     // The time it is planned for, when that is still to come; or the slot
     // offered, when that is; or an hour from now.
@@ -171,8 +173,8 @@ fun ScheduleSheet(slug: String, offered: String?, current: String? = null, sched
                     EngineLabel(stringResource(R.string.publish_when))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         val moment = Date.from(date)
-                        PickerKey(DateFormat.getMediumDateFormat(context).format(moment)) { pickingDay = true }
-                        PickerKey(DateFormat.getTimeFormat(context).format(moment)) { pickingHour = true }
+                        PickerKey(mediumDate(context, moment)) { pickingDay = true }
+                        PickerKey(timeOfDay(context, moment)) { pickingHour = true }
                     }
                 }
             }
@@ -282,7 +284,7 @@ private fun DayPicker(day: LocalDate, floor: LocalDate, onPick: (LocalDate) -> U
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HourPicker(hour: Int, minute: Int, onPick: (Int, Int) -> Unit, onDismiss: () -> Unit) {
-    val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = DateFormat.is24HourFormat(LocalContext.current))
+    val state = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = is24Hour(rememberHost()))
     Dressed {
         AlertDialog(
             onDismissRequest = onDismiss,

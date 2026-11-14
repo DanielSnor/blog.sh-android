@@ -1,11 +1,11 @@
 package app.blogsh.android.ui.screens
 
-import android.content.ClipboardManager
-import android.content.Context
-import android.os.Build
-import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import app.blogsh.android.ui.pasteText
+import app.blogsh.android.ui.deviceName
+import app.blogsh.android.ui.rememberCameraAsking
+import app.blogsh.android.ui.SheetDialog
+import app.blogsh.android.ui.rememberHost
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -22,16 +22,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import app.blogsh.android.R
 import app.blogsh.android.model.Blog
 import app.blogsh.android.model.BlogShelf
@@ -81,7 +77,7 @@ import kotlinx.coroutines.withContext
  */
 @Composable
 fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Unit, onDone: () -> Unit) {
-    val context = LocalContext.current
+    val context = rememberHost()
     val scope = rememberCoroutineScope()
     var text by remember { mutableStateOf(initialCode) }
     var connecting by remember { mutableStateOf(false) }
@@ -92,7 +88,7 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
     var cameraRefused by remember { mutableStateOf(false) }
     val offered = remember { CodeScanner.isOffered(context) }
 
-    val asking = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
+    val asking = rememberCameraAsking { allowed ->
         cameraRefused = !allowed
         scanning = allowed
     }
@@ -129,7 +125,7 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
         connecting = true
         problem = null
         val blog = into ?: Blog(host = code.host, port = code.port, user = code.user, name = code.site ?: "")
-        val device = Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)?.takeIf { it.isNotBlank() } ?: Build.MODEL ?: ""
+        val device = deviceName(context)
         // A key made for this exchange: one that did not take leaves none behind.
         var made: String? = null
         try {
@@ -180,7 +176,7 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
         }
     }
 
-    Dialog(onDismissRequest = onBack, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    SheetDialog(onDismissRequest = onBack) {
         SheetBars()
         Typed {
             SheetFrame {
@@ -201,7 +197,7 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
                                     cameraRefused = false
                                     scanning = true
                                 } else {
-                                    asking.launch(android.Manifest.permission.CAMERA)
+                                    asking()
                                 }
                             }
                         }
@@ -235,8 +231,7 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
                     }
                     row {
                         Command(stringResource(R.string.android_paste), Symbols.docOnClipboard, enabled = !connecting) {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString()?.let {
+                            pasteText(context)?.let {
                                 text = it
                                 problem = null
                             }

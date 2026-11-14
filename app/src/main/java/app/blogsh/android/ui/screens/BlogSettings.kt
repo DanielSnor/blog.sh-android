@@ -1,8 +1,9 @@
 package app.blogsh.android.ui.screens
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
+import app.blogsh.android.ui.copyText
+import app.blogsh.android.ui.SheetDialog
+import app.blogsh.android.ui.rememberHost
+import app.blogsh.android.ui.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -17,8 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -53,8 +52,6 @@ import app.blogsh.android.ui.Theme
 import app.blogsh.android.ui.mono
 import app.blogsh.android.ui.gap
 import app.blogsh.android.ui.ui
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -78,7 +75,7 @@ private sealed class Probe {
  */
 @Composable
 fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
-    val context = LocalContext.current
+    val context = rememberHost()
     // The key says that it took: the row is the only place to see it.
     var copied by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -120,7 +117,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
     val port = blog?.port ?: 22
     val paired = blog?.pairedAs
 
-    Dialog(onDismissRequest = onBack, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    SheetDialog(onDismissRequest = onBack) {
         SheetBars()
         Typed {
     SheetFrame {
@@ -195,8 +192,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
                     row {
                         if (copied) DoneRow(stringResource(R.string.copied))
                         else Command(stringResource(R.string.copy_the_authorized_keys_line), Symbols.docOnDoc) {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.setPrimaryClip(ClipData.newPlainText("authorized_keys", line))
+                            copyText(context, "authorized_keys", line)
                             copied = true
                             scope.launch {
                                 delay(2_000)

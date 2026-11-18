@@ -20,7 +20,7 @@ import java.util.Locale
  * what is offered here is the newest finished one.
  */
 object Updates {
-    /** The newest release that is not a draft and not a pre-release. */
+    /** The Android app's newest release that is not a draft and not a pre-release; another app says its own (`Device.releases`). */
     const val LATEST = "https://api.github.com/repos/DanielSnor/blog.sh-android/releases/latest"
 
     /** What there is to say after asking. */
@@ -38,8 +38,8 @@ object Updates {
         data object Unknown : Said()
     }
 
-    /** Asks GitHub, off the screen's thread. */
-    suspend fun ask(current: String, from: String = LATEST): Said = withContext(Dispatchers.IO) {
+    /** Asks GitHub, off the screen's thread, about this app's own releases. */
+    suspend fun ask(current: String, from: String = Device.releases): Said = withContext(Dispatchers.IO) {
         runCatching {
             val connection = URL(from).openConnection() as HttpURLConnection
             connection.connectTimeout = 10_000

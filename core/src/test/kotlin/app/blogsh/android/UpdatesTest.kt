@@ -1,10 +1,14 @@
 package app.blogsh.android
 
+import app.blogsh.android.model.Device
 import app.blogsh.android.model.Updates
+import com.sun.net.httpserver.HttpServer
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.net.InetSocketAddress
 
 /**
  * Whether a newer version is out, as GitHub's newest release says it. A
@@ -60,5 +64,32 @@ class UpdatesTest {
     @Test
     fun theReleasesAskedAreThisApps() {
         assertEquals("https://api.github.com/repos/DanielSnor/blog.sh-android/releases/latest", Updates.LATEST)
+        assertEquals(Updates.LATEST, Device.releases)
+    }
+
+    /**
+     * An app that is released from a repository of its own -- the desktop
+     * app -- is asked about from there: told of the Android app's newest,
+     * a desktop would be sent to an APK.
+     */
+    @Test
+    fun anAppWithReleasesOfItsOwnIsAskedAboutThere() {
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        server.createContext("/repos/someone/elsewhere/releases/latest") { exchange ->
+            val body = answer("v9.9.9", page = "https://github.com/someone/elsewhere/releases/tag/v9.9.9").toByteArray()
+            exchange.sendResponseHeaders(200, body.size.toLong())
+            exchange.responseBody.use { it.write(body) }
+        }
+        server.start()
+        val before = Device.releases
+        try {
+            Device.releases = "http://127.0.0.1:${server.address.port}/repos/someone/elsewhere/releases/latest"
+            val said = runBlocking { Updates.ask("0.8.1") }
+            assertEquals(Updates.Said.Newer("9.9.9", "https://github.com/someone/elsewhere/releases/tag/v9.9.9"), said)
+        } finally {
+            Device.releases = before
+            server.stop(0)
+        }
     }
 }
+

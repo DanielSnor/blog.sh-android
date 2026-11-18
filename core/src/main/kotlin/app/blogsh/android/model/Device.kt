@@ -29,6 +29,14 @@ object Device {
     /** Which build this is, as the build wrote it into the app. */
     var stamp: () -> BuildStamp = { BuildStamp(null, null) }
 
+    /**
+     * Where a newer version of this app is asked about: its own
+     * repository's newest release on GitHub. The Android app's unless the
+     * app says another -- the desktop app is released from a repository
+     * of its own, and the Android app's newest is nothing to a desktop.
+     */
+    var releases: String = Updates.LATEST
+
     /** What went wrong where nobody is shown it, kept where the device's log can be read. */
     var log: (String, Throwable) -> Unit = { what, error -> System.err.println("blogsh: $what: $error") }
 }

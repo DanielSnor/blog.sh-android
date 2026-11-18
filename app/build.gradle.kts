@@ -16,8 +16,8 @@ android {
         applicationId = "app.blogsh.android"
         minSdk = 29
         targetSdk = 36
-        versionCode = 15
-        versionName = "0.8.1"
+        versionCode = 16
+        versionName = "0.9.0"
     }
 
     // The key a release is signed with: kept on the machine that builds

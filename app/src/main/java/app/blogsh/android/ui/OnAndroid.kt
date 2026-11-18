@@ -115,7 +115,7 @@ fun wideDisplay(): Boolean = LocalConfiguration.current.smallestScreenWidthDp >=
 @Composable
 fun systemFontScale(): Float = LocalConfiguration.current.fontScale
 
-/** The app's version, as it is named by it: 0.8.1. */
+/** The app's version, as it is named by it: 0.9.0. */
 val appVersion: String get() = BuildConfig.VERSION_NAME
 
 /** A size in bytes the way the system says one: 2.4 MB. */

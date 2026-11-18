@@ -185,7 +185,7 @@
  },
  {
   "markdown": "10. ten",
-  "html": "<ol><li>ten</li></ol>"
+  "html": "<ol start=\"10\"><li>ten</li></ol>"
  },
  {
   "markdown": "```\ncode\n```",

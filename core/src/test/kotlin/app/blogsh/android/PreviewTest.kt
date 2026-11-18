@@ -57,6 +57,28 @@ class PreviewTest {
         assertTrue(Preview.document("", "", "en").contains("hr.teaser-end{"))
     }
 
+    // a list that starts elsewhere
+
+    /**
+     * The engine numbers a list from its first item (since 1.11.1), as
+     * the markdown it is parsed with does: a list that begins at 5 is
+     * drawn from 5, not from 1.
+     */
+    @Test
+    fun aListIsNumberedFromItsFirstItem() {
+        assertEquals("<ol start=\"5\"><li>five</li><li>six</li></ol>", Preview.render("5. five\n6. six"))
+        assertEquals("<ol start=\"10\"><li>ten</li></ol>", Preview.render("10. ten"))
+        assertEquals("<ol start=\"0\"><li>none</li></ol>", Preview.render("0. none"))
+        assertEquals("<ol start=\"7\"><li>seven</li></ol>", Preview.render("007. seven"))
+        assertEquals("<ol start=\"3\"><li>three</li></ol>", Preview.render("  3. three"))
+    }
+
+    @Test
+    fun aListFromOneAndBulletsStayAsTheyWere() {
+        assertEquals("<ol><li>one</li><li>two</li></ol>", Preview.render("1. one\n2. two"))
+        assertEquals("<ul><li>a</li><li>b</li></ul>", Preview.render("- a\n- b"))
+    }
+
     // pictures in a row
 
     private val three: Map<String, Shown> =

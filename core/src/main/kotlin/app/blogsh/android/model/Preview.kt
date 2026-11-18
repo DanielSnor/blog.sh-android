@@ -225,7 +225,11 @@ object Preview {
                     items.add("<li>" + inline(listed.replace(lines[i], "")) + "</li>")
                     i += 1
                 }
-                html.add((if (ordered) "<ol>" else "<ul>") + items.joinToString("") + (if (ordered) "</ol>" else "</ul>"))
+                // Numbered from its first item, as the engine numbers it
+                // (since 1.11.1): "5." begins at 5, "1." needs no word.
+                val start = if (ordered) Regex("""^\s*([0-9]+)""").find(line)?.groupValues?.get(1)?.toIntOrNull() else null
+                val opening = if (!ordered) "<ul>" else if (start == null || start == 1) "<ol>" else "<ol start=\"" + start + "\">"
+                html.add(opening + items.joinToString("") + (if (ordered) "</ol>" else "</ul>"))
                 continue
             }
             if (blank(i)) {

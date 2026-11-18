@@ -206,7 +206,7 @@ private fun DeviceRow(number: Int, device: PairedDevices.Device, own: Boolean, l
             }
         } else if (!own && device.fingerprint.isNotEmpty()) {
             Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(R.string.android_taken_off_on_the_server), color = Theme.muted, style = ui(12f))
+                Text(stringResource(R.string.taken_off_on_the_server_with), color = Theme.muted, style = ui(12f))
                 SelectionContainer { Text("./blog.sh pair --revoke ${device.fingerprint}", color = Theme.ink, style = mono(12f, bold = false)) }
             }
         }

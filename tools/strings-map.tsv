@@ -218,6 +218,8 @@ remove_this_blog	Remove this blog
 rename	Rename
 rename_slug	Rename slug
 renamed	Renamed: %@
+replace	Replace
+replace_what_is_written_here_with_the	Replace what is written here with the translator's text? Nothing is saved until you save it.
 reschedule	Reschedule
 rescheduled	Rescheduled
 restore	Restore
@@ -266,6 +268,7 @@ take_this_device_off_the_blog	Take this device off the blog
 take_this_device_off_the_blog_the	Take this device off the blog '%@'? The server will not let it in any more; to connect again, it needs a new code from ./blog.sh pair. The blog stays in the app, with what is written for it on this device.
 take_this_language_off_the_post	Take this language off the post
 taken_off	Taken off
+taken_off_on_the_server_with	Taken off on the server with:
 tap_a_colour_to_change_it_it	Tap a colour to change it. It holds on this device, for every blog.
 test_the_connection	Test the connection
 text	Text
@@ -332,6 +335,8 @@ the_site_will_be_built_in_a	The site will be built in a moment.
 the_text_did_not_come_with_the	The text did not come with the answer.
 the_text_is_missing_the_blog_takes	The text is missing: the blog takes no post of a title alone.
 the_time_offered_is_the_next_free	The time offered is the next free publishing slot.
+the_translator_on_the_server_is_at	The translator on the server is at work. It can take a minute or more, and nothing is saved until you save it.
+the_translator_s_text_read_it_before	The translator's text. Read it before you save it.
 there_is_no_text_in_the_file	There is no text in the file.
 this_blog_does_not_show_its_devices	This blog does not show its devices to the app yet; a newer ./blog.sh will. On the server, ./blog.sh pair --list shows them.
 this_blog_s_engine_does_not_offer	This blog's engine does not offer this check to the app yet. It comes with a newer ./blog.sh.
@@ -353,6 +358,7 @@ throw_away_it_was_never_sent_nothing	Throw '%@' away? It was never sent; nothing
 throw_away	Throw away
 throw_these_changes_away_they_were_never	Throw these changes away? They were never saved; nothing of them is kept.
 title	Title
+translate_automatically	Translate automatically
 trash	Trash
 trash_emptied_item_s_freed	Trash emptied: %lld item(s), %@ freed.
 trash_is_empty	Trash is empty

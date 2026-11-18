@@ -412,7 +412,47 @@ data class EditEntry(
  * the original beside it, to be written elsewhere.
  */
 @Serializable
-data class TranslationAnswer(val ok: Boolean, val post: TranslationEntry)
+data class TranslationAnswer(
+    val ok: Boolean,
+    val post: TranslationEntry,
+    /**
+     * Whether the server's translator would make this language, said
+     * before anyone asks it to (1.12). An older engine says nothing, and
+     * nothing is offered.
+     */
+    val auto: AutoTranslation? = null,
+)
+
+/**
+ * `auto` of `translate --json`: whether `translate --auto` would run for
+ * this device, and when it would not, why -- in the blog's words. After a
+ * `translate --auto --json`, also what looks wrong with the translator's
+ * text: a number, an address or a picture that is not where the original
+ * has it, paragraphs that do not add up.
+ */
+@Serializable
+data class AutoTranslation(
+    val available: Boolean,
+    val problem: String? = null,
+    val message: String? = null,
+    val warnings: List<Warning>? = null,
+) {
+    @Serializable
+    data class Warning(val code: String, val message: String)
+
+    /** Whether anything of the translator stands above the editor: its key, or why there is none. */
+    val offered: Boolean get() = available || !message.isNullOrEmpty()
+
+    companion object {
+        /**
+         * What the translator is asked with: the post, the language, and --
+         * over words the language has already -- that it is asked again on
+         * purpose; the engine turns a second translation away without it.
+         */
+        fun args(slug: String, lang: String, written: Boolean): List<String> =
+            listOf("translate", slug, "--lang", lang, "--auto") + (if (written) listOf("--force") else emptyList())
+    }
+}
 
 @Serializable
 data class TranslationEntry(

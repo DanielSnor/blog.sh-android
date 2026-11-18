@@ -151,4 +151,6 @@ object Symbols {
     val ipadAndIphone = R.drawable.ic_devices
     /** book */
     val book = R.drawable.ic_book
+    /** translate */
+    val translate = R.drawable.ic_translate
 }

@@ -221,6 +221,8 @@
     <string name="rename">Přejmenovat</string>
     <string name="rename_slug">Přejmenovat slug</string>
     <string name="renamed">Přejmenováno: %1$s</string>
+    <string name="replace">Nahradit</string>
+    <string name="replace_what_is_written_here_with_the">Nahradit to, co je tu napsané, textem od překladače? Nic se neuloží, dokud to neuložíš.</string>
     <string name="reschedule">Přeplánovat</string>
     <string name="rescheduled">Přeplánováno</string>
     <string name="restore">Obnovit</string>
@@ -269,6 +271,7 @@
     <string name="take_this_device_off_the_blog_the">Odebrat tohle zařízení z blogu „%1$s“? Server ho už dovnitř nepustí; k novému připojení bude potřeba nový kód z ./blog.sh pair. Blog v appce zůstane i s tím, co je pro něj v zařízení rozepsáno.</string>
     <string name="take_this_language_off_the_post">Odebrat tenhle jazyk z příspěvku</string>
     <string name="taken_off">Odebráno</string>
+    <string name="taken_off_on_the_server_with">Na serveru se odebere příkazem:</string>
     <string name="tap_a_colour_to_change_it_it">Ťuknutím na políčko barvu změníš. Platí na tomhle zařízení a pro všechny blogy.</string>
     <string name="test_the_connection">Vyzkoušet spojení</string>
     <string name="text">Text</string>
@@ -335,6 +338,8 @@
     <string name="the_text_did_not_come_with_the">Text v odpovědi nepřišel.</string>
     <string name="the_text_is_missing_the_blog_takes">Chybí text: samotný titulek blog nepřijme.</string>
     <string name="the_time_offered_is_the_next_free">Nabídnutý čas je nejbližší volný slot.</string>
+    <string name="the_translator_on_the_server_is_at">Překladač na serveru pracuje. Může to trvat i přes minutu a nic se neuloží, dokud to neuložíš.</string>
+    <string name="the_translator_s_text_read_it_before">Text od překladače. Než ho uložíš, přečti si ho.</string>
     <string name="there_is_no_text_in_the_file">V souboru žádný text není.</string>
     <string name="this_blog_does_not_show_its_devices">Tenhle blog zatím appce svá zařízení neukáže; novější ./blog.sh to umí. Na serveru je ukáže ./blog.sh pair --list.</string>
     <string name="this_blog_s_engine_does_not_offer">Engine tohohle blogu tuhle kontrolu appce zatím nenabízí. Přijde s novějším ./blog.sh.</string>
@@ -356,6 +361,7 @@
     <string name="throw_away">Zahodit</string>
     <string name="throw_these_changes_away_they_were_never">Zahodit tyhle úpravy? Nebyly nikdy uloženy a nic z nich nezůstane.</string>
     <string name="title">Titulek</string>
+    <string name="translate_automatically">Přeložit automaticky</string>
     <string name="trash">Koš</string>
     <string name="trash_emptied_item_s_freed">Koš vysypán: položek %1$d, uvolněno %2$s.</string>
     <string name="trash_is_empty">Koš je prázdný</string>

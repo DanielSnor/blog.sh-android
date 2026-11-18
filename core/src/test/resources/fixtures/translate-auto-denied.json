@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "post": {
+    "slug": "pet-kroku",
+    "lang": "en",
+    "title": "Pět kroků",
+    "written": false,
+    "editable": true,
+    "problem": null,
+    "text": "---\ntitle: \nslug: \n---\n\n",
+    "original": "---\ntitle: Pět kroků\nslug: pet-kroku\n---\n\nPrvní odstavec má 5 slov.\n\nDruhý odstavec s odkazem na https://blogsh.app/.",
+    "media": [],
+    "preview": "/draft/3c748f2df0f0c427/pet-kroku/",
+    "base": "92f2007884b7625ac7f782b75f5e2947c944f2a89d6fc48ab537cebe4a9e25b1"
+  },
+  "auto": {
+    "available": false,
+    "problem": "translator_not_allowed",
+    "message": "Tenhle server má strojový překlad pro spárovaná zařízení vypnutý (TRANSLATOR_REMOTE v env.sh). Smaž ten řádek, nebo ho nastav na allow, a zapne se."
+  }
+}

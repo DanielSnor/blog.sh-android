@@ -1,0 +1,31 @@
+{
+  "ok": true,
+  "post": {
+    "slug": "pet-kroku",
+    "lang": "en",
+    "title": "Pět kroků",
+    "written": false,
+    "editable": true,
+    "problem": null,
+    "text": "---\ntitle: [EN] Pět kroků\nslug:\n---\n\n[EN] První odstavec má 6 slov.\n\n[EN] Druhý odstavec s odkazem na https://blogsh.app/.\n",
+    "original": "---\ntitle: Pět kroků\nslug: pet-kroku\n---\n\nPrvní odstavec má 5 slov.\n\nDruhý odstavec s odkazem na https://blogsh.app/.",
+    "media": [],
+    "preview": "/draft/3c748f2df0f0c427/pet-kroku/",
+    "base": "92f2007884b7625ac7f782b75f5e2947c944f2a89d6fc48ab537cebe4a9e25b1"
+  },
+  "auto": {
+    "available": true,
+    "warnings": [
+      {
+        "code": "numbers",
+        "message": "Čísla se liší od originálu -- chybí: 5; nová: 6.",
+        "missing": [
+          "5"
+        ],
+        "extra": [
+          "6"
+        ]
+      }
+    ]
+  }
+}

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Text
+import androidx.compose.runtime.key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.blogsh.android.R
 import app.blogsh.android.model.ActionAnswer
+import app.blogsh.android.model.AutoTranslation
 import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.Blogs
 import app.blogsh.android.model.CodeQuotes
@@ -92,6 +94,15 @@ fun TranslateScreen(slug: String, lang: String) {
     var broughtBack by remember { mutableStateOf<Unsaved?>(null) }
     // The blog the screen was opened for: what is kept is kept under it.
     val blog = remember { Blogs.currentId }
+    // Whether the server's translator would make this language; null from
+    // an engine that does not say, and then nothing is offered.
+    var auto by remember { mutableStateOf<AutoTranslation?>(null) }
+    // The translator is at work on the server.
+    var translating by remember { mutableStateOf(false) }
+    var confirmingMachine by remember { mutableStateOf(false) }
+    // The translator's text is in the editor, not saved yet, and this is
+    // what looked wrong in it.
+    var machineWarnings by remember { mutableStateOf<List<AutoTranslation.Warning>?>(null) }
     val what = remember(lang) { Unsaved.What.Language(lang) }
 
     val languageName = remember(lang) { Locale.forLanguageTag(lang).getDisplayLanguage(Locale.getDefault()).ifEmpty { lang } }
@@ -101,6 +112,7 @@ fun TranslateScreen(slug: String, lang: String) {
         try {
             val answer = Engine.call<TranslationAnswer>("translate", slug, "--lang", lang)
             entry = answer.post
+            auto = answer.auto
             // The blog's words, or the ones written here and never saved.
             // What was written here is brought back only where it can be saved.
             val kept = if (answer.post.editable) blog?.let { Unsaved.kept(it, slug, what, BlogShelf.notes) } else null
@@ -158,6 +170,7 @@ fun TranslateScreen(slug: String, lang: String) {
             // Saved, or taken off: what the editor held is not left to bring back.
             blog?.let { Unsaved.forget(it, slug, what, going, BlogShelf.notes) }
             broughtBack = null
+            machineWarnings = null
             Desk.changed()
             load()
             answered += 1
@@ -168,6 +181,30 @@ fun TranslateScreen(slug: String, lang: String) {
             answered += 1
         } finally {
             saving = false
+        }
+    }
+
+    // `translate --auto --json`: the translator's text into the editor,
+    // where it is read and saved as a text written by hand is -- nothing
+    // is saved by asking. A language that has words already is asked for
+    // again on purpose (`--force`), the person having said so.
+    suspend fun translate() {
+        val post = entry ?: return
+        translating = true
+        problem = null
+        changedOnBlog = false
+        machineWarnings = null
+        // What the last save said is not of the words that come now.
+        saved = null
+        try {
+            val answer = Engine.call<TranslationAnswer>(AutoTranslation.args(slug, lang, post.written))
+            state.set(answer.post.text)
+            machineWarnings = answer.auto?.warnings ?: emptyList()
+        } catch (e: Throwable) {
+            if (e.isCalledOff) throw e
+            problem = e.said
+        } finally {
+            translating = false
         }
     }
 
@@ -215,9 +252,37 @@ fun TranslateScreen(slug: String, lang: String) {
                         Modifier.padding(bottom = 10.dp),
                     )
                 }
-                Plate {
-                    // Left alone while a save is on its way.
-                    row { PaperEditor(state, minHeight = 280.dp, enabled = post.editable && !saving, original = post.text) }
+                val machine = auto.takeIf { post.editable }
+                if (machine != null) {
+                    if (machine.available) {
+                        Plate(Modifier.gap(10)) {
+                            row {
+                                Command(stringResource(R.string.translate_automatically), Symbols.translate, busy = translating, enabled = !saving) {
+                                    // Over words of somebody's own the translator's are not
+                                    // put without asking; over nothing they are.
+                                    if (Preview.takesOff(state.text)) scope.launch { translate() } else confirmingMachine = true
+                                }
+                            }
+                        }
+                        if (translating) {
+                            Hint(stringResource(R.string.the_translator_on_the_server_is_at))
+                        } else {
+                            machineWarnings?.let { warnings ->
+                                Hint(stringResource(R.string.the_translator_s_text_read_it_before))
+                                warnings.forEach { warning ->
+                                    key(warning) { Text(warning.message, color = Theme.danger, style = ui(13f), modifier = Modifier.gap(6)) }
+                                }
+                            }
+                        }
+                    } else if (!machine.message.isNullOrEmpty()) {
+                        Hint(machine.message!!)
+                    }
+                }
+                // Apart from the translator's key and what it said, as the
+                // preview's key is apart from the editor below it.
+                Plate(if (machine?.offered == true) Modifier.gap(14) else Modifier) {
+                    // Left alone while a save or the translator is on its way.
+                    row { PaperEditor(state, minHeight = 280.dp, enabled = post.editable && !saving && !translating, original = post.text) }
                 }
                 Plate(Modifier.gap(10)) {
                     row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }
@@ -226,7 +291,7 @@ fun TranslateScreen(slug: String, lang: String) {
                 PrimaryButton(
                     if (saving) stringResource(R.string.saving) else stringResource(R.string.save_the_text, languageName),
                     modifier = Modifier.gap(22),
-                    enabled = !(saving || !post.editable || text == post.text),
+                    enabled = !(saving || translating || !post.editable || text == post.text),
                     busy = saving,
                 ) { Desk.outliving.launch { save(state.text) } }
                 problem?.let { ProblemLine(it) }
@@ -287,6 +352,13 @@ fun TranslateScreen(slug: String, lang: String) {
         val parts = remember { Preview.parts(state.text) }
         val shown = remember { Preview.shown(entry?.media ?: emptyList(), entry?.preview ?: "/") }
         PreviewSheet(parts.first.ifEmpty { entry?.title ?: "" }, parts.second, shown, lang = lang) { previewing = false }
+    }
+    if (confirmingMachine) {
+        Asks(
+            stringResource(R.string.replace_what_is_written_here_with_the),
+            choices = listOf(Choice(stringResource(R.string.replace), danger = true) { scope.launch { translate() } }),
+            onDismiss = { confirmingMachine = false },
+        )
     }
     if (confirmingRemoval) {
         Asks(

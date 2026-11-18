@@ -221,6 +221,8 @@
     <string name="rename">Umbenennen</string>
     <string name="rename_slug">Slug umbenennen</string>
     <string name="renamed">Umbenannt: %1$s</string>
+    <string name="replace">Ersetzen</string>
+    <string name="replace_what_is_written_here_with_the">Was hier steht, durch den Text des Übersetzers ersetzen? Gespeichert wird erst, wenn du speicherst.</string>
     <string name="reschedule">Umplanen</string>
     <string name="rescheduled">Umgeplant</string>
     <string name="restore">Wiederherstellen</string>
@@ -269,6 +271,7 @@
     <string name="take_this_device_off_the_blog_the">Dieses Gerät vom Blog „%1$s“ entfernen? Der Server lässt es dann nicht mehr herein; für eine neue Verbindung braucht es einen neuen Code aus ./blog.sh pair. Der Blog bleibt in der App, mit allem, was auf diesem Gerät für ihn geschrieben ist.</string>
     <string name="take_this_language_off_the_post">Diese Sprache vom Beitrag entfernen</string>
     <string name="taken_off">Entfernt</string>
+    <string name="taken_off_on_the_server_with">Auf dem Server wird es so entfernt:</string>
     <string name="tap_a_colour_to_change_it_it">Tippe auf ein Feld, um die Farbe zu ändern. Gilt auf diesem Gerät, für jeden Blog.</string>
     <string name="test_the_connection">Verbindung testen</string>
     <string name="text">Text</string>
@@ -335,6 +338,8 @@
     <string name="the_text_did_not_come_with_the">Der Text kam nicht mit der Antwort.</string>
     <string name="the_text_is_missing_the_blog_takes">Der Text fehlt: einen Beitrag nur aus einem Titel nimmt der Blog nicht.</string>
     <string name="the_time_offered_is_the_next_free">Die angebotene Zeit ist der nächste freie Slot.</string>
+    <string name="the_translator_on_the_server_is_at">Der Übersetzer auf dem Server arbeitet. Das kann eine Minute oder länger dauern, und gespeichert wird erst, wenn du speicherst.</string>
+    <string name="the_translator_s_text_read_it_before">Der Text des Übersetzers. Lies ihn, bevor du ihn speicherst.</string>
     <string name="there_is_no_text_in_the_file">In der Datei steht kein Text.</string>
     <string name="this_blog_does_not_show_its_devices">Dieser Blog zeigt der App seine Geräte noch nicht; ein neueres ./blog.sh kann es. Auf dem Server zeigt ./blog.sh pair --list sie.</string>
     <string name="this_blog_s_engine_does_not_offer">Die Engine dieses Blogs bietet der App diese Prüfung noch nicht an. Sie kommt mit einem neueren ./blog.sh.</string>
@@ -356,6 +361,7 @@
     <string name="throw_away">Verwerfen</string>
     <string name="throw_these_changes_away_they_were_never">Diese Änderungen verwerfen? Sie wurden nie gesichert; nichts davon bleibt erhalten.</string>
     <string name="title">Titel</string>
+    <string name="translate_automatically">Automatisch übersetzen</string>
     <string name="trash">Papierkorb</string>
     <string name="trash_emptied_item_s_freed">Papierkorb geleert: %1$d Element(e), %2$s freigegeben.</string>
     <string name="trash_is_empty">Der Papierkorb ist leer</string>

@@ -10,7 +10,6 @@
     <string name="android_colour_number">Die Farbe als Zahl</string>
     <string name="android_paste">Einfügen</string>
     <string name="android_picture_needs_network">Das Bild konnte nicht gelesen werden: Es liegt wohl nur in der Cloud und lässt sich ohne Netz nicht laden. Hinzufügen lässt sich eines, das ganz auf diesem Gerät liegt — etwa ein eben aufgenommenes.</string>
-    <string name="android_taken_off_on_the_server">Auf dem Server wird es so entfernt:</string>
     <string name="android_check_for_a_newer_version">Nach einer neueren Version suchen</string>
     <string name="android_newer_version">Version %1$s ist erschienen — hier läuft %2$s.</string>
     <string name="android_open_the_release">Veröffentlichung öffnen</string>

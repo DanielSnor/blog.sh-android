@@ -221,6 +221,8 @@
     <string name="rename">Rename</string>
     <string name="rename_slug">Rename slug</string>
     <string name="renamed">Renamed: %1$s</string>
+    <string name="replace">Replace</string>
+    <string name="replace_what_is_written_here_with_the">Replace what is written here with the translator\'s text? Nothing is saved until you save it.</string>
     <string name="reschedule">Reschedule</string>
     <string name="rescheduled">Rescheduled</string>
     <string name="restore">Restore</string>
@@ -269,6 +271,7 @@
     <string name="take_this_device_off_the_blog_the">Take this device off the blog \'%1$s\'? The server will not let it in any more; to connect again, it needs a new code from ./blog.sh pair. The blog stays in the app, with what is written for it on this device.</string>
     <string name="take_this_language_off_the_post">Take this language off the post</string>
     <string name="taken_off">Taken off</string>
+    <string name="taken_off_on_the_server_with">Taken off on the server with:</string>
     <string name="tap_a_colour_to_change_it_it">Tap a colour to change it. It holds on this device, for every blog.</string>
     <string name="test_the_connection">Test the connection</string>
     <string name="text">Text</string>
@@ -335,6 +338,8 @@
     <string name="the_text_did_not_come_with_the">The text did not come with the answer.</string>
     <string name="the_text_is_missing_the_blog_takes">The text is missing: the blog takes no post of a title alone.</string>
     <string name="the_time_offered_is_the_next_free">The time offered is the next free publishing slot.</string>
+    <string name="the_translator_on_the_server_is_at">The translator on the server is at work. It can take a minute or more, and nothing is saved until you save it.</string>
+    <string name="the_translator_s_text_read_it_before">The translator\'s text. Read it before you save it.</string>
     <string name="there_is_no_text_in_the_file">There is no text in the file.</string>
     <string name="this_blog_does_not_show_its_devices">This blog does not show its devices to the app yet; a newer ./blog.sh will. On the server, ./blog.sh pair --list shows them.</string>
     <string name="this_blog_s_engine_does_not_offer">This blog\'s engine does not offer this check to the app yet. It comes with a newer ./blog.sh.</string>
@@ -356,6 +361,7 @@
     <string name="throw_away">Throw away</string>
     <string name="throw_these_changes_away_they_were_never">Throw these changes away? They were never saved; nothing of them is kept.</string>
     <string name="title">Title</string>
+    <string name="translate_automatically">Translate automatically</string>
     <string name="trash">Trash</string>
     <string name="trash_emptied_item_s_freed">Trash emptied: %1$d item(s), %2$s freed.</string>
     <string name="trash_is_empty">Trash is empty</string>

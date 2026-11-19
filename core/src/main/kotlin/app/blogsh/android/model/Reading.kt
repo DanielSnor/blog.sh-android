@@ -131,6 +131,14 @@ class Reading(private val notes: Notes) {
     var textSize by mutableStateOf(TextSize.kept(notes.read(TextSize.KEY)?.toIntOrNull()))
         private set
 
+    /**
+     * The original beside the text being translated, where a screen on
+     * its side has the room for both; above it otherwise. Beside, until
+     * somebody chose.
+     */
+    var sideBySide by mutableStateOf(notes.read(SIDE_BY_SIDE_KEY) != "no")
+        private set
+
     /** What was chosen; what the app speaks now is what was chosen when it started. */
     var language by mutableStateOf(AppLanguage.read(notes))
         private set
@@ -169,7 +177,15 @@ class Reading(private val notes: Notes) {
         chosen.write(notes)
     }
 
+    fun placeOriginal(beside: Boolean) {
+        sideBySide = beside
+        notes.write(SIDE_BY_SIDE_KEY, if (beside) null else "no")
+    }
+
     companion object {
+        /** The iOS app's own name for it. */
+        const val SIDE_BY_SIDE_KEY = "translate.sideBySide"
+
         /** The one the app has. */
         val shared: Reading by lazy { Reading(BlogShelf.notes) }
     }

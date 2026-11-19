@@ -276,4 +276,16 @@ class AppLanguageTest {
         Reading(notes).wear(Colouring.Blog)
         assertEquals(Colouring.Blog, Reading(notes).wearing)
     }
+
+    /** The original stands beside the translation until somebody chose otherwise, and the choice is kept. */
+    @Test
+    fun theOriginalIsBesideUntilChosenOtherwise() {
+        val notes = MemoryNotes()
+        assertTrue(Reading(notes).sideBySide)
+        Reading(notes).placeOriginal(false)
+        assertFalse(Reading(notes).sideBySide)
+        Reading(notes).placeOriginal(true)
+        assertTrue(Reading(notes).sideBySide)
+        assertNull(notes.read(Reading.SIDE_BY_SIDE_KEY))
+    }
 }

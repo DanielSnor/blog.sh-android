@@ -153,4 +153,8 @@ object Symbols {
     val book = R.drawable.ic_book
     /** translate */
     val translate = R.drawable.ic_translate
+    /** rectangle.split.2x1 */
+    val rectangleSplit2x1 = R.drawable.ic_view_column_2
+    /** rectangle.split.1x2 */
+    val rectangleSplit1x2 = R.drawable.ic_splitscreen
 }

@@ -1,7 +1,11 @@
 package app.blogsh.android.ui.screens
 
 import app.blogsh.android.ui.stringResource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -28,6 +32,7 @@ import app.blogsh.android.model.DeliveryFile
 import app.blogsh.android.model.Desk
 import app.blogsh.android.model.Engine
 import app.blogsh.android.model.Preview
+import app.blogsh.android.model.Reading
 import app.blogsh.android.model.TranslationAnswer
 import app.blogsh.android.model.TranslationEntry
 import app.blogsh.android.model.Unsaved
@@ -42,6 +47,9 @@ import app.blogsh.android.ui.Choice
 import app.blogsh.android.ui.Command
 import app.blogsh.android.ui.EditorState
 import app.blogsh.android.ui.Hint
+import app.blogsh.android.ui.Layout
+import app.blogsh.android.ui.LocalLayout
+import app.blogsh.android.ui.PlateScope
 import app.blogsh.android.ui.LocalNav
 import app.blogsh.android.ui.PaperEditor
 import app.blogsh.android.ui.PaperScreen
@@ -104,6 +112,14 @@ fun TranslateScreen(slug: String, lang: String) {
     // what looked wrong in it.
     var machineWarnings by remember { mutableStateOf<List<AutoTranslation.Warning>?>(null) }
     val what = remember(lang) { Unsaved.What.Language(lang) }
+
+    // On a screen wide enough for two -- a tablet or a computer, on its
+    // side -- the original can stand beside the text being written, so
+    // both are seen at once. A phone, and a tablet held upright, which is
+    // a large phone, have room for one above the other.
+    val roomBeside = LocalLayout.current == Layout.Columns
+    // The original beside the text: chosen, and with the room for it.
+    val besides = roomBeside && Reading.shared.sideBySide
 
     val languageName = remember(lang) { Locale.forLanguageTag(lang).getDisplayLanguage(Locale.getDefault()).ifEmpty { lang } }
     val text = state.text
@@ -228,61 +244,92 @@ fun TranslateScreen(slug: String, lang: String) {
                 broughtBack?.let { back ->
                     BroughtBack(broughtBackWords(back, post.base, null), stringResource(R.string.take_the_text_as_the_blog_has)) { takeTheBlogs() }
                 }
-                SectionLabel(stringResource(R.string.the_original))
-                Plate {
+                // The original and its key to stand beside the text or above it.
+                val arrangement: PlateScope.() -> Unit = {
                     row {
                         Command(
-                            stringResource(if (showingOriginal) R.string.hide_the_original else R.string.show_the_original),
-                            if (showingOriginal) Symbols.chevronUp else Symbols.chevronDown,
-                        ) { showingOriginal = !showingOriginal }
-                    }
-                    if (showingOriginal) {
-                        row { SelectionContainer { Text(post.original, color = Theme.ink, style = mono(14f, bold = false)) } }
+                            stringResource(if (besides) R.string.original_above_the_text else R.string.original_beside_the_text),
+                            if (besides) Symbols.rectangleSplit1x2 else Symbols.rectangleSplit2x1,
+                        ) { Reading.shared.placeOriginal(!besides) }
                     }
                 }
-                Hint(stringResource(R.string.only_the_words_are_translated_the_date))
+                val original: PlateScope.() -> Unit = {
+                    row { SelectionContainer { Text(post.original, color = Theme.ink, style = mono(14f, bold = false), modifier = Modifier.fillMaxWidth()) } }
+                }
+                // The language being written: its label, why it cannot be,
+                // the translator, and the editor.
+                val translation: @Composable () -> Unit = {
+                    SectionLabel(stringResource(R.string.s_in, languageName))
+                    // What the text cannot say is not written over from here:
+                    // the translation is read, and changed at the desk.
+                    if (!post.editable) {
+                        Hint(
+                            post.problem?.let { stringResource(R.string.this_post_cannot_be_edited_here_at, it) }
+                                ?: stringResource(R.string.this_post_cannot_be_edited_here),
+                            Modifier.padding(bottom = 10.dp),
+                        )
+                    }
+                    val machine = auto.takeIf { post.editable }
+                    if (machine != null) {
+                        if (machine.available) {
+                            Plate {
+                                row {
+                                    Command(stringResource(R.string.translate_automatically), Symbols.translate, busy = translating, enabled = !saving) {
+                                        // Over words of somebody's own the translator's are not
+                                        // put without asking; over nothing they are.
+                                        if (Preview.takesOff(state.text)) scope.launch { translate() } else confirmingMachine = true
+                                    }
+                                }
+                            }
+                            if (translating) {
+                                Hint(stringResource(R.string.the_translator_on_the_server_is_at))
+                            } else {
+                                machineWarnings?.let { warnings ->
+                                    Hint(stringResource(R.string.the_translator_s_text_read_it_before))
+                                    warnings.forEach { warning ->
+                                        key(warning) { Text(warning.message, color = Theme.danger, style = ui(13f), modifier = Modifier.gap(6)) }
+                                    }
+                                }
+                            }
+                        } else if (!machine.message.isNullOrEmpty()) {
+                            Hint(machine.message!!)
+                        }
+                    }
+                    // Apart from the translator's key and what it said, as the
+                    // preview's key is apart from the editor below it.
+                    Plate(if (machine?.offered == true) Modifier.gap(14) else Modifier) {
+                        // Left alone while a save or the translator is on its way.
+                        row { PaperEditor(state, minHeight = 280.dp, enabled = post.editable && !saving && !translating, original = post.text) }
+                    }
+                }
 
-                SectionLabel(stringResource(R.string.s_in, languageName))
-                // What the text cannot say is not written over from here:
-                // the translation is read, and changed at the desk.
-                if (!post.editable) {
-                    Hint(
-                        post.problem?.let { stringResource(R.string.this_post_cannot_be_edited_here_at, it) }
-                            ?: stringResource(R.string.this_post_cannot_be_edited_here),
-                        Modifier.padding(bottom = 10.dp),
-                    )
-                }
-                val machine = auto.takeIf { post.editable }
-                if (machine != null) {
-                    if (machine.available) {
-                        Plate(Modifier.gap(10)) {
-                            row {
-                                Command(stringResource(R.string.translate_automatically), Symbols.translate, busy = translating, enabled = !saving) {
-                                    // Over words of somebody's own the translator's are not
-                                    // put without asking; over nothing they are.
-                                    if (Preview.takesOff(state.text)) scope.launch { translate() } else confirmingMachine = true
-                                }
+                if (besides) {
+                    // The two side by side, each with its own label, tops level.
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Theme.gutter), verticalAlignment = Alignment.Top) {
+                        Column(Modifier.weight(1f)) {
+                            SectionLabel(stringResource(R.string.the_original))
+                            Plate {
+                                arrangement()
+                                original()
                             }
+                            Hint(stringResource(R.string.only_the_words_are_translated_the_date))
                         }
-                        if (translating) {
-                            Hint(stringResource(R.string.the_translator_on_the_server_is_at))
-                        } else {
-                            machineWarnings?.let { warnings ->
-                                Hint(stringResource(R.string.the_translator_s_text_read_it_before))
-                                warnings.forEach { warning ->
-                                    key(warning) { Text(warning.message, color = Theme.danger, style = ui(13f), modifier = Modifier.gap(6)) }
-                                }
-                            }
-                        }
-                    } else if (!machine.message.isNullOrEmpty()) {
-                        Hint(machine.message!!)
+                        Column(Modifier.weight(1f)) { translation() }
                     }
-                }
-                // Apart from the translator's key and what it said, as the
-                // preview's key is apart from the editor below it.
-                Plate(if (machine?.offered == true) Modifier.gap(14) else Modifier) {
-                    // Left alone while a save or the translator is on its way.
-                    row { PaperEditor(state, minHeight = 280.dp, enabled = post.editable && !saving && !translating, original = post.text) }
+                } else {
+                    SectionLabel(stringResource(R.string.the_original))
+                    Plate {
+                        row {
+                            Command(
+                                stringResource(if (showingOriginal) R.string.hide_the_original else R.string.show_the_original),
+                                if (showingOriginal) Symbols.chevronUp else Symbols.chevronDown,
+                            ) { showingOriginal = !showingOriginal }
+                        }
+                        if (roomBeside) arrangement()
+                        if (showingOriginal) original()
+                    }
+                    Hint(stringResource(R.string.only_the_words_are_translated_the_date))
+                    translation()
                 }
                 Plate(Modifier.gap(10)) {
                     row { Command(stringResource(R.string.preview), Symbols.eye) { previewing = true } }

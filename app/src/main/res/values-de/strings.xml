@@ -175,6 +175,8 @@
     <string name="only_the_words_are_translated_the_date">Übersetzt werden nur die Worte. Datum, Schlagwörter, Serie und Status gehören zum Beitrag selbst und gelten in jeder Sprache.</string>
     <string name="open">Geöffnet</string>
     <string name="open_the_blog_in_the_browser">Blog im Browser öffnen</string>
+    <string name="original_above_the_text">Original über dem Text</string>
+    <string name="original_beside_the_text">Original neben dem Text</string>
     <string name="pair_again">Erneut koppeln</string>
     <string name="paired_devices">Gekoppelte Geräte</string>
     <string name="picture_no_preview_on_this_device">Bild %1$s -- auf diesem Gerät ohne Vorschau</string>

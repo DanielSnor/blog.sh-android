@@ -172,6 +172,8 @@ only_media_are_in_the_trash_for	Only media are in the trash for this post; the t
 only_the_words_are_translated_the_date	Only the words are translated. The date, the tags, the series and the state belong to the post itself and hold in every language.
 open	Open
 open_the_blog_in_the_browser	Open the blog in the browser
+original_above_the_text	Original above the text
+original_beside_the_text	Original beside the text
 pair_again	Pair again
 paired_devices	Paired devices
 picture_no_preview_on_this_device	Picture %@ -- no preview on this device

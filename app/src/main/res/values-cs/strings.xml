@@ -175,6 +175,8 @@
     <string name="only_the_words_are_translated_the_date">Překládají se jen slova. Datum, štítky, série a stav patří příspěvku a platí ve všech jazycích.</string>
     <string name="open">Otevřený</string>
     <string name="open_the_blog_in_the_browser">Otevřít blog v prohlížeči</string>
+    <string name="original_above_the_text">Originál nad textem</string>
+    <string name="original_beside_the_text">Originál vedle textu</string>
     <string name="pair_again">Spárovat znovu</string>
     <string name="paired_devices">Spárovaná zařízení</string>
     <string name="picture_no_preview_on_this_device">Obrázek %1$s -- v tomhle zařízení bez náhledu</string>

@@ -175,6 +175,8 @@
     <string name="only_the_words_are_translated_the_date">Only the words are translated. The date, the tags, the series and the state belong to the post itself and hold in every language.</string>
     <string name="open">Open</string>
     <string name="open_the_blog_in_the_browser">Open the blog in the browser</string>
+    <string name="original_above_the_text">Original above the text</string>
+    <string name="original_beside_the_text">Original beside the text</string>
     <string name="pair_again">Pair again</string>
     <string name="paired_devices">Paired devices</string>
     <string name="picture_no_preview_on_this_device">Picture %1$s — no preview on this device</string>

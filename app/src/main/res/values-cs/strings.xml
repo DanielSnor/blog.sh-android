@@ -174,7 +174,6 @@
     <string name="only_media_are_in_the_trash_for">V koši jsou pro tenhle příspěvek jen média, ta vrátí terminál.</string>
     <string name="only_the_words_are_translated_the_date">Překládají se jen slova. Datum, štítky, série a stav patří příspěvku a platí ve všech jazycích.</string>
     <string name="open">Otevřený</string>
-    <string name="open_now">Teď je otevřený blog %1$s</string>
     <string name="open_the_blog_in_the_browser">Otevřít blog v prohlížeči</string>
     <string name="pair_again">Spárovat znovu</string>
     <string name="paired_devices">Spárovaná zařízení</string>

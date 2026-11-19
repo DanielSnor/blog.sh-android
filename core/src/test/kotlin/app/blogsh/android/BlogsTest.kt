@@ -6,8 +6,11 @@ import app.blogsh.android.model.BlogList
 import app.blogsh.android.model.BlogShelf
 import app.blogsh.android.model.EngineJson
 import app.blogsh.android.model.Facts
+import app.blogsh.android.model.ServerSettings
+import app.blogsh.android.model.TrustOnFirstUse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -263,5 +266,59 @@ class BlogsTest {
         // Let in, with no name said for the device: let in all the same.
         BlogShelf.write(listOf(paired.copy(pairedAs = "")), paired.id, notes)
         assertEquals(true, app.blogsh.android.model.ServerSettings.load(notes)?.paired)
+    }
+
+    /**
+     * A blog removed from the app takes the key its server answered with
+     * along -- unless another blog is reached at the same address and
+     * port, as two blogs on one server are, and still trusts it.
+     */
+    @Test
+    fun aServerKeyStaysOnlyWhileAnotherBlogIsReachedThere() {
+        val sean = Blog(host = "116.203.134.0", port = 202)
+        val app = Blog(host = " 116.203.134.0 ", port = 202)
+        val other = Blog(host = "116.203.134.0", port = 22)
+        assertTrue(BlogList.sharesServer(sean, listOf(sean, app, other)))
+        assertFalse(BlogList.sharesServer(sean, listOf(sean, other)))
+        assertFalse(BlogList.sharesServer(sean, listOf(sean)))
+        // No port is port 22, as the connection takes it.
+        assertTrue(BlogList.sharesServer(Blog(host = "127.0.0.1", port = 0), listOf(Blog(host = "127.0.0.1", port = 22))))
+
+        val notes = MemoryNotes()
+        val list = BlogList(notes) {}
+        for (blog in listOf(sean, app, other)) list.adopt(blog)
+        notes.write(TrustOnFirstUse.notesKey("116.203.134.0", 202), "SHA256:a")
+        notes.write(TrustOnFirstUse.notesKey("116.203.134.0", 22), "SHA256:b")
+        // A second blog is still reached there: the key stays.
+        list.remove(sean.id)
+        assertEquals("SHA256:a", TrustOnFirstUse.known("116.203.134.0", 202, notes))
+        // The last one there takes it along, and nothing of the other port.
+        list.remove(app.id)
+        assertNull(TrustOnFirstUse.known("116.203.134.0", 202, notes))
+        assertEquals("SHA256:b", TrustOnFirstUse.known("116.203.134.0", 22, notes))
+    }
+
+    /** A blog that is not the open one is reached where it is, and stays not open. */
+    @Test
+    fun aBlogsSettingsAreItsOwnWithoutOpeningIt() {
+        val notes = MemoryNotes()
+        val list = BlogList(notes) {}
+        val open = Blog(host = "open.example", user = "me")
+        val other = Blog(host = " other.example ", port = 0, user = "you", pairedAs = "phone")
+        list.adopt(open)
+        list.adopt(other)
+        list.select(open.id)
+        list.update(other.id) { it.copy(user = "them") }
+        assertEquals("them", list.blog(other.id)?.user)
+        assertEquals("me", list.current?.user)
+        assertEquals(open.id, list.currentId)
+        val settings = ServerSettings.of(other.id, notes)!!
+        assertEquals("other.example", settings.host)
+        assertEquals(22, settings.port)
+        assertEquals("them", settings.user)
+        assertTrue(settings.paired)
+        assertEquals("open.example", ServerSettings.load(notes)?.host)
+        assertNull(ServerSettings.of("nobody", notes))
+        assertNull(list.blog(null))
     }
 }

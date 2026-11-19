@@ -180,9 +180,15 @@ class BlogList(
 
     val current: Blog? get() = all.firstOrNull { it.id == currentId }
 
+    /** One blog by its id, open or not. */
+    fun blog(id: String?): Blog? = id?.let { wanted -> all.firstOrNull { it.id == wanted } }
+
     /** A change to the blog that is open, written down at once. */
-    fun update(change: (Blog) -> Blog) {
-        val index = all.indexOfFirst { it.id == currentId }
+    fun update(change: (Blog) -> Blog) = update(currentId, change)
+
+    /** A change to one blog, open or not, written down at once. */
+    fun update(id: String?, change: (Blog) -> Blog) {
+        val index = all.indexOfFirst { it.id == id }
         if (index < 0) return
         val blog = change(all[index])
         if (blog == all[index]) return
@@ -270,6 +276,13 @@ class BlogList(
         Unsent.forget(id, notes)
         Unsaved.forgetAll(id, notes)
         runCatching { forgetWaiting(id) }
+        // The key its server answered with is forgotten with it -- unless
+        // another blog in the app is reached at the same address and port,
+        // and still trusts that key.
+        if (!sharesServer(blog, all)) {
+            val (host, port) = blog.reached
+            TrustOnFirstUse.forget(host, port, notes)
+        }
         hangUp()
         all = all.filter { it.id != id }
         if (currentId == id) currentId = all.firstOrNull()?.id
@@ -277,6 +290,14 @@ class BlogList(
     }
 
     private fun save() = BlogShelf.write(all, currentId, notes)
+
+    companion object {
+        /**
+         * Whether another of `blogs` is reached where `blog` is: the same
+         * address and port, and so the same server key remembered for both.
+         */
+        fun sharesServer(blog: Blog, blogs: List<Blog>): Boolean = blogs.any { it.id != blog.id && it.reached == blog.reached }
+    }
 }
 
 /** The one list the app has. */

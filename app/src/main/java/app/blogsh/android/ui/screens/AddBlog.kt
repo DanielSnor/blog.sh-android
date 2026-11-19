@@ -162,8 +162,8 @@ fun AddBlogSheet(initialCode: String = "", into: Blog? = null, onBack: () -> Uni
                 Blogs.repaired(into.id, code.host, code.port, code.user, account, known, code.site)
                 // The key it had, where it was given another: nothing answers to it any more.
                 if (account != into.keyAccount) withContext(NonCancellable + Dispatchers.IO) { runCatching { KeyStore.deleteKey(into.keyAccount) } }
-                // Let in again from the list of blogs, it is the one to open.
-                Blogs.select(into.id)
+                // Let in again from its settings, which are looked at without
+                // opening the blog: the blog that is open stays open.
             }
             Herald.shared.say(context.getString(R.string.connected, handed.device.ifEmpty { blog.label }))
             onDone()

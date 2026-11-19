@@ -139,6 +139,12 @@ object Engine {
      */
     suspend inline fun <reified T> call(args: List<String>): T = patiently(waitsItsTurn(args)) { decode(run(args)) }
 
+    /**
+     * `of`: a blog other than the open one, asked of its own server --
+     * its settings are looked at without it being opened.
+     */
+    suspend inline fun <reified T> call(args: List<String>, of: String?): T = patiently(waitsItsTurn(args)) { decode(batch(listOf(args), of)[0]) }
+
     suspend inline fun <reified T> call(vararg args: String): T = call(args.toList())
 
     /** One answer of a batch, read as `call` reads its own. */
@@ -187,16 +193,17 @@ object Engine {
     @Volatile
     var stand: ((List<String>) -> ByteArray)? = null
 
-    suspend fun batch(commands: List<List<String>>): List<ByteArray> {
+    suspend fun batch(commands: List<List<String>>, of: String? = null): List<ByteArray> {
+        // The practice blog answers for itself: it has no server -- the
+        // named one, where a blog is named, or else the open one.
         val answers = stand?.let { answer -> commands.map(answer) }
-            // The practice blog answers for itself: it has no server.
-            ?: if (Blogs.current?.isPractice == true) commands.map { Practice.answer(it) } else asked(commands)
+            ?: if ((Blogs.blog(of) ?: Blogs.current)?.isPractice == true) commands.map { Practice.answer(it) } else asked(commands, of)
         // The first screen reads its cards again where a command changed the blog.
         if (commands.any { changesTheBlog(it) }) Desk.wrote()
         return answers
     }
 
-    private suspend fun asked(commands: List<List<String>>): List<ByteArray> = onTheLine { ssh, wary ->
+    private suspend fun asked(commands: List<List<String>>, of: String? = null): List<ByteArray> = onTheLine(of = of) { ssh, wary ->
         val answers = mutableListOf<ByteArray>()
         for (args in commands) {
             // Only the first can find the connection dead without having
@@ -353,12 +360,19 @@ object Engine {
      * had begun to speak is never repeated; whether a publish arrived is
      * not something to guess at.
      */
-    private suspend fun <T> onTheLine(only: String? = null, work: (SSHClient, Boolean) -> T): T = withContext(Dispatchers.IO) { ride(only, work) }
+    /**
+     * `of`: a named blog, open or not, reached where it is -- which a
+     * look at its settings asks for. `only` is the other way round: the
+     * open blog, and nothing at all where another has been opened since.
+     */
+    private suspend fun <T> onTheLine(only: String? = null, of: String? = null, work: (SSHClient, Boolean) -> T): T =
+        withContext(Dispatchers.IO) { ride(only, of, work) }
 
-    private suspend fun <T> ride(only: String?, work: (SSHClient, Boolean) -> T): T {
+    private suspend fun <T> ride(only: String?, of: String?, work: (SSHClient, Boolean) -> T): T {
         // What was written for one blog is never sent to the next: a call
         // meant for a blog that is not the open one any more is called off.
-        val settings = ServerSettings.load(only = only) ?: throw if (only != null) CancellationException() else EngineError.NotConfigured
+        val found = if (of != null) ServerSettings.of(of) else ServerSettings.load(only = only)
+        val settings = found ?: throw if (only != null) CancellationException() else EngineError.NotConfigured
         val door = Door(settings.host, settings.port, settings.user, settings.keyAccount)
         // What became of the call is said to whoever shows the blog as
         // within reach or not: a server nobody answered at is silent

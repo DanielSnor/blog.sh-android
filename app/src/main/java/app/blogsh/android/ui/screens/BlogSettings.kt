@@ -68,13 +68,13 @@ private sealed class Probe {
  * line for the server's authorized_keys -- with the forced command in
  * front of it, which is what keeps this key from ever getting a shell.
  *
- * It is the open blog's, and it is reached from that blog's row in the
- * list of blogs; what is the app's own is under the gear. `onBack` leads
+ * It is one blog's, reached from that blog's row in the list of blogs,
+ * and looking at it does not open the blog; what is the app's own is under the gear. `onBack` leads
  * to that list again, `onDone` closes the list too, and so the way back
  * to the app.
  */
 @Composable
-fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
+fun BlogSettingsSheet(blogId: String? = null, onBack: () -> Unit, onDone: () -> Unit) {
     val context = rememberHost()
     // The key says that it took: the row is the only place to see it.
     var copied by remember { mutableStateOf(false) }
@@ -89,15 +89,16 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
     var confirmingForget by remember { mutableStateOf(false) }
     // The server's remembered key is read again after it is forgotten or first seen.
     var keyTick by remember { mutableStateOf(0) }
-    val blog = Blogs.current
+    // Whose settings: a blog of the list, or -- left out -- the open one.
+    val blog = Blogs.blog(blogId) ?: Blogs.current
 
-    LaunchedEffect(Blogs.currentId, blog?.keyAccount) {
-        publicKey = Blogs.current?.let { runCatching { KeyStore.publicKeyLine(it.keyAccount) }.getOrNull() }
+    LaunchedEffect(blog?.id, blog?.keyAccount) {
+        publicKey = blog?.let { runCatching { KeyStore.publicKeyLine(it.keyAccount) }.getOrNull() }
         probe = Probe.Idle
     }
 
     fun makeKey() {
-        val account = Blogs.current?.keyAccount ?: return
+        val account = blog?.keyAccount ?: return
         try {
             KeyStore.makeKey(account)
             Engine.hangUp()
@@ -108,8 +109,8 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
         }
     }
 
-    // The fields are the open blog's own, written down as they are typed.
-    fun set(change: (Blog) -> Blog) = Blogs.update(change)
+    // The fields are the blog's own, written down as they are typed.
+    fun set(change: (Blog) -> Blog) = Blogs.update(blog?.id, change)
 
     val plain = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Ascii)
     val host = blog?.host ?: ""
@@ -221,7 +222,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
             scope.launch {
                 probe = Probe.Running
                 probe = try {
-                    Probe.Answered(Engine.call<VersionAnswer>("version"))
+                    Probe.Answered(Engine.call<VersionAnswer>(listOf("version"), of = blog?.id))
                 } catch (e: Throwable) {
                     if (e.isCalledOff) throw e
                     Probe.Failed(e.said)
@@ -282,7 +283,7 @@ fun BlogSettingsSheet(onBack: () -> Unit, onDone: () -> Unit) {
         }
     }
 
-    if (showingDevices) DevicesSheet(onBack = { showingDevices = false })
+    if (showingDevices) DevicesSheet(blogId = blog?.id, onBack = { showingDevices = false })
     if (pairing && blog != null) {
         AddBlogSheet(into = blog, onBack = { pairing = false }, onDone = {
             pairing = false

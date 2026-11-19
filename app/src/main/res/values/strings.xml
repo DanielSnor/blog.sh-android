@@ -174,7 +174,6 @@
     <string name="only_media_are_in_the_trash_for">Only media are in the trash for this post; the terminal restores those.</string>
     <string name="only_the_words_are_translated_the_date">Only the words are translated. The date, the tags, the series and the state belong to the post itself and hold in every language.</string>
     <string name="open">Open</string>
-    <string name="open_now">Open now: %1$s</string>
     <string name="open_the_blog_in_the_browser">Open the blog in the browser</string>
     <string name="pair_again">Pair again</string>
     <string name="paired_devices">Paired devices</string>

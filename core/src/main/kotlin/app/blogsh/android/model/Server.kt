@@ -31,6 +31,18 @@ data class ServerSettings(
             if (host.isEmpty() || user.isEmpty()) return null
             return ServerSettings(host, port, user, blog.keyAccount, paired = blog.pairedAs != null)
         }
+
+        /**
+         * Where one named blog is, open or not: its settings are looked at,
+         * and asked of its own server, without it becoming the open one.
+         */
+        fun of(id: String, from: Notes = BlogShelf.notes): ServerSettings? {
+            val blog = BlogShelf.read(from).first.firstOrNull { it.id == id } ?: return null
+            val (host, port) = blog.reached
+            val user = blog.user.trim()
+            if (host.isEmpty() || user.isEmpty()) return null
+            return ServerSettings(host, port, user, blog.keyAccount, paired = blog.pairedAs != null)
+        }
     }
 }
 

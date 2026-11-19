@@ -63,7 +63,7 @@ import java.text.NumberFormat
 
 /**
  * The blogs the app drives, and the way from one to another: a row opens
- * its blog, the key at its end opens that blog's settings, the last key
+ * its blog, the key at its end shows that blog's settings without opening it, the last key
  * begins a new one. A blog is its own server, its own key and its own
  * colour; nothing of one is used for another. A long press on a row
  * offers to carry it a place up or down the list, or to remove its blog.
@@ -74,8 +74,9 @@ import java.text.NumberFormat
  * settings: what it is, and the way out of the app for it.
  */
 @Composable
-fun PracticeBlogSheet(onBack: () -> Unit, onDone: () -> Unit) {
-    val blog = Blogs.current?.takeIf { it.isPractice }
+fun PracticeBlogSheet(blogId: String? = null, onBack: () -> Unit, onDone: () -> Unit) {
+    // Which practice blog: the one of the list, or -- left out -- the open one.
+    val blog = (Blogs.blog(blogId) ?: Blogs.current)?.takeIf { it.isPractice }
     var confirmingRemoval by remember { mutableStateOf(false) }
     SheetDialog(onDismissRequest = onBack) {
         SheetBars()
@@ -110,19 +111,12 @@ fun PracticeBlogSheet(onBack: () -> Unit, onDone: () -> Unit) {
     }
 }
 
-/**
- * The blog that became the open one through the key to its settings,
- * until whoever closes the list has said so.
- */
-object OpenedBySettings {
-    var label: String? = null
-}
-
 @Composable
 fun BlogsSheet(onDismiss: () -> Unit) {
     var held by remember { mutableStateOf<Blog?>(null) }
     var removing by remember { mutableStateOf<Blog?>(null) }
-    var settingUp by remember { mutableStateOf(false) }
+    // The blog whose settings are open: looked at, not opened.
+    var settingUp by remember { mutableStateOf<String?>(null) }
     var adding by remember { mutableStateOf(false) }
     val settings = stringResource(R.string.the_blog_s_settings)
     PaperSheet(
@@ -143,16 +137,11 @@ fun BlogsSheet(onDismiss: () -> Unit) {
                                 onLongClick = { held = blog },
                             )
                         ) { BlogRow(blog, open = blog.id == Blogs.currentId) }
-                        // The settings are the open blog's: the key opens the blog with them.
+                        // The blog's settings, looked at without opening it: the
+                        // key reads as a look at them, and the blog that is open
+                        // stays open.
                         Pressable(
-                            {
-                                // Another blog than the open one: said, since
-                                // the key reads as a look at its settings and
-                                // not as a change of the blog that is open.
-                                if (blog.id != Blogs.currentId && Blogs.currentId != null) OpenedBySettings.label = blog.label
-                                Blogs.select(blog.id)
-                                settingUp = true
-                            },
+                            { settingUp = blog.id },
                             modifier = Modifier.semantics { contentDescription = settings },
                         ) {
                             // A key that looks like one: the mark alone was
@@ -176,11 +165,11 @@ fun BlogsSheet(onDismiss: () -> Unit) {
             }
         }
     }
-    if (settingUp) {
-        if (Blogs.current?.isPractice == true) {
-            PracticeBlogSheet(onBack = { settingUp = false }, onDone = { settingUp = false; onDismiss() })
+    settingUp?.let { id ->
+        if (Blogs.blog(id)?.isPractice == true) {
+            PracticeBlogSheet(blogId = id, onBack = { settingUp = null }, onDone = { settingUp = null; onDismiss() })
         } else {
-            BlogSettingsSheet(onBack = { settingUp = false }, onDone = { settingUp = false; onDismiss() })
+            BlogSettingsSheet(blogId = id, onBack = { settingUp = null }, onDone = { settingUp = null; onDismiss() })
         }
     }
     if (adding) AddBlogSheet(onBack = { adding = false }, onDone = { adding = false; onDismiss() })

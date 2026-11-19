@@ -174,7 +174,6 @@
     <string name="only_media_are_in_the_trash_for">Im Papierkorb liegen für diesen Beitrag nur Medien; die holt das Terminal zurück.</string>
     <string name="only_the_words_are_translated_the_date">Übersetzt werden nur die Worte. Datum, Schlagwörter, Serie und Status gehören zum Beitrag selbst und gelten in jeder Sprache.</string>
     <string name="open">Geöffnet</string>
-    <string name="open_now">Jetzt geöffnet: %1$s</string>
     <string name="open_the_blog_in_the_browser">Blog im Browser öffnen</string>
     <string name="pair_again">Erneut koppeln</string>
     <string name="paired_devices">Gekoppelte Geräte</string>

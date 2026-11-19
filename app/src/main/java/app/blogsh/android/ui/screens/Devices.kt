@@ -55,9 +55,10 @@ import java.text.NumberFormat
  * server, by whoever sits at it.
  */
 @Composable
-fun DevicesSheet(onBack: () -> Unit) {
+fun DevicesSheet(blogId: String? = null, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
-    val blog = Blogs.current
+    // Whose devices: a blog of the list, or -- left out -- the open one.
+    val blog = Blogs.blog(blogId) ?: Blogs.current
     var answer by remember { mutableStateOf<PairedDevices?>(null) }
     var problem by remember { mutableStateOf<String?>(null) }
     // The blog is an older one, which does not show its devices to an app.
@@ -77,7 +78,7 @@ fun DevicesSheet(onBack: () -> Unit) {
         problem = null
         notYet = false
         try {
-            answer = Engine.call<PairedDevices>("pair", "--list")
+            answer = Engine.call<PairedDevices>(listOf("pair", "--list"), of = blog?.id)
         } catch (e: Throwable) {
             if (e.isCalledOff) throw e
             answer = null
@@ -95,7 +96,7 @@ fun DevicesSheet(onBack: () -> Unit) {
         problem = null
         try {
             // Who is left comes with the answer.
-            answer = Engine.call<PairedDevices>("pair", "--revoke")
+            answer = Engine.call<PairedDevices>(listOf("pair", "--revoke"), of = blog?.id)
         } catch (e: Throwable) {
             if (e.isCalledOff) {
                 leaving = false
@@ -115,7 +116,7 @@ fun DevicesSheet(onBack: () -> Unit) {
         Herald.shared.say(takenOff)
     }
 
-    LaunchedEffect(Blogs.currentId) {
+    LaunchedEffect(blog?.id) {
         gone = false
         load()
     }
